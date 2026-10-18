@@ -191,21 +191,19 @@ const chapter1Practice = (() => {
         };
     }
 
-    // Saved per student, so each child sees only their own scores.
-    let PERSIST_KEY = null;
-    const keyFor = studentId => `ch1PracticeState_${studentId}`;
+    // Saved per student (Supabase chapter1Practice document), so each child
+    // sees only their own scores.
+    const PERSIST_DOC = 'chapter1Practice';
+    let persistStudentId = null;
 
     function saveState() {
-        if (!PERSIST_KEY) return;
-        try { localStorage.setItem(PERSIST_KEY, JSON.stringify(_state)); } catch {}
+        if (!persistStudentId) return;
+        HMCloud.save(PERSIST_DOC, _state, persistStudentId);
     }
 
-    function loadState(key) {
-        try {
-            const s = JSON.parse(localStorage.getItem(key));
-            if (s && s.screen) return s;
-        } catch {}
-        return null;
+    function loadState(studentId) {
+        const s = HMCloud.get(PERSIST_DOC, studentId);
+        return s && s.screen ? s : null;
     }
 
     // ── HELPERS ──────────────────────────────────────────────────────────────
@@ -1244,14 +1242,14 @@ const chapter1Practice = (() => {
     // ── PUBLIC API ───────────────────────────────────────────────────────────
     return {
         init(studentId) {
-            PERSIST_KEY = keyFor(studentId);
-            _state = loadState(PERSIST_KEY) || freshState();
+            persistStudentId = studentId;
+            _state = loadState(studentId) || freshState();
             render();
         },
 
         // Real completion for one student, read without opening the practice.
         getProgress(studentId) {
-            const saved = loadState(keyFor(studentId));
+            const saved = loadState(studentId);
             const scores = (saved && saved.scores) || {};
             const done = ACTIVITIES.filter(a => scores[a.key] && scores[a.key].complete).length;
             return { done, total: ACTIVITIES.length };

@@ -25,16 +25,13 @@ function freshPortalState() {
     };
 }
 
-// The teacher app (app.js) saves class progress under this key. Same browser
-// only until a shared backend replaces localStorage.
-const CLASS_PROGRESS_STORAGE_KEY = 'happyMindsClassProgress';
+// The teacher app (app.js) saves class progress as this Supabase document.
+const CLASS_PROGRESS_STORAGE_KEY = 'classProgress';
 const STAGES = ['explore', 'practice', 'create', 'perform'];
 
 function getClassProgress() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(CLASS_PROGRESS_STORAGE_KEY));
-        if (saved) return { completedChapters: saved.completedChapters || [], chapterProgress: saved.chapterProgress || {} };
-    } catch (err) { /* fall through */ }
+    const saved = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY);
+    if (saved) return { completedChapters: saved.completedChapters || [], chapterProgress: saved.chapterProgress || {} };
     return { completedChapters: [], chapterProgress: {} };
 }
 
@@ -76,57 +73,77 @@ document.addEventListener('DOMContentLoaded', () => {
     checkLogin();
 });
 
+HMCloud.onSaveStatus(status => {
+    showToast(status === 'error'
+        ? "Couldn't save just now. Trying again…"
+        : 'All your progress is saved!');
+});
+
 // ==========================================================================
 // AUTH & STATE
 // ==========================================================================
-// Students sign in with the same accounts as the main app (config.js), and
-// share its saved-login key — so logging in on index.html lands here, and
-// logging out here returns to index.html signed out.
-const AUTH_STORAGE_KEY = 'happyMindsAuthUser';
-
-function findStudentAccount(username) {
-    return HappyMindsConfig.ACCOUNTS.find(a => a.role === 'student' && a.username === username);
-}
-
+// Students sign in with the same Supabase accounts as the main app, and the
+// session is shared across the site — so logging in on index.html lands
+// here, and logging out here returns to index.html signed out.
 function enterPortal(account) {
     currentUser = account;
-    try { localStorage.setItem(AUTH_STORAGE_KEY, account.username); } catch (e) { /* ignore */ }
     loadState();
     document.getElementById('sp-login').classList.add('sp-hidden');
     document.getElementById('sp-app').classList.remove('sp-hidden');
     initApp();
 }
 
-function spAttemptLogin(e) {
+function setSpLoginBusy(busy, label) {
+    const button = document.querySelector('#spLoginForm button[type="submit"]');
+    button.disabled = busy;
+    button.innerHTML = busy
+        ? `<i class="fa-solid fa-circle-notch fa-spin"></i> ${label}`
+        : '<i class="fa-solid fa-star"></i> Let\'s Go! 🚀';
+}
+
+async function spAttemptLogin(e) {
     e.preventDefault();
     const user = document.getElementById('spLoginUser').value.trim().toLowerCase();
     const pass = document.getElementById('spLoginPass').value;
-    const account = findStudentAccount(user);
+    const errorEl = document.getElementById('spLoginError');
 
-    if (!account || account.password !== pass) {
-        document.getElementById('spLoginError').textContent = 'That name or password doesn\'t match. Ask your teacher for help!';
-        return;
+    errorEl.textContent = '';
+    setSpLoginBusy(true, 'Signing in…');
+    try {
+        const account = await HMCloud.signIn(user, pass);
+        if (account.role !== 'student') {
+            // Grown-up accounts belong in the classroom app, which picks up
+            // this same session and signs them straight in.
+            window.location.replace('index.html');
+            return;
+        }
+        enterPortal(account);
+    } catch (err) {
+        errorEl.textContent = /incorrect username/i.test(err.message)
+            ? 'That name or password doesn\'t match. Ask your teacher for help!'
+            : err.message;
+    } finally {
+        setSpLoginBusy(false);
     }
-    enterPortal(account);
 }
 
-function checkLogin() {
-    let saved = null;
-    try { saved = localStorage.getItem(AUTH_STORAGE_KEY); } catch (e) { /* ignore */ }
-    const account = saved && findStudentAccount(saved);
-    if (account) enterPortal(account);
+async function checkLogin() {
+    setSpLoginBusy(true, 'Checking…');
+    const account = await HMCloud.restoreSession();
+    setSpLoginBusy(false);
+    if (account && account.role === 'student') enterPortal(account);
 }
 
-function spLogout() {
+async function spLogout() {
     currentUser = null;
-    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (e) { /* ignore */ }
+    await HMCloud.signOut();
     window.location.href = 'index.html';
 }
 
 function loadState() {
-    const savedState = localStorage.getItem(`spState_${currentUser.studentId}`);
+    const savedState = HMCloud.get('studentPortal', currentUser.studentId);
     if (savedState) {
-        spState = { ...freshPortalState(), ...JSON.parse(savedState) };
+        spState = { ...freshPortalState(), ...savedState };
     } else {
         // First visit: an empty record, nothing pre-filled
         spState = freshPortalState();
@@ -149,7 +166,7 @@ function syncClassBadges() {
 }
 
 function saveState() {
-    localStorage.setItem(`spState_${currentUser.studentId}`, JSON.stringify(spState));
+    HMCloud.save('studentPortal', spState, currentUser.studentId);
     updateGlobalUI();
 }
 

@@ -8,6 +8,9 @@ assets/Character_reference/
 logo.png
 logo_transparent.png
 
+# Account passwords (run in the Supabase SQL Editor, never committed)
+supabase/seed-accounts.sql
+
 # Old backups and one-off scripts
 _backup-before-student-portal-swap/
 remove_bg.py

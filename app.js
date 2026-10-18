@@ -6,7 +6,8 @@
    no per-chapter copies of any view.
    ========================================================================== */
 
-// ================= localStorage keys (must come before appState) =================
+// ================= Saved document names (must come before appState) =================
+// Each name is one document in Supabase (HMCloud, cloud.js).
 // Every one of these used to be declared right next to its own load/save
 // functions, further down the file — which looked tidy but was a real bug:
 // appState's own initializer below calls loadTimeTracking(), loadPrepStatus()
@@ -19,15 +20,15 @@
 // load, and nothing written in a previous session ever came back. Moving
 // every key constant up here, before appState exists, fixes all of them at
 // once.
-const TIME_TRACKING_STORAGE_KEY = 'happyMindsTimeTracking';
-const PREP_STATUS_STORAGE_KEY = 'happyMindsPrepStatus';
-const REFLECTION_STORAGE_KEY = 'happyMindsReflections';
-const OBSERVE_STORAGE_KEY = 'happyMindsObservations';
-const LUMORA_WALL_STORAGE_KEY = 'happyMindsLumoraWall';
+const TIME_TRACKING_STORAGE_KEY = 'timeTracking';
+const PREP_STATUS_STORAGE_KEY = 'prepStatus';
+const REFLECTION_STORAGE_KEY = 'reflections';
+const OBSERVE_STORAGE_KEY = 'observations';
+const LUMORA_WALL_STORAGE_KEY = 'lumoraWall';
 // Class progress: which chapters are complete + which stages are done per
 // chapter. Also read by the student portal (student-portal.js), so students
 // see the same chapter their class is on.
-const CLASS_PROGRESS_STORAGE_KEY = 'happyMindsClassProgress';
+const CLASS_PROGRESS_STORAGE_KEY = 'classProgress';
 
 // Global Application State
 const appState = {
@@ -43,7 +44,7 @@ const appState = {
     practiceStepIndex: 0,
     builderAssembled: [],
     hintIndex: 0,
-    scanTargetStudentId: HappyMindsConfig.STUDENTS[0].id,
+    scanTargetStudentId: null,
     scanTargetChapterId: 1,
     // Time-on-page tracking, shown live via the stage-timer-badge in each
     // stage's stepper bar. Lets a teacher check real usage against the
@@ -78,20 +79,29 @@ function localDateString(date) {
 }
 
 function loadClassProgress() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(CLASS_PROGRESS_STORAGE_KEY));
-        if (saved) return { completedChapters: saved.completedChapters || [], chapterProgress: saved.chapterProgress || {} };
-    } catch (err) { /* fall through to a fresh class */ }
+    const saved = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY);
+    if (saved) return { completedChapters: saved.completedChapters || [], chapterProgress: saved.chapterProgress || {} };
     return { completedChapters: [], chapterProgress: {} };
 }
 
 function saveClassProgress() {
-    try {
-        localStorage.setItem(CLASS_PROGRESS_STORAGE_KEY, JSON.stringify({
-            completedChapters: appState.completedChapters,
-            chapterProgress: appState.chapterProgress
-        }));
-    } catch (err) { /* ignore */ }
+    HMCloud.save(CLASS_PROGRESS_STORAGE_KEY, {
+        completedChapters: appState.completedChapters,
+        chapterProgress: appState.chapterProgress
+    });
+}
+
+// appState is built before anyone signs in, so it starts empty; once the
+// signed-in account's documents arrive from Supabase, load them all in.
+function reloadSavedState() {
+    const progress = loadClassProgress();
+    appState.completedChapters = progress.completedChapters;
+    appState.chapterProgress = progress.chapterProgress;
+    appState.timeTracking = loadTimeTracking();
+    appState.prepStatus = loadPrepStatus();
+    appState.reflections = loadReflections();
+    appState.observations = loadObservations();
+    appState.lumoraWall = loadLumoraWall();
 }
 
 function getProgress(chapterId) {
@@ -125,19 +135,11 @@ let activeTimerKey = null;
 let activeTimerStartedAt = null;
 
 function loadTimeTracking() {
-    try {
-        return JSON.parse(localStorage.getItem(TIME_TRACKING_STORAGE_KEY)) || {};
-    } catch (err) {
-        return {};
-    }
+    return HMCloud.get(TIME_TRACKING_STORAGE_KEY) || {};
 }
 
 function saveTimeTracking() {
-    try {
-        localStorage.setItem(TIME_TRACKING_STORAGE_KEY, JSON.stringify(appState.timeTracking));
-    } catch (err) {
-        // Private browsing / storage disabled — tracking just won't persist across reloads.
-    }
+    HMCloud.save(TIME_TRACKING_STORAGE_KEY, appState.timeTracking);
 }
 
 function startTimer(chapterId, stage) {
@@ -311,50 +313,59 @@ function startChapterStage(stageName) {
     if (activePill) activePill.classList.add('active');
 }
 
-// ================= Login / Logout (placeholder auth) =================
-// Session is just a localStorage flag holding which ACCOUNTS entry is
-// "logged in" — there is no server, so this only gates the UI, not real data.
-const AUTH_STORAGE_KEY = 'happyMindsAuthUser';
+// ================= Login / Logout (Supabase Auth, via cloud.js) =================
+// The login button doubles as the progress indicator while a session is
+// being checked or a sign-in is in flight.
+function setLoginBusy(busy, label) {
+    const button = document.querySelector('#loginForm button[type="submit"]');
+    button.disabled = busy;
+    button.innerHTML = busy
+        ? `<i class="fa-solid fa-circle-notch fa-spin"></i> ${label}`
+        : '<i class="fa-solid fa-right-to-bracket"></i> Log In';
+}
 
-function checkExistingSession() {
-    try {
-        const savedUsername = localStorage.getItem(AUTH_STORAGE_KEY);
-        const account = HappyMindsConfig.ACCOUNTS.find(a => a.username === savedUsername);
-        if (account) {
-            enterApp(account);
-            return;
-        }
-    } catch (e) { /* localStorage unavailable — fall through to login */ }
+async function checkExistingSession() {
+    setLoginBusy(true, 'Checking your session…');
+    const account = await HMCloud.restoreSession();
+    setLoginBusy(false);
+    if (account) {
+        enterApp(account);
+        return;
+    }
     document.getElementById('login-view').style.display = 'flex';
     document.getElementById('app').classList.add('app-hidden');
 }
 
-function attemptLogin(event) {
+async function attemptLogin(event) {
     event.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorEl = document.getElementById('loginError');
 
-    const account = HappyMindsConfig.ACCOUNTS.find(a => a.username === username && a.password === password);
-    if (!account) {
-        errorEl.textContent = 'Incorrect username or password.';
-        return;
-    }
-
     errorEl.textContent = '';
-    try { localStorage.setItem(AUTH_STORAGE_KEY, account.username); } catch (e) { /* ignore */ }
-    enterApp(account);
+    setLoginBusy(true, 'Signing in…');
+    try {
+        const account = await HMCloud.signIn(username, password);
+        enterApp(account);
+    } catch (err) {
+        errorEl.textContent = err.message;
+    } finally {
+        setLoginBusy(false);
+    }
 }
 
 function enterApp(account) {
-    // Students have their own standalone portal; it reads the same saved
-    // login (AUTH_STORAGE_KEY), so no second sign-in is needed there.
+    // Students have their own standalone portal; Supabase keeps the session
+    // for this whole site, so no second sign-in is needed there.
     if (account.role === 'student') {
         window.location.replace('student-portal.html');
         return;
     }
 
     appState.currentUser = account;
+    reloadSavedState();
+    renderChaptersRoadmap();
+    renderChapterHub();
 
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('app').classList.remove('app-hidden');
@@ -398,9 +409,13 @@ function closeNotificationMenu() {
     document.getElementById('notificationDropdown').classList.remove('open');
 }
 
-function handleLogout(event) {
+async function handleLogout(event) {
     event.stopPropagation();
-    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (e) { /* ignore */ }
+    // Record time on the open stage before the session (and save access) ends.
+    stopTimer();
+    await HMCloud.signOut();
+    appState.currentUser = null;
+    reloadSavedState();
     document.getElementById('userMenuDropdown').classList.remove('open');
     document.getElementById('loginForm').reset();
     document.getElementById('app').classList.add('app-hidden');
@@ -2353,17 +2368,11 @@ const REFLECTION_TEMPLATE = [
 ];
 
 function loadReflections() {
-    try {
-        return JSON.parse(localStorage.getItem(REFLECTION_STORAGE_KEY)) || {};
-    } catch (err) {
-        return {};
-    }
+    return HMCloud.get(REFLECTION_STORAGE_KEY) || {};
 }
 
 function saveReflections() {
-    try {
-        localStorage.setItem(REFLECTION_STORAGE_KEY, JSON.stringify(appState.reflections));
-    } catch (err) { /* ignore */ }
+    HMCloud.save(REFLECTION_STORAGE_KEY, appState.reflections);
 }
 
 function getReflectionDraft(chapterId) {
@@ -2566,17 +2575,11 @@ const OBSERVE_GAPS = [
 ];
 
 function loadObservations() {
-    try {
-        return JSON.parse(localStorage.getItem(OBSERVE_STORAGE_KEY)) || [];
-    } catch (err) {
-        return [];
-    }
+    return HMCloud.get(OBSERVE_STORAGE_KEY) || [];
 }
 
 function saveObservations() {
-    try {
-        localStorage.setItem(OBSERVE_STORAGE_KEY, JSON.stringify(appState.observations));
-    } catch (err) { /* ignore */ }
+    HMCloud.save(OBSERVE_STORAGE_KEY, appState.observations);
 }
 
 let observeDraft = null;
@@ -2897,17 +2900,11 @@ ${obs.followUp ? `Check-in done — tried: ${obs.followUp.tried}${obs.followUp.n
 // of a second competing drag-sort UI.
 
 function loadLumoraWall() {
-    try {
-        return JSON.parse(localStorage.getItem(LUMORA_WALL_STORAGE_KEY)) || {};
-    } catch (err) {
-        return {};
-    }
+    return HMCloud.get(LUMORA_WALL_STORAGE_KEY) || {};
 }
 
 function saveLumoraWall() {
-    try {
-        localStorage.setItem(LUMORA_WALL_STORAGE_KEY, JSON.stringify(appState.lumoraWall));
-    } catch (err) { /* ignore */ }
+    HMCloud.save(LUMORA_WALL_STORAGE_KEY, appState.lumoraWall);
 }
 
 // Each word is {text, studentId|null}. Defensively upgrades any old plain-
@@ -3014,17 +3011,11 @@ function renderAnswerCards() {
 // so the computed status is shown honestly here and on the chapter hub only.
 
 function loadPrepStatus() {
-    try {
-        return JSON.parse(localStorage.getItem(PREP_STATUS_STORAGE_KEY)) || {};
-    } catch (err) {
-        return {};
-    }
+    return HMCloud.get(PREP_STATUS_STORAGE_KEY) || {};
 }
 
 function savePrepStatus() {
-    try {
-        localStorage.setItem(PREP_STATUS_STORAGE_KEY, JSON.stringify(appState.prepStatus));
-    } catch (err) { /* ignore */ }
+    HMCloud.save(PREP_STATUS_STORAGE_KEY, appState.prepStatus);
 }
 
 function getPrepStatus(chapterId) {
@@ -3210,11 +3201,10 @@ function openStudentReport(studentId) {
     navigateTo('teacher-report');
 }
 
-// Student portal (student-portal.js) saves each child's progress under
-// spState_<studentId> in this same browser. Returns null if they haven't
-// opened the portal yet.
+// Student portal (student-portal.js) saves each child's progress as their
+// studentPortal document. Returns null if they haven't opened the portal yet.
 function loadStudentPortalState(studentId) {
-    try { return JSON.parse(localStorage.getItem(`spState_${studentId}`)); } catch (err) { return null; }
+    return HMCloud.get('studentPortal', studentId);
 }
 
 // Portal text (e.g. creation titles) is typed by the student, so escape it
@@ -3483,6 +3473,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderChapterHub();
     analyzeWritingContent();
     checkExistingSession();
+});
+
+HMCloud.onSaveStatus(status => {
+    showNotification(status === 'error'
+        ? "Couldn't save your latest changes. Retrying — keep this page open."
+        : 'All changes saved.');
 });
 
 // Close the user menu / notification dropdown when clicking anywhere outside them.

@@ -20,15 +20,15 @@
     <!-- Chapter 1's dedicated Practice experience (self-contained, scoped to #chapter1-practice) -->
     <link rel="stylesheet" href="chapter1-practice.css">
     <!-- App Data & Config (must load before app.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
     <script src="config.js"></script>
+    <script src="cloud.js"></script>
     <script src="chapters-data.js"></script>
 </head>
 <body>
     <!-- ================= LOGIN GATE =================
-         Frontend-only placeholder auth: credentials live in config.js
-         (ACCOUNTS) and the session is just a localStorage flag. This is NOT
-         secure and must be replaced by real server-side auth (Supabase Auth)
-         before any real student/teacher data touches this app. -->
+         Supabase Auth (cloud.js). Accounts are created by the admin in
+         Supabase; there is no sign-up. -->
     <div id="login-view" class="login-screen">
         <div class="login-card">
             <img src="assets/logo_icon.png" alt="Happy Minds" class="login-logo">
@@ -50,14 +50,6 @@
                 </button>
             </form>
 
-            <div class="login-demo-hint">
-                <strong>Demo credentials (placeholder, not secure)</strong>
-                <div><i class="fa-solid fa-chalkboard-user"></i> Teacher: <code>teacher1</code> / <code>teacher123</code></div>
-                <div><i class="fa-solid fa-user-tie"></i> Trainer: <code>trainer1</code> / <code>trainer123</code></div>
-                <div><i class="fa-solid fa-user-shield"></i> Admin: <code>admin1</code> / <code>admin123</code></div>
-                <div><i class="fa-solid fa-child"></i> Student: <code>arjun1</code> / <code>arjun123</code></div>
-                <div><i class="fa-solid fa-people-roof"></i> Parent: <code>parent1</code> / <code>parent123</code></div>
-            </div>
         </div>
     </div>
 

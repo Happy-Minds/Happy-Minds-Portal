@@ -12,7 +12,7 @@ The portal is plain HTML, CSS and JavaScript, so there is no build step.
    - Python: `python -m http.server 8000`, then open http://localhost:8000
 3. Open `index.html` for the teacher/trainer/admin portal, or `student-portal.html` for students and parents.
 
-An internet connection is needed for Font Awesome icons and the confetti library, which load from a CDN.
+An internet connection is needed. Sign-in and saved data come from Supabase, and Font Awesome, confetti and supabase-js load from a CDN.
 
 ## Pages
 
@@ -23,20 +23,21 @@ An internet connection is needed for Font Awesome icons and the confetti library
 | `student-practice.js` / `chapter1-practice.*` | Practice activities |
 | `projector.html` / `projector.js` | Classroom projector view |
 | `chapters-data.js` | Chapter content |
-| `config.js` | Endpoints, demo roster and demo login accounts |
+| `config.js` | Endpoints and the Supabase project address/publishable key |
+| `cloud.js` | Supabase connection: sign-in, roster and saved data |
+| `supabase/schema.sql` | Database tables and access rules |
 
-## Demo logins
+## Backend (Supabase)
 
-The logins in `config.js` are placeholders checked in the browser. They are not real authentication.
+Sign-in, the class roster and all saved progress live in Supabase, so every device sees the same data.
 
-| Role | Username | Password |
-| --- | --- | --- |
-| Teacher | `teacher1` | `teacher123` |
-| Trainer | `trainer1` | `trainer123` |
-| Admin | `admin1` | `admin123` |
-| Student | `arjun1` / `aanya1` | `arjun123` / `aanya123` |
-| Parent | `parent1` / `parent2` | `parent123` |
+- **Tables:** `students` (roster), `profiles` (one per account: role, name, linked student) and `app_documents` (every saved record, one JSON document each).
+- **Access rules:** Row Level Security in `supabase/schema.sql` decides who sees what. Staff (teacher, trainer, admin) see everything. A student sees and writes only their own records. A parent sees only their own child's records. Class progress and the Lumora Wall are readable by every signed-in account.
+- **Accounts:** people sign in with a username. Behind the scenes it is stored as `<username>@happyminds.local`, and no email is ever sent there. Accounts are created by running `supabase/seed-accounts.sql` in the Supabase SQL Editor. That file holds passwords, so it is kept out of git. Ask the project admin for it. Sign-up is off.
 
-## Data
+### Setting up a new Supabase project
 
-All progress is currently saved in the browser's `localStorage`, so it is not shared between devices. Supabase (database, auth and file storage) is the next step and will replace both the local storage and the demo logins.
+1. In the SQL Editor, run `supabase/schema.sql`.
+2. Then run `supabase/seed-accounts.sql`.
+3. Under **Authentication → Sign In / Providers**, turn off **Allow new users to sign up**.
+4. Put the project URL and publishable key in `config.js`.
