@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Minds — Projector</title>
+    <link rel="icon" type="image/png" href="assets/logo_icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="projector.css">
+    <!-- Chapter 1's Noun Detective practice is mirrored here by reusing its
+         own scoped stylesheet directly (all rules scoped under
+         #chapter1-practice — see that file's header), rather than
+         reinventing equivalent styles. Never loads chapter1-practice.js. -->
+    <link rel="stylesheet" href="chapter1-practice.css">
+    <!--
+        Projector View — the second, student-facing surface described in the
+        Developer Brief's "Teacher mode" section: "The projector shows only
+        what students need; the script lives on the teacher's device."
+
+        This page NEVER loads app.js and NEVER touches chapter.prep (the
+        teacher script data). It only reads chapters-data.js for student-safe
+        fields (video, storybook, thinkTalk question text) — so there is no
+        script for anyone to find even by inspecting this page's source.
+
+        It is driven entirely by BroadcastChannel messages sent from the
+        teacher's own Explore screen in the same browser (see
+        openProjectorView() and the broadcast() calls in app.js). No backend,
+        no network call — same-device, same-origin, two windows.
+    -->
+    <script src="chapters-data.js"></script>
+</head>
+<body>
+    <div class="projector-stage" id="projectorStage">
+
+        <!-- Waiting screen: shown until the teacher's window sends a state -->
+        <div class="proj-screen proj-waiting active" id="proj-waiting">
+            <div class="proj-card">
+                <div class="proj-waiting-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                <h1>Waiting for the teacher's device…</h1>
+                <p>Keep this window open on the projector. Nothing will show here until class begins on the teacher's screen.</p>
+            </div>
+        </div>
+
+        <!-- 1. Settle & Breathe — full-bleed, same blue as .settle-card -->
+        <div class="proj-screen proj-settle" id="proj-settle">
+            <div class="proj-door"><i class="fa-solid fa-door-open"></i></div>
+            <h1 class="proj-breathe-text" id="proj-breathe-text">Breathe in...</h1>
+        </div>
+
+        <!-- 2. Watch the video -->
+        <div class="proj-screen proj-video" id="proj-video">
+            <video id="projVideo" class="proj-video-el"></video>
+            <div id="projYoutubePlayer" class="proj-video-el"></div>
+        </div>
+
+        <!-- 3. Storybook read-along — the same warm card as the teacher's own storybook -->
+        <div class="proj-screen proj-storybook" id="proj-storybook">
+            <div class="proj-storybook-card" id="proj-storybook-card">
+                <div class="proj-storybook-char" id="proj-storybook-char">
+                    <img id="proj-storybook-img" src="" alt="">
+                </div>
+                <p class="proj-storybook-text" id="proj-storybook-text"></p>
+
+                <!-- Shown instead of the two elements above when this page has
+                     its own illustration (chapters-data.js page.image) -->
+                <div class="proj-storybook-illustrated" id="proj-storybook-illustrated">
+                    <img class="proj-storybook-illustration" id="proj-storybook-illustration-img" src="" alt="">
+                    <div class="proj-storybook-caption" id="proj-storybook-caption"></div>
+                </div>
+            </div>
+            <div class="proj-storybook-dots" id="proj-storybook-dots"></div>
+        </div>
+
+        <!-- 4. Think & Talk — one question card at a time -->
+        <div class="proj-screen proj-thinktalk" id="proj-thinktalk">
+            <div class="proj-card">
+                <div class="proj-thinktalk-badge"><i class="fa-solid fa-comments"></i> Think &amp; Talk</div>
+                <h1 class="proj-thinktalk-question" id="proj-thinktalk-question"></h1>
+            </div>
+        </div>
+
+        <!-- 5. Draw your world -->
+        <div class="proj-screen proj-draw" id="proj-draw">
+            <div class="proj-card">
+                <h1><i class="fa-solid fa-palette"></i> Draw Your World</h1>
+                <p class="proj-draw-sub">Add at least 6–7 things to your map.</p>
+                <div class="proj-draw-timer" id="proj-draw-timer" style="display:none;">
+                    <svg viewBox="0 0 120 120" class="proj-timer-ring">
+                        <circle cx="60" cy="60" r="54" class="proj-timer-track"></circle>
+                        <circle cx="60" cy="60" r="54" class="proj-timer-fill" id="proj-timer-fill"></circle>
+                    </svg>
+                    <span class="proj-timer-label" id="proj-timer-label">7:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. Wrap up -->
+        <div class="proj-screen proj-wrapup" id="proj-wrapup">
+            <div class="proj-card">
+                <div class="proj-wrapup-emoji">👏</div>
+                <h1>Give yourself a clap!</h1>
+                <p>Next up: a word adventure.</p>
+            </div>
+        </div>
+
+        <!-- ===== Create stage ===== -->
+
+        <!-- Opening ritual: full-bleed cyan, door + the word wall carried over from Explore -->
+        <div class="proj-screen proj-create-ritual" id="proj-create-ritual">
+            <div class="proj-door"><i class="fa-solid fa-door-open"></i></div>
+            <h1>Welcome back, explorers!</h1>
+            <div class="proj-wall-tiles" id="proj-wall-tiles"></div>
+        </div>
+
+        <!-- Story starter, in large text -->
+        <div class="proj-screen proj-create-starter" id="proj-create-starter">
+            <div class="proj-card">
+                <div class="proj-thinktalk-badge"><i class="fa-solid fa-flag"></i> Story Starter</div>
+                <h1 class="proj-starter-text" id="proj-starter-text"></h1>
+            </div>
+        </div>
+
+        <!-- Teacher's model story, revealed one sentence at a time, nouns highlighted -->
+        <div class="proj-screen proj-create-model" id="proj-create-model">
+            <div class="proj-card">
+                <div class="proj-thinktalk-badge"><i class="fa-solid fa-chalkboard"></i> Model Story</div>
+                <h1 class="proj-model-text" id="proj-model-text"></h1>
+                <div class="proj-storybook-dots" id="proj-model-dots"></div>
+            </div>
+        </div>
+
+        <!-- Write your story: calm countdown + reminder + word bank -->
+        <div class="proj-screen proj-create-write" id="proj-create-write">
+            <div class="proj-card">
+                <h1><i class="fa-solid fa-pencil"></i> Write Your Story</h1>
+                <p class="proj-draw-sub" id="proj-write-reminder">Use words from the wall below.</p>
+                <div class="proj-wall-tiles" id="proj-write-wall-tiles"></div>
+            </div>
+        </div>
+
+        <!-- Check my story: the same 3-item checklist students tick on paper -->
+        <div class="proj-screen proj-create-check" id="proj-create-check">
+            <div class="proj-card">
+                <h1><i class="fa-solid fa-clipboard-check"></i> Check My Story</h1>
+                <ul class="proj-checklist">
+                    <li>I used at least 2 nouns from my list</li>
+                    <li>My names start with capital letters</li>
+                    <li>My story has a beginning</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ===== Practice stage (generic 5-activity template, Chapters 2-24) ===== -->
+        <div class="proj-screen proj-practice" id="proj-practice">
+            <div class="proj-card">
+                <div class="proj-practice-header">
+                    <div class="proj-thinktalk-badge" id="proj-practice-badge"></div>
+                    <span class="proj-practice-counter" id="proj-practice-counter"></span>
+                </div>
+
+                <!-- Word Detective: just the clue, large -->
+                <div class="proj-practice-body" id="proj-practice-detective" style="display:none;">
+                    <h1 class="proj-practice-clue" id="proj-practice-clue"></h1>
+                </div>
+
+                <!-- Word Sort: empty zones that fill up as the teacher places tiles -->
+                <div class="proj-practice-body" id="proj-practice-sort" style="display:none;">
+                    <div class="proj-sort-zones" id="proj-sort-zones"></div>
+                </div>
+
+                <!-- Sentence Builder: the sentence assembling word by word -->
+                <div class="proj-practice-body" id="proj-practice-builder" style="display:none;">
+                    <p class="proj-draw-sub">Building the sentence…</p>
+                    <div class="proj-builder-assembly" id="proj-builder-assembly"></div>
+                </div>
+
+                <!-- Word Search: the same grid, found words highlight live -->
+                <div class="proj-practice-body" id="proj-practice-search" style="display:none;">
+                    <div class="proj-ws-layout">
+                        <div class="proj-ws-grid" id="proj-ws-grid"></div>
+                        <div class="proj-ws-word-list" id="proj-ws-word-list"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Check: question + options, read aloud -->
+                <div class="proj-practice-body" id="proj-practice-quickcheck" style="display:none;">
+                    <h1 class="proj-practice-question" id="proj-practice-question"></h1>
+                    <div class="proj-quickcheck-options" id="proj-quickcheck-options"></div>
+                </div>
+            </div>
+
+            <!-- Shared result flash, shown briefly on any activity -->
+            <div class="proj-practice-result" id="proj-practice-result" style="display:none;"></div>
+        </div>
+
+        <!-- Chapter 1's Noun Detective — full mirror of the teacher's own
+             screen (see projector.js's renderC1* functions and
+             chapter1-practice.js's "PROJECTOR MIRRORING" section). Reuses
+             chapter1-practice.css's classes directly; interactive controls
+             (buttons, text inputs, the Hunt modal) are left out — the class
+             watches, they don't tap the screen. -->
+        <div class="proj-screen proj-practice-c1" id="proj-practice-c1">
+            <div id="chapter1-practice">
+
+                <div class="screen" id="screen-discover">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 1 · DISCOVER</div>
+                        <h2 class="mission-title">🔎 Look Carefully!</h2>
+                        <p class="mission-instruction">Can you find something we can name?</p>
+                    </div>
+                    <div class="guide">
+                        <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+                        <div class="guide-bubble">Let's investigate! Something glowing in the magical world...</div>
+                    </div>
+                    <div class="world-scene" id="proj-c1-discover-scene">
+                        <img class="world-bg" src="assets/chapter1-practice/world/background.png" alt="Magical world to explore">
+                    </div>
+                    <div id="proj-c1-discover-result" class="center-col" style="display:none;">
+                        <div class="activity-panel">
+                            <div class="noun-display" id="proj-c1-discover-noun-display"></div>
+                            <p style="font-size:1.2rem; color:var(--c-text-light); font-weight:500;">This is a <strong>noun</strong> — a naming word!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-classify">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 2 · CLASSIFY</div>
+                        <h2 class="mission-title">📋 Classify the Noun</h2>
+                        <p class="mission-instruction">Is it a Common Noun or a Proper Noun?</p>
+                    </div>
+                    <div class="activity-panel">
+                        <div class="noun-display" id="proj-c1-classify-noun-display"></div>
+                        <div id="proj-c1-classify-result" class="center-col" style="display:none; margin-top:8px;"></div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-why">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 3 · WHY?</div>
+                        <h2 class="mission-title">🤔 Why is it Special?</h2>
+                    </div>
+                    <div class="activity-panel">
+                        <div class="comparison-box">
+                            <div class="comparison-item common-side">
+                                <div class="comparison-word" style="color:var(--c-common);">🐉 dragon</div>
+                                <div class="comparison-label" style="color:var(--c-common);">Common Noun</div>
+                                <p class="comparison-sub">a general name</p>
+                            </div>
+                            <div class="comparison-arrow">→</div>
+                            <div class="comparison-item proper-side">
+                                <div class="comparison-word" style="color:var(--c-proper);">✨ Flame</div>
+                                <div class="comparison-label" style="color:var(--c-proper);">Proper Noun</div>
+                                <p class="comparison-sub">a special name</p>
+                            </div>
+                        </div>
+                        <h3 style="font-size:1.4rem; margin: 20px 0 4px;">Why is <span style="color:var(--c-proper);">Flame</span> a Proper Noun?</h3>
+                        <div class="options-list" id="proj-c1-why-options">
+                            <div class="option-btn" data-answer="a"><span class="option-letter">A</span><span>It is an animal</span></div>
+                            <div class="option-btn" data-answer="b"><span class="option-letter">B</span><span>It is a special name given to the dragon</span></div>
+                            <div class="option-btn" data-answer="c"><span class="option-letter">C</span><span>It is a place</span></div>
+                        </div>
+                        <div id="proj-c1-why-result" class="center-col" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-name">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 4 · NAME IT</div>
+                        <h2 class="mission-title">✨ Magical Naming Machine</h2>
+                    </div>
+                    <div class="naming-machine">
+                        <div class="naming-chips" id="proj-c1-naming-chips"></div>
+                        <div class="noun-display common" id="proj-c1-naming-preview"></div>
+                        <span class="noun-badge common">Common Noun</span>
+                        <div class="transform-result" id="proj-c1-transform-result">
+                            <div class="transform-arrow">⬇️</div>
+                            <div class="noun-display proper" id="proj-c1-transform-name"></div>
+                            <span class="noun-badge proper">Proper Noun</span>
+                            <div class="result-card" style="margin:18px auto 0;">
+                                <div class="result-emoji">✨</div>
+                                <div class="result-title">Magical!</div>
+                                <p class="result-text">
+                                    <strong id="proj-c1-transform-common-name"></strong> is a Common Noun.<br>
+                                    <strong id="proj-c1-transform-proper-name"></strong> is a Proper Noun because it's a special name!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-fix">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 5 · FIX</div>
+                        <h2 class="mission-title">🚨 Grammar Fixer</h2>
+                        <div class="rule-banner">⭐ Proper Nouns begin with CAPITAL LETTERS</div>
+                    </div>
+                    <div class="activity-panel">
+                        <div class="fixer-sentence" id="proj-c1-fixer-sentence"></div>
+                        <div id="proj-c1-fixer-result" class="center-col" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-hunt">
+                    <div class="mission-header">
+                        <div class="mission-badge">MISSION 6 · HUNT</div>
+                        <h2 class="mission-title">🔎 Noun Hunt</h2>
+                        <p class="mission-instruction">Find 5 Common Nouns, then give some special names to create 3 Proper Nouns!</p>
+                    </div>
+                    <div class="hunt-layout">
+                        <div class="world-scene" id="proj-c1-hunt-scene">
+                            <img class="world-bg" src="assets/chapter1-practice/world/background.png" alt="Magical world to explore">
+                        </div>
+                        <div class="hunt-sidebar">
+                            <div class="collection-box common-collection">
+                                <div class="collection-title common-title">📘 Common Nouns</div>
+                                <div class="collection-progress" id="proj-c1-common-progress">Found: 0 / 5</div>
+                                <div class="collection-items" id="proj-c1-common-collection"></div>
+                            </div>
+                            <div class="collection-box proper-collection">
+                                <div class="collection-title proper-title">📕 Proper Nouns</div>
+                                <div class="collection-progress" id="proj-c1-proper-progress">Found: 0 / 3</div>
+                                <div class="collection-items" id="proj-c1-proper-collection"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="screen-quickcheck">
+                    <div class="mission-header">
+                        <div class="mission-badge">QUICK CHECK · CLOSE</div>
+                        <h2 class="mission-title">🙋 Quick Check</h2>
+                        <p class="mission-instruction">Ask the class, then take a show of hands!</p>
+                    </div>
+                    <div class="activity-panel" id="proj-c1-quickcheck-panel"></div>
+                </div>
+
+                <div class="screen" id="screen-complete">
+                    <div class="completion-screen">
+                        <span class="trophy-icon">🏆</span>
+                        <h2 class="completion-title">🌟 Practice Complete! 🌟</h2>
+                        <p class="completion-subtitle">You are officially Noun Detectives!</p>
+                        <div class="checklist" id="proj-c1-completion-checklist"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ===== Perform stage ===== -->
+
+        <!-- Feedback frame, modeled before pairs begin — full-bleed green -->
+        <div class="proj-screen proj-perform-frame" id="proj-perform-frame">
+            <div class="proj-thinktalk-badge"><i class="fa-solid fa-comments"></i> Feedback Frame</div>
+            <h1>"I loved ___.<br>One cool thing: ___."</h1>
+        </div>
+
+        <!-- Pair share: a big, calm countdown driven by the teacher's controls -->
+        <div class="proj-screen proj-perform-pair" id="proj-perform-pair">
+            <div class="proj-card">
+                <h1><i class="fa-solid fa-user-group"></i> Pair Share</h1>
+                <p class="proj-draw-sub">Read slowly — like telling a secret.</p>
+                <div class="proj-draw-timer" style="display:flex;">
+                    <svg viewBox="0 0 120 120" class="proj-timer-ring">
+                        <circle cx="60" cy="60" r="54" class="proj-timer-track"></circle>
+                        <circle cx="60" cy="60" r="54" class="proj-timer-fill" id="proj-pair-timer-fill"></circle>
+                    </svg>
+                    <span class="proj-timer-label" id="proj-pair-timer-label">4:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explorer's Stage: volunteer spotlight + applause -->
+        <div class="proj-screen proj-perform-spotlight" id="proj-perform-spotlight">
+            <div class="proj-card">
+                <div class="proj-spotlight-icon" id="proj-spotlight-icon"><i class="fa-solid fa-microphone"></i></div>
+                <h1 id="proj-spotlight-text">Ask for a volunteer…</h1>
+            </div>
+        </div>
+
+        <!-- Close: the door closes on today's session — full-bleed green -->
+        <div class="proj-screen proj-perform-close" id="proj-perform-close">
+            <div class="proj-door closing"><i class="fa-solid fa-door-closed"></i></div>
+            <h1>See you next time, explorers!</h1>
+        </div>
+
+    </div>
+
+    <script src="projector.js"></script>
+    <!-- YouTube IFrame API: loaded async, calls window.onYouTubeIframeAPIReady (defined in projector.js) when ready -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>

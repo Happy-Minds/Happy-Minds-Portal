@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Minds - An English Communication Journey</title>
+    <link rel="icon" type="image/png" href="assets/logo_icon.png">
+    <!-- Google Fonts -->   
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Fredoka: used only by chapter1-practice.css (Noun Detective headings) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chapter 1's dedicated Practice experience (self-contained, scoped to #chapter1-practice) -->
+    <link rel="stylesheet" href="chapter1-practice.css">
+    <!-- App Data & Config (must load before app.js) -->
+    <script src="config.js"></script>
+    <script src="chapters-data.js"></script>
+</head>
+<body>
+    <!-- ================= LOGIN GATE =================
+         Frontend-only placeholder auth: credentials live in config.js
+         (ACCOUNTS) and the session is just a localStorage flag. This is NOT
+         secure and must be replaced by real server-side auth (Supabase Auth)
+         before any real student/teacher data touches this app. -->
+    <div id="login-view" class="login-screen">
+        <div class="login-card">
+            <img src="assets/logo_icon.png" alt="Happy Minds" class="login-logo">
+            <h1 class="login-title">Happy Minds</h1>
+            <p class="login-subtitle">Sign in to your account</p>
+
+            <form class="login-form" id="loginForm" onsubmit="attemptLogin(event)">
+                <label class="login-field">
+                    <span>Username</span>
+                    <input type="text" id="loginUsername" autocomplete="username" placeholder="e.g. teacher1" required>
+                </label>
+                <label class="login-field">
+                    <span>Password</span>
+                    <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" required>
+                </label>
+                <p class="login-error" id="loginError"></p>
+                <button type="submit" class="btn-primary-glowing full-width">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log In
+                </button>
+            </form>
+
+            <div class="login-demo-hint">
+                <strong>Demo credentials (placeholder, not secure)</strong>
+                <div><i class="fa-solid fa-chalkboard-user"></i> Teacher: <code>teacher1</code> / <code>teacher123</code></div>
+                <div><i class="fa-solid fa-user-tie"></i> Trainer: <code>trainer1</code> / <code>trainer123</code></div>
+                <div><i class="fa-solid fa-user-shield"></i> Admin: <code>admin1</code> / <code>admin123</code></div>
+                <div><i class="fa-solid fa-child"></i> Student: <code>arjun1</code> / <code>arjun123</code></div>
+                <div><i class="fa-solid fa-people-roof"></i> Parent: <code>parent1</code> / <code>parent123</code></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="app-container app-hidden">
+
+        <!-- ================= Persistence Header ================= -->
+        <header class="main-header">
+            <div class="brand-section" onclick="navigateTo('home')">
+                <div class="brand-icon">
+                    <img src="assets/logo_icon.png" alt="Happy Minds logo">
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-name">Happy Minds</h1>
+                    <span class="brand-tagline">An English Communication Journey</span>
+                </div>
+            </div>
+
+            <nav class="main-nav">
+                <!-- Teacher / Trainer / Admin -->
+                <button class="nav-btn active" data-view="home" data-roles="teacher,trainer,admin" onclick="navigateTo('home')">
+                    <i class="fa-solid fa-house"></i> Home
+                </button>
+                <button class="nav-btn" data-view="chapters" data-roles="teacher,trainer,admin" onclick="navigateTo('chapters')">
+                    <i class="fa-solid fa-map"></i> Chapters
+                </button>
+                <button class="nav-btn" data-view="scan" data-roles="teacher,trainer,admin" onclick="openScanView()">
+                    <i class="fa-solid fa-qrcode"></i> Scan
+                </button>
+                <button class="nav-btn" data-view="observe" data-role="trainer" onclick="openObservationPicker()" style="display:none;">
+                    <i class="fa-solid fa-user-tie"></i> Observe
+                </button>
+                <button class="nav-btn" data-view="reports" data-roles="trainer,admin" onclick="openReportsHome()" style="display:none;">
+                    <i class="fa-solid fa-chart-column"></i> Reports
+                </button>
+                <button class="nav-btn" data-view="admin" data-role="admin" onclick="renderAdminDashboard(); navigateTo('admin');" style="display:none;">
+                    <i class="fa-solid fa-user-shield"></i> Admin
+                </button>
+
+                <!-- Parent -->
+                <button class="nav-btn" data-view="parent-dashboard" data-role="parent" onclick="navigateTo('parent-dashboard')" style="display:none;">
+                    <i class="fa-solid fa-chart-simple"></i> My Child's Report
+                </button>
+            </nav>
+
+            <div class="header-right">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search chapters..." id="searchInput">
+                </div>
+                <div class="notification-center" data-roles="teacher,trainer,admin">
+                    <button class="icon-badge-btn" onclick="toggleNotificationMenu(event)">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="badge-count" id="notificationBadge" style="display:none;">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-dropdown-header">Notifications</div>
+                        <div class="notification-dropdown-list" id="notificationDropdownList"></div>
+                    </div>
+                </div>
+
+                <div class="user-profile-pill" onclick="toggleUserMenu()">
+                    <img src="assets/boy_arjun.png" alt="User Avatar" id="headerUserAvatar" class="profile-avatar">
+                    <div class="profile-name-group">
+                        <span class="profile-name" id="headerUserName">Hi, Arjun!</span>
+                        <span class="profile-role-badge" id="headerUserRole"></span>
+                    </div>
+                    <i class="fa-solid fa-angle-down"></i>
+
+                    <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button onclick="handleLogout(event)">
+                            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic View Container -->
+        <main class="content-container">
+
+            <!-- ================= VIEW 1: HOME PAGE ================= -->
+            <section id="home-view" class="view-section active-view">
+
+                <div class="hero-card">
+                    <div class="hero-left">
+                        <h2 class="hero-title">Your Words.<br><span class="highlight-blue">Your Ideas.</span><br><span class="highlight-orange">Your Story.</span></h2>
+                        <p class="hero-subtitle">Explore, practice, create and perform your way through English.</p>
+                        
+                        <div class="hero-cta-group">
+                            <button class="btn-primary-glowing" onclick="navigateTo('chapters')">
+                                START YOUR JOURNEY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                            <button class="btn-glass" onclick="navigateTo('chapters')">
+                                <i class="fa-solid fa-compass"></i> EXPLORE CHAPTERS
+                            </button>
+                        </div>
+
+                        <div class="hero-stats-pill">
+                            <div class="stat-item">
+                                <div class="stat-icon blue"><i class="fa-solid fa-book-bookmark"></i></div>
+                                <div>
+                                    <span class="stat-value" id="homeStatChapters">24</span>
+                                    <span class="stat-label">Chapters</span>
+                                </div>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <div class="stat-icon green"><i class="fa-solid fa-layer-group"></i></div>
+                                <div>
+                                    <span class="stat-value">4</span>
+                                    <span class="stat-label">Learning Stages</span>
+                                </div>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item progress-item">
+                                <div class="progress-info">
+                                    <span class="stat-label">Your Progress</span>
+                                    <span class="stat-value" id="homeStatProgressPct">0%</span>
+                                </div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" id="homeStatProgressFill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-right">
+                        <div class="scene-illustration-wrapper">
+                            <img src="assets/hero_bg.jpg" alt="A girl and her dragon flying over a floating sky world" class="hero-bg-img">
+
+                            <!-- Stage selector: glowing crystal orbs, one per learning stage -->
+                            <div class="stage-orbs">
+                                <button class="stage-orb" onclick="startChapterStage('explore')" aria-label="Explore">
+                                    <img src="assets/orb_explore.png" alt="Explore">
+                                </button>
+                                <button class="stage-orb" onclick="startChapterStage('practice')" aria-label="Practice">
+                                    <img src="assets/orb_practice.png" alt="Practice">
+                                </button>
+                                <button class="stage-orb" onclick="startChapterStage('create')" aria-label="Create">
+                                    <img src="assets/orb_create.png" alt="Create">
+                                </button>
+                                <button class="stage-orb" onclick="startChapterStage('perform')" aria-label="Perform">
+                                    <img src="assets/orb_perform.png" alt="Perform">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-bottom-tagline">
+                    <span class="sparkle">✨</span> Smart Learners, Brighter Tomorrows <i class="fa-solid fa-heart pink-heart"></i>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 2: CHAPTERS ROADMAP ================= -->
+            <section id="chapters-view" class="view-section">
+                <div class="roadmap-header">
+                    <div class="roadmap-title-area">
+                        <h2>Your English Adventure</h2>
+                        <p>24 chapters. Countless ideas. One communication journey.</p>
+                    </div>
+                    <div class="overall-progress-card">
+                        <div class="progress-labels">
+                            <span>Overall Progress</span>
+                            <strong id="roadmapProgressText">0/24 Chapters   0%</strong>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="roadmapProgressFill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Winding Adventure Path Map -->
+                <div class="adventure-map-container">
+                    <img src="assets/roadmap_bg.png" alt="Map Landscape" class="map-bg-image">
+
+                    <!-- Path Winding SVG Lines (drawn dynamically through every node) -->
+                    <svg class="path-svg" viewBox="0 0 1000 500" preserveAspectRatio="none">
+                        <path id="roadmapPath" fill="none" stroke="#FCD34D" stroke-width="8" stroke-dasharray="12 8" />
+                    </svg>
+
+                    <!-- Interactive Chapter Nodes Grid: all 24 nodes are rendered by app.js from chapters-data.js -->
+                    <div class="nodes-grid" id="nodesGrid"></div>
+                </div>
+
+                <div class="map-encouragement-banner">
+                    <i class="fa-solid fa-seedling green"></i> Keep going... Every chapter is a new you!
+                </div>
+            </section>
+
+            <!-- ================= VIEW 3: CHAPTER 01 HUB ================= -->
+            <section id="chapter-detail-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('chapters')">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Chapters
+                </button>
+
+                <div class="chapter-hub-hero">
+                    <div class="hub-hero-text">
+                        <span class="chapter-tag" id="hubChapterTag">Chapter 01</span>
+                        <h2 class="hub-title" id="hubTitle">My Imaginary World</h2>
+                        <p class="hub-quote" id="hubQuote">"Let your imagination speak."</p>
+                    </div>
+                </div>
+
+                <!-- Class planners: to-do lists for the two class sessions this chapter spans -->
+                <div class="planner-status-row" id="plannerStatusRow"></div>
+
+                <!-- 4 Stage Cards Grid -->
+                <div class="stages-grid">
+                    <div class="stage-card explore-card" onclick="startChapterStage('explore')">
+                        <div class="stage-icon-circle blue">
+                            <i class="fa-solid fa-circle-play"></i>
+                        </div>
+                        <h3>Explore</h3>
+                        <p>Watch and discover</p>
+                        <span class="stage-btn-tag">Start Stage <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="stage-card practice-card" onclick="startChapterStage('practice')">
+                        <div class="stage-icon-circle orange">
+                            <i class="fa-solid fa-puzzle-piece"></i>
+                        </div>
+                        <h3>Practice</h3>
+                        <p>Challenge your skills</p>
+                        <span class="stage-btn-tag">Start Stage <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="stage-card create-card" onclick="startChapterStage('create')">
+                        <div class="stage-icon-circle cyan">
+                            <i class="fa-solid fa-rocket"></i>
+                        </div>
+                        <h3>Create</h3>
+                        <p>Turn ideas into words</p>
+                        <span class="stage-btn-tag">Start Stage <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+
+                    <div class="stage-card perform-card" onclick="startChapterStage('perform')">
+                        <div class="stage-icon-circle green">
+                            <i class="fa-solid fa-microphone"></i>
+                        </div>
+                        <h3>Perform</h3>
+                        <p>Bring your ideas to life</p>
+                        <span class="stage-btn-tag">Start Stage <i class="fa-solid fa-chevron-right"></i></span>
+                    </div>
+                </div>
+
+                <div class="chapter-progress-footer">
+                    <span>Chapter Progress</span>
+                    <div class="progress-bar-bg flex-1">
+                        <div class="progress-bar-fill" id="chapterHubProgressBar" style="width: 0%;"></div>
+                    </div>
+                    <span id="chapterHubProgressText">0%</span>
+                </div>
+
+                <div class="hub-secondary-entries">
+                    <!-- Teacher Prep: what the Teacher QR opens, before class -->
+                    <button class="prep-entry-banner" onclick="openTeacherPrep()">
+                        <div class="prep-entry-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                        <div class="fixit-entry-text">
+                            <strong>Teacher Prep</strong>
+                            <span>Lesson plan, full script, and your "I'm ready" check.</span>
+                        </div>
+                        <span class="readiness-dot" id="hubReadinessDot" title="Prep readiness"></span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                    <!-- Fix It Zone is not part of the teacher's view — students reach
+                         it from their own portal (student-portal.html). -->
+
+                    <!-- Answer Cards: Plan B mode (manual tally) — real camera card-scanning
+                         needs a computer-vision build the brief flags as a research spike. -->
+                    <button class="prep-entry-banner" onclick="openAnswerCards()">
+                        <div class="prep-entry-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                        <div class="fixit-entry-text">
+                            <strong>Answer Cards</strong>
+                            <span>Quick class poll for any question — tap to tally, Plan B mode.</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: ANSWER CARDS (Plan B: manual tally) ================= -->
+            <section id="answercards-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('chapter-detail')">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Chapter
+                </button>
+
+                <div class="prep-header">
+                    <div class="badge-icon blue"><i class="fa-solid fa-chart-simple"></i></div>
+                    <div class="prep-header-text">
+                        <h2>Answer Cards</h2>
+                        <p>Ask any A/B/C/D question. Count the cards held up, tap once per card.</p>
+                    </div>
+                </div>
+
+                <div class="prep-section-card">
+                    <label class="fixit-plan-label">Question (optional, just for your reference)</label>
+                    <input type="text" class="fixit-plan-input" id="acQuestion" placeholder="e.g. Is 'Mumbai' common or proper?">
+
+                    <div class="ac-options-row" id="acOptionsRow"></div>
+
+                    <button class="btn-glass full-width" style="margin-top:16px;" onclick="resetAnswerCards()">
+                        <i class="fa-solid fa-rotate-left"></i> Reset for Next Question
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: TEACHER PREP (what the Teacher QR opens) ================= -->
+            <section id="prep-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('chapter-detail')">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Chapter
+                </button>
+
+                <div class="prep-header">
+                    <div class="badge-icon blue"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <div class="prep-header-text">
+                        <h2 id="prepTitle">Teacher Prep: My Imaginary World</h2>
+                        <p>Session 1 &amp; Session 2 — everything you need before class.</p>
+                    </div>
+                    <div class="readiness-badge" id="prepReadinessBadge"></div>
+                </div>
+
+                <!-- Lesson Plan -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-bullseye"></i> Lesson Plan</h3>
+                    <div class="prep-plan-grid">
+                        <div>
+                            <h4>Objectives</h4>
+                            <ul class="roving-prompts-list" id="prepObjectives"></ul>
+                        </div>
+                        <div>
+                            <h4>Student Outputs</h4>
+                            <p class="prep-output-line"><strong>Session 1:</strong> <span id="prepOutput1"></span></p>
+                            <p class="prep-output-line"><strong>Session 2:</strong> <span id="prepOutput2"></span></p>
+                        </div>
+                    </div>
+                    <h4 style="margin-top:16px;">Materials</h4>
+                    <div class="prep-materials-chips" id="prepMaterials"></div>
+                    <h4 style="margin-top:16px;">Differentiation</h4>
+                    <div class="prep-diff-list" id="prepDifferentiation"></div>
+                </div>
+
+                <!-- Media Preview -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-photo-film"></i> Media Preview</h3>
+                    <div class="prep-media-row">
+                        <img id="prepVideoThumb" class="prep-video-thumb" alt="Chapter video thumbnail">
+                        <div class="prep-storybook-preview">
+                            <i class="fa-solid fa-book-open"></i>
+                            <span id="prepStorybookCount">8 pages</span>
+                            <p>The Lumora Storybook</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Script -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-scroll"></i> Full Script by Step</h3>
+                    <div class="prep-session-tabs">
+                        <button class="prep-session-tab active" onclick="showPrepSession(1, this)">Session 1 (10 steps)</button>
+                        <button class="prep-session-tab" onclick="showPrepSession(2, this)">Session 2 (9 steps)</button>
+                    </div>
+                    <div id="prepScriptSteps"></div>
+                </div>
+
+                <!-- Before-Class Checklist -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-list-check"></i> Before-Class Checklist</h3>
+                    <div class="checklist-items" id="prepChecklist"></div>
+                </div>
+
+                <!-- I'm Ready Check -->
+                <div class="prep-section-card prep-ready-card">
+                    <h3><i class="fa-solid fa-circle-check"></i> "I'm Ready" Check</h3>
+                    <div class="prep-ready-taps" id="prepReadyTaps">
+                        <button class="prep-ready-tap" data-check="video" onclick="togglePrepReady('video')">
+                            <i class="fa-solid fa-video"></i> Watched the video
+                        </button>
+                        <button class="prep-ready-tap" data-check="script" onclick="togglePrepReady('script')">
+                            <i class="fa-solid fa-scroll"></i> Read the script
+                        </button>
+                        <button class="prep-ready-tap" data-check="materials" onclick="togglePrepReady('materials')">
+                            <i class="fa-solid fa-box"></i> Materials ready
+                        </button>
+                    </div>
+                    <p class="prep-readiness-explain" id="prepReadinessExplain"></p>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: OBSERVATION PICKER (trainer) ================= -->
+            <section id="observe-picker-view" class="view-section">
+                <div class="prep-header">
+                    <div class="badge-icon blue"><i class="fa-solid fa-user-tie"></i></div>
+                    <div class="prep-header-text">
+                        <h2>Classroom Observation</h2>
+                        <p>Pick a chapter and session to observe, or check your observation history.</p>
+                    </div>
+                </div>
+
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-calendar-day"></i> Today's Visit</h3>
+                    <div id="observeTodayCard"></div>
+                </div>
+
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-eye"></i> Start a New Observation</h3>
+                    <div class="observe-picker-row">
+                        <select class="custom-select" id="observeChapterSelect" onchange="renderObserveToday()">
+                            <option value="1">Chapter 01 — My Imaginary World</option>
+                        </select>
+                        <select class="custom-select" id="observeSessionSelect">
+                            <option value="1">Session 1 (Explore &amp; Practice)</option>
+                            <option value="2">Session 2 (Create &amp; Perform)</option>
+                        </select>
+                        <button class="btn-primary-glowing" onclick="openObservationForm()">
+                            <i class="fa-solid fa-arrow-right"></i> Begin
+                        </button>
+                    </div>
+                </div>
+
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Observation History</h3>
+                    <div id="observeHistoryList"></div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: OBSERVATION FORM (trainer, during + after class) ================= -->
+            <section id="observe-form-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('observe-picker')">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Observations
+                </button>
+
+                <div class="prep-header">
+                    <div class="badge-icon blue"><i class="fa-solid fa-clipboard-check"></i></div>
+                    <div class="prep-header-text">
+                        <h2 id="observeFormTitle">Observing: My Imaginary World</h2>
+                        <p>Fill silently during the lesson — never interrupt the class to use this.</p>
+                    </div>
+                </div>
+
+                <!-- Part 1: Protocol -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-user-check"></i> Before You Begin</h3>
+                    <div class="checklist-items" id="observeProtocol"></div>
+                    <p class="prep-readiness-explain" style="margin-top:10px;">Your access is view-only — you watch and record, and never control the lesson.</p>
+                </div>
+
+                <!-- Part A: Core Model Adherence -->
+                <div class="prep-section-card">
+                    <h3>A. Core Model Adherence</h3>
+                    <div id="observePartA"></div>
+                </div>
+
+                <!-- Part B: Facilitator vs Lecturer -->
+                <div class="prep-section-card">
+                    <h3>B. Facilitator vs Lecturer</h3>
+                    <div class="checklist-items" id="observePartB"></div>
+                </div>
+
+                <!-- Part C: Student Engagement -->
+                <div class="prep-section-card">
+                    <h3>C. Student Engagement</h3>
+                    <div class="observe-tally-row">
+                        <span>Verbal participation tally</span>
+                        <div class="observe-tally-control">
+                            <button class="btn-glass compact" onclick="adjustTally(-1)">−</button>
+                            <span id="observeTallyValue">0</span>
+                            <button class="btn-glass compact" onclick="adjustTally(1)">+</button>
+                        </div>
+                    </div>
+                    <p class="prep-readiness-explain" id="observeTallyPct"></p>
+                    <div class="prep-materials-chips" style="margin:10px 0 18px;">
+                        <span class="prep-material-chip" id="observeClassSizeChip"></span>
+                        <span class="prep-material-chip" id="observeWallChip"></span>
+                    </div>
+                    <div class="reflection-field"><label>On-task (1-5)</label><div class="reflection-stars" id="observeOnTaskStars"></div></div>
+                    <div class="reflection-field"><label>Positive body language (1-5)</label><div class="reflection-stars" id="observeBodyStars"></div></div>
+                    <div class="reflection-field"><label>Any disengaged student — what did the teacher do?</label>
+                        <textarea class="reflection-textarea" id="observeDisengagedNote"></textarea></div>
+                </div>
+
+                <!-- Part D: Pacing -->
+                <div class="prep-section-card">
+                    <h3>D. Pacing &amp; Time Management</h3>
+                    <div id="observePartD"></div>
+                </div>
+
+                <!-- Part E: Differentiation -->
+                <div class="prep-section-card">
+                    <h3>E. Differentiation &amp; Support</h3>
+                    <div class="checklist-items" id="observePartE"></div>
+                </div>
+
+                <!-- Part 2: Expectations / Evidence -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-clipboard-check"></i> Evidence &amp; Expectations</h3>
+                    <div id="observeEvidence"></div>
+                </div>
+
+                <!-- Part 5 Non-Negotiables -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-star"></i> Non-Negotiables</h3>
+                    <p class="prep-readiness-explain" style="margin-bottom:14px;">Any "No" here is automatically pinned as the priority topic below.</p>
+                    <div id="observeNonNegotiables"></div>
+                </div>
+
+                <!-- Coaching Prompts -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Coaching Prompts</h3>
+                    <p class="prep-readiness-explain" style="margin-bottom:14px;">Tap a gap that matched what you saw — it fills the feedback below for you.</p>
+                    <div class="observe-gaps-grid" id="observeGapsGrid"></div>
+                </div>
+
+                <!-- Post-Observation Feedback Form -->
+                <div class="prep-section-card">
+                    <h3><i class="fa-solid fa-comment-dots"></i> Feedback Form (sandwich method)</h3>
+                    <div class="reflection-field"><label>Strengths (2-3)</label>
+                        <textarea class="reflection-textarea" id="observeStrengths" placeholder="What went well?"></textarea></div>
+                    <div class="reflection-field"><label>Core model notes (Explore · Practice, or Create · Perform)</label>
+                        <button type="button" class="btn-glass compact" style="margin-bottom:8px;" onclick="copyCoreModelNotes()"><i class="fa-solid fa-copy"></i> Copy from notes above</button>
+                        <textarea class="reflection-textarea" id="observeCoreNotes"></textarea></div>
+                    <div class="reflection-field"><label>One key area for improvement</label>
+                        <input type="text" class="reflection-text-input" id="observeKeyArea"></div>
+                    <div class="reflection-field"><label>Actionable suggestion</label>
+                        <input type="text" class="reflection-text-input" id="observeSuggestion"></div>
+                    <div class="checklist-items">
+                        <label class="check-item"><input type="checkbox" id="observeFollowupTeacher"> Teacher will try this in the next session</label>
+                        <label class="check-item"><input type="checkbox" id="observeFollowupObserver"> Observer will do a 5-minute check-in before the next class</label>
+                    </div>
+                    <div class="observe-signoff-row">
+                        <div class="reflection-field"><label>Observer signature</label>
+                            <input type="text" class="reflection-text-input" id="observeSignObserver"></div>
+                        <div class="reflection-field"><label>Teacher signature</label>
+                            <input type="text" class="reflection-text-input" id="observeSignTeacher"></div>
+                    </div>
+                    <p class="prep-readiness-explain">Hold the feedback conversation within 24 hours.</p>
+                </div>
+
+                <div class="prep-section-card reflection-submit-card">
+                    <button class="btn-primary-glowing full-width" onclick="submitObservation()">
+                        <i class="fa-solid fa-check-double"></i> Submit Observation
+                    </button>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: CHAPTER REFLECTION (teacher, after Session 2) ================= -->
+            <section id="reflection-view" class="view-section">
+                <div class="prep-header">
+                    <div class="badge-icon pink"><i class="fa-solid fa-clipboard-question"></i></div>
+                    <div class="prep-header-text">
+                        <h2 id="reflectionTitle">Chapter Reflection</h2>
+                        <p>A chapter is complete once this is submitted. Saves as you go — finish it in two sittings if you need to.</p>
+                    </div>
+                </div>
+
+                <div id="reflectionSections"></div>
+
+                <div class="prep-section-card reflection-submit-card">
+                    <button class="btn-primary-glowing full-width" onclick="submitReflection()">
+                        <i class="fa-solid fa-check-double"></i> Submit Reflection &amp; Complete Chapter
+                    </button>
+                    <p class="reflection-autosave-note" id="reflectionAutosaveNote"></p>
+                </div>
+            </section>
+
+            <!-- ================= VIEW: FIX IT ZONE (student self-access) ================= -->
+            <!-- ================= VIEW 4: STAGE 1 - EXPLORE ================= -->
+            <section id="explore-stage-view" class="view-section">
+                <!-- Top Stepper Bar -->
+                <div class="stage-stepper-bar">
+                    <button class="back-link-btn compact" onclick="navigateTo('chapter-detail')">
+                        <i class="fa-solid fa-arrow-left"></i> <span class="chapter-back-label">Chapter 01</span>
+                    </button>
+                    <div class="stepper-steps">
+                        <button class="step-pill active" data-stage="explore" onclick="startChapterStage('explore')">1 Explore</button>
+                        <button class="step-pill" data-stage="practice" onclick="startChapterStage('practice')">2 Practice</button>
+                        <button class="step-pill" data-stage="create" onclick="startChapterStage('create')">3 Create</button>
+                        <button class="step-pill" data-stage="perform" onclick="startChapterStage('perform')">4 Perform</button>
+                    </div>
+                    <div class="stepper-bar-right">
+                        <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
+                            <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
+                        </div>
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                            <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stage-header-title">
+                    <div class="badge-icon camera"><i class="fa-solid fa-video"></i></div>
+                    <div>
+                        <h2 id="exploreTitle">Explore: My Imaginary World</h2>
+                        <p>Watch closely. Your discussion questions unlock when the video ends.</p>
+                    </div>
+                </div>
+
+                <!-- Step 1: Settle & Breathe — a calm opening ritual before the
+                     video starts, read straight from the lesson script -->
+                <div class="settle-card" id="settleSection">
+                    <div class="settle-door-icon"><i class="fa-solid fa-door-open"></i></div>
+                    <p class="settle-line">"Alright, before we begin, let's take a deep breath together. Breathe in... and out. Wonderful. Now, get comfortable. You can close your eyes if you like. I'm going to ask your imagination to do something special today. Is your imagination ready?"</p>
+                    <button class="btn-primary-glowing" id="settleStartBtn" onclick="settleFinished()">
+                        <i class="fa-solid fa-wind"></i> Class is calm — Start
+                    </button>
+                </div>
+
+                <!-- Real video player: a YouTube embed when the chapter has one,
+                     otherwise a native <video> pointed at VIDEO_BASE_URL. Stays in
+                     the DOM (and playing) in Remote Mode — just visually hidden —
+                     so its play/pause/ended events keep driving the projector. -->
+                <div class="video-player-card" id="videoPlayerCard">
+                    <video id="chapterVideo" class="chapter-video" controls poster="assets/roadmap_bg.png"
+                           onended="onChapterVideoEnded()" onerror="onChapterVideoError()"
+                           onplay="broadcastToProjector({type:'video-cmd', action:'play'}); updateRemoteVideoBtn(true)"
+                           onpause="broadcastToProjector({type:'video-cmd', action:'pause'}); updateRemoteVideoBtn(false)"
+                           ontimeupdate="updateRemoteVideoProgress()"></video>
+                    <div id="chapterYoutubePlayer" class="chapter-video"></div>
+
+                    <div class="video-fallback" id="videoFallback">
+                        <i class="fa-solid fa-clapperboard"></i>
+                        <p>This chapter's video hasn't been uploaded yet.</p>
+                        <span class="video-fallback-hint">For testing: mark it watched to preview the discussion questions below.</span>
+                        <button class="btn-glass" onclick="simulateVideoWatched()">
+                            <i class="fa-solid fa-check"></i> Mark as watched
+                        </button>
+                    </div>
+
+                    <!-- Remote Mode: shown instead of the video pixels once a projector
+                         is connected — "Script text only on the teacher device, never
+                         on the projector" extends here to "video only on the projector,
+                         never on the teacher device." -->
+                    <div class="video-remote-controls" id="videoRemoteControls">
+                        <div class="video-remote-icon"><i class="fa-solid fa-tv"></i></div>
+                        <p class="video-remote-label">Playing on the projector</p>
+
+                        <div class="video-remote-progress-row">
+                            <span class="video-remote-time" id="videoRemoteTimeCurrent">0:00</span>
+                            <div class="video-remote-progress-track">
+                                <div class="video-remote-progress-fill" id="videoRemoteProgressFill"></div>
+                            </div>
+                            <span class="video-remote-time" id="videoRemoteTimeTotal">0:00</span>
+                        </div>
+
+                        <div class="video-remote-btn-row">
+                            <button class="icon-badge-btn video-remote-btn" onclick="remoteVideoSeek(-10)" title="Rewind 10s">
+                                <i class="fa-solid fa-rotate-left"></i><span>10s</span>
+                            </button>
+                            <button class="video-remote-btn primary" id="videoRemotePlayBtn" onclick="remoteVideoToggle()" title="Play / Pause">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                            <button class="icon-badge-btn video-remote-btn" onclick="remoteVideoSeek(10)" title="Skip 10s">
+                                <i class="fa-solid fa-rotate-right"></i><span>10s</span>
+                            </button>
+                        </div>
+                        <button class="btn-glass compact" onclick="remoteVideoReplay()">
+                            <i class="fa-solid fa-arrow-rotate-left"></i> Replay from start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Storybook read-along — hidden until the video finishes, must be
+                     read through before Think & Talk unlocks -->
+                <div class="storybook-section" id="storybookSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-book-open"></i></div>
+                        <div>
+                            <h3>The Lumora Storybook</h3>
+                            <p id="storybookPageCounter">Page 1 of 8</p>
+                        </div>
+                    </div>
+
+                    <div class="storybook-card" id="storybookCard">
+                        <!-- The illustration is projector-only in Remote Mode — the
+                             teacher only needs the words to read along or prompt from.
+                             (Only applies to the plain layout below — a page with its
+                             own full illustration, .illustrated, stays visible either way.) -->
+                        <div class="storybook-char-frame" id="storybookCharFrame">
+                            <img id="storybookCharImg" src="" alt="">
+                        </div>
+                        <p class="storybook-page-text" id="storybookPageText"></p>
+
+                        <!-- Shown instead of the two elements above, only for a page
+                             that has its own illustration (chapters-data.js page.image) -->
+                        <div class="storybook-illustrated" id="storybookIllustrated">
+                            <img class="storybook-illustration" id="storybookIllustrationImg" src="" alt="">
+                            <button type="button" class="storybook-read-aloud-btn" id="storybookReadAloudBtn"
+                                    onclick="toggleStorybookNarration('teacher')" title="Read this page aloud" aria-label="Read this page aloud">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <div class="storybook-caption" id="storybookCaption"></div>
+                        </div>
+                    </div>
+
+                    <div class="storybook-nav">
+                        <button class="btn-glass" id="storybookPrevBtn" onclick="storybookGo(-1)">
+                            <i class="fa-solid fa-arrow-left"></i> Back
+                        </button>
+                        <div class="storybook-dots" id="storybookDots"></div>
+                        <button class="btn-primary-glowing compact" id="storybookNextBtn" onclick="storybookGo(1)">
+                            Next <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Think & Talk Section — hidden until the storybook is finished -->
+                <div class="think-talk-section" id="thinkTalkSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-comments"></i></div>
+                        <div>
+                            <h3>Think & Talk</h3>
+                            <p>Let's talk about what we just watched.</p>
+                        </div>
+                    </div>
+
+                    <div class="discussion-cards-grid" id="thinkTalkGrid"></div>
+
+                    <!-- Lumora Wall: live class word wall, fed by the teacher as
+                         students call out ideas. Reused as a word bank in Create. -->
+                    <div class="lumora-wall-card">
+                        <div class="lumora-wall-header">
+                            <i class="fa-solid fa-link"></i> The Lumora Wall
+                            <span class="lumora-wall-sub">Type a student's idea — it appears on the wall for everyone, and comes back as a word bank in Create.</span>
+                        </div>
+                        <div class="lumora-wall-input-row">
+                            <input type="text" id="lumoraWallInput" placeholder="e.g. a river of honey" maxlength="40" onkeydown="if(event.key==='Enter') addLumoraWallWord()">
+                            <select class="custom-select lumora-wall-student-select" id="lumoraWallStudentSelect"></select>
+                            <button class="btn-primary-glowing compact" onclick="addLumoraWallWord()"><i class="fa-solid fa-plus"></i> Add</button>
+                        </div>
+                        <div class="lumora-wall-tiles" id="lumoraWallTiles"></div>
+                    </div>
+
+                    <div class="think-talk-footer-banner">
+                        <img src="assets/girl_aanya.png" alt="Aanya" class="tt-avatar">
+                        <div class="tt-text">
+                            <strong>Great talking!</strong>
+                            <span>Now let's capture it on paper.</span>
+                        </div>
+                        <button class="btn-primary-glowing compact" onclick="revealDraw()">
+                            Continue to Drawing <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Draw Your World — physical, on paper. The portal only
+                     shows the instructions and roving prompts; no on-screen drawing. -->
+                <div class="draw-section" id="drawSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-palette"></i></div>
+                        <div>
+                            <h3>Draw Your World</h3>
+                            <p>On paper — add at least 6–7 things.</p>
+                        </div>
+                    </div>
+
+                    <p class="draw-instruction">"Now, we are going to capture this world. You are going to draw a map of your magical world. Use colors. Add trees, castles, clouds, animals, rivers — anything that belongs in your world. You have about 7 minutes to draw. Let's begin!"</p>
+
+                    <button class="btn-glass" onclick="startDrawTimer()">
+                        <i class="fa-solid fa-stopwatch"></i> Start 7-min timer on projector
+                    </button>
+
+                    <div class="roving-prompts-card">
+                        <div class="roving-prompts-title"><i class="fa-solid fa-person-walking"></i> Roving prompts while students draw</div>
+                        <ul class="roving-prompts-list">
+                            <li>"Wow! Tell me about this. What is this tall thing here?"</li>
+                            <li>"I see you have a river here. What color is the water in your world?"</li>
+                            <li>Stuck student? "Remember that dragon you heard snoring? Where is its cave?"</li>
+                        </ul>
+                    </div>
+
+                    <div class="think-talk-footer-banner">
+                        <img src="assets/dragon_buddy.png" alt="Flame" class="tt-avatar">
+                        <div class="tt-text">
+                            <strong>Pencils down!</strong>
+                            <span>Time to wrap up Explore.</span>
+                        </div>
+                        <button class="btn-primary-glowing compact" onclick="revealWrapUp()">
+                            We're Done Drawing <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 6: Wrap Up — short celebration + transition into Practice -->
+                <div class="wrapup-section" id="wrapupSection">
+                    <div class="wrapup-content">
+                        <div class="wrapup-icon">👏</div>
+                        <p class="wrapup-line">"Look at what you've created. In just a few minutes, you've built an entire world. Give yourself a clap! Now, we're about to go on a different kind of adventure — a word adventure!"</p>
+                        <button class="btn-primary-glowing" onclick="startChapterStage('practice')">
+                            Go to Practice <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 5: STAGE 2 - PRACTICE ================= -->
+            <section id="practice-stage-view" class="view-section">
+                <!-- Top Stepper Bar — teacher's own classroom run. -->
+                <div class="stage-stepper-bar">
+                    <button class="back-link-btn compact" data-roles="teacher,trainer,admin" onclick="navigateTo('chapter-detail')">
+                        <i class="fa-solid fa-arrow-left"></i> <span class="chapter-back-label">Chapter 01</span>
+                    </button>
+                    <div class="stepper-steps" data-roles="teacher,trainer,admin">
+                        <button class="step-pill" data-stage="explore" onclick="startChapterStage('explore')">1 Explore</button>
+                        <button class="step-pill active" data-stage="practice" onclick="startChapterStage('practice')">2 Practice</button>
+                        <button class="step-pill" data-stage="create" onclick="startChapterStage('create')">3 Create</button>
+                        <button class="step-pill" data-stage="perform" onclick="startChapterStage('perform')">4 Perform</button>
+                    </div>
+                    <div class="stepper-bar-right" data-roles="teacher,trainer,admin">
+                        <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
+                            <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
+                        </div>
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                            <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Generic 5-activity template — used by every chapter except chapter 1 -->
+                <div id="genericPracticeSystem">
+                    <div class="practice-header">
+                        <div class="practice-title-group">
+                            <div class="badge-icon pink" id="practiceStepIcon"><i class="fa-solid fa-search"></i></div>
+                            <div>
+                                <h2 id="practiceStepTitle">Word Detective</h2>
+                                <span class="question-counter-text" id="practiceStepCounter">Activity 1 of 3</span>
+                            </div>
+                        </div>
+
+                        <div class="question-dots" id="practiceDotsContainer"></div>
+                    </div>
+
+                    <!-- Activity card: filled entirely by app.js — a different mini-game per step -->
+                    <div class="quiz-question-card" id="practiceActivityCard"></div>
+                </div>
+
+                <!-- Chapter 1's dedicated "Noun Detective" practice — see chapter1-practice.css/.js -->
+                <div id="chapter1PracticeMount" style="display:none;">
+<div id="chapter1-practice">
+
+    <!-- ========================================
+         SCREEN 0: INTRO
+         ======================================== -->
+    <div class="screen active" id="screen-intro">
+        <div class="intro-hero">
+            <img class="hero-bg" src="assets/chapter1-practice/world/background.png" alt="A magical world with a castle, forest, river and meadow">
+            <div class="intro-characters">
+                <div class="intro-token girl-token">
+                    <div class="token-shadow"></div>
+                    <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Explorer girl, our guide"></div>
+                </div>
+                <div class="intro-token dragon-token">
+                    <div class="token-shadow"></div>
+                    <div class="char-token token-dragon"><img src="assets/chapter1-practice/characters/dragon.jpg" alt="Friendly dragon"></div>
+                </div>
+                <div class="intro-token bird-token">
+                    <div class="char-token token-bird"><img src="assets/chapter1-practice/characters/bird.jpg" alt="Blue bird"></div>
+                </div>
+            </div>
+            <div class="intro-overlay">
+                <div class="intro-chapter-badge">📖 Chapter 1</div>
+                <h1 class="intro-title">My Imaginary World</h1>
+                <div class="intro-subtitle-badge">Practice • Nouns</div>
+            </div>
+        </div>
+
+        <div class="detective-section">
+            <h2 class="detective-title">
+                <span class="emoji">🔎</span>
+                Noun Detective
+                <span class="emoji">✨</span>
+            </h2>
+            <p class="detective-subtitle">Let's explore the magical world and discover nouns!</p>
+            <button class="btn btn-primary" id="btn-start-mission" onclick="chapter1Practice.startMission()">
+                Start Mission →
+            </button>
+        </div>
+
+        <div class="progress-bar" id="progress-bar"></div>
+
+        <div class="info-cards">
+            <div class="info-card blue">
+                <div class="info-card-title">📚 What are Nouns?</div>
+                <p>Nouns are <strong>naming words</strong>. They name people, places, animals and things.</p>
+            </div>
+            <div class="info-card yellow">
+                <div class="info-card-title">💡 Two Kinds of Names</div>
+                <p><strong>Common Noun</strong> — a general name, like <em>dragon</em>.<br><strong>Proper Noun</strong> — a special name, like <em>Flame</em>. It starts with a capital letter!</p>
+            </div>
+            <div class="info-card green">
+                <div class="info-card-title">⭐ Today's Mission</div>
+                <p>Explore the world, find Common Nouns, and give some of them special names to make Proper Nouns!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 1: DISCOVER
+         ======================================== -->
+    <div class="screen" id="screen-discover">
+        <div class="progress-bar" id="progress-bar-1"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 1 · DISCOVER</div>
+            <h2 class="mission-title">🔎 Look Carefully!</h2>
+            <p class="mission-instruction">Can you find something we can name? Click a glowing clue in the magical world!</p>
+        </div>
+
+        <div class="guide">
+            <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+            <div class="guide-bubble">Let's investigate! Click on something glowing in the magical world.</div>
+        </div>
+
+        <div class="world-scene" id="discover-scene">
+            <img class="world-bg" src="assets/chapter1-practice/world/background.png" alt="Magical world to explore">
+            <!-- Hotspots injected by JS -->
+        </div>
+
+        <div id="discover-result" class="center-col" style="display:none;">
+            <div class="activity-panel">
+                <div class="noun-display" id="discover-noun-display"></div>
+                <p style="font-size:1.2rem; color:var(--c-text-light); font-weight:500; margin-bottom:16px;">
+                    This is a <strong>noun</strong> — a naming word!
+                </p>
+                <div class="guide" style="margin-bottom:8px;">
+                    <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+                    <div class="guide-bubble">Great find! A noun names something. Let's figure out what kind of noun this is.</div>
+                </div>
+                <button class="btn btn-next" onclick="chapter1Practice.goToClassify()">
+                    What kind of noun is this? →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 2: CLASSIFY
+         ======================================== -->
+    <div class="screen" id="screen-classify">
+        <div class="progress-bar" id="progress-bar-2"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 2 · CLASSIFY</div>
+            <h2 class="mission-title">📋 Classify the Noun</h2>
+            <p class="mission-instruction">Is it a Common Noun or a Proper Noun?</p>
+        </div>
+
+        <div class="activity-panel">
+            <div class="noun-display" id="classify-noun-display"></div>
+
+            <div class="guide" style="max-width:440px;">
+                <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+                <div class="guide-bubble">Think carefully! Is this a general name, or a special name for one particular thing?</div>
+            </div>
+
+            <div class="btn-row" id="classify-buttons" style="margin-top:20px;">
+                <button class="btn btn-common" id="btn-classify-common" onclick="chapter1Practice.classifyAnswer('common')">
+                    📘 Common Noun
+                </button>
+                <button class="btn btn-proper" id="btn-classify-proper" onclick="chapter1Practice.classifyAnswer('proper')">
+                    📕 Proper Noun
+                </button>
+            </div>
+
+            <div id="classify-result" class="center-col" style="display:none; margin-top:8px;"></div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 3: WHY
+         ======================================== -->
+    <div class="screen" id="screen-why">
+        <div class="progress-bar" id="progress-bar-3"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 3 · WHY?</div>
+            <h2 class="mission-title">🤔 Why is it Special?</h2>
+            <p class="mission-instruction">Let's understand the difference using our textbook example.</p>
+        </div>
+
+        <div class="activity-panel">
+            <div class="comparison-box">
+                <div class="comparison-item common-side">
+                    <div class="comparison-word" style="color:var(--c-common);">🐉 dragon</div>
+                    <div class="comparison-label" style="color:var(--c-common);">Common Noun</div>
+                    <p class="comparison-sub">a general name</p>
+                </div>
+                <div class="comparison-arrow">→</div>
+                <div class="comparison-item proper-side">
+                    <div class="comparison-word" style="color:var(--c-proper);">✨ Flame</div>
+                    <div class="comparison-label" style="color:var(--c-proper);">Proper Noun</div>
+                    <p class="comparison-sub">a special name</p>
+                </div>
+            </div>
+
+            <h3 style="font-size:1.4rem; margin: 20px 0 4px;">Why is <span style="color:var(--c-proper);">Flame</span> a Proper Noun?</h3>
+
+            <div class="options-list" id="why-options">
+                <button class="option-btn" data-answer="a" onclick="chapter1Practice.whyAnswer(this, 'a')">
+                    <span class="option-letter">A</span>
+                    <span>It is an animal</span>
+                </button>
+                <button class="option-btn" data-answer="b" onclick="chapter1Practice.whyAnswer(this, 'b')">
+                    <span class="option-letter">B</span>
+                    <span>It is a special name given to the dragon</span>
+                </button>
+                <button class="option-btn" data-answer="c" onclick="chapter1Practice.whyAnswer(this, 'c')">
+                    <span class="option-letter">C</span>
+                    <span>It is a place</span>
+                </button>
+            </div>
+
+            <div id="why-result" class="center-col" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 4: NAMING MACHINE
+         ======================================== -->
+    <div class="screen" id="screen-name">
+        <div class="progress-bar" id="progress-bar-4"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 4 · NAME IT</div>
+            <h2 class="mission-title">✨ Magical Naming Machine</h2>
+            <p class="mission-instruction">Pick something, then give it a special name to turn it into a Proper Noun!</p>
+        </div>
+
+        <div class="guide">
+            <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+            <div class="guide-bubble">When we give something a special name, it becomes a Proper Noun! What should we call it?</div>
+        </div>
+
+        <div class="naming-machine">
+            <div class="naming-chips" id="naming-chips"></div>
+
+            <div class="noun-display common" id="naming-preview"></div>
+            <span class="noun-badge common">Common Noun</span>
+
+            <div class="transform-arrow">⬇️</div>
+
+            <div id="naming-input-row">
+                <label for="naming-input" style="font-size:1.05rem; font-weight:600; display:block; margin-bottom:10px; color:#6B21A8;">
+                    Type the special name here:
+                </label>
+                <input type="text" class="naming-input" id="naming-input" placeholder="e.g. Flame" maxlength="24" autocomplete="off">
+                <div class="naming-error-msg" id="naming-error"></div>
+                <button class="btn btn-accent" onclick="chapter1Practice.submitName()" style="margin-top:6px;">
+                    ✨ Transform!
+                </button>
+            </div>
+
+            <div id="naming-full-row" style="display:none;">
+                <div class="naming-full-msg">⭐ You've created 3 Proper Nouns already — wonderful work!</div>
+            </div>
+
+            <div class="transform-result" id="transform-result">
+                <div class="transform-arrow">⬇️</div>
+                <div class="noun-display proper" id="transform-name"></div>
+                <span class="noun-badge proper">Proper Noun</span>
+                <div class="result-card" style="margin:18px auto 0;">
+                    <div class="result-emoji">✨</div>
+                    <div class="result-title">Magical!</div>
+                    <p class="result-text">
+                        <strong id="transform-common-name"></strong> is a Common Noun.<br>
+                        <strong id="transform-proper-name"></strong> is a Proper Noun because it's a special name!<br><br>
+                        <em>Proper Nouns always begin with a <strong>capital letter</strong>.</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-next" onclick="chapter1Practice.goToScreen('screen-fix')" style="margin-top:8px;">
+            Next Mission →
+        </button>
+    </div>
+
+    <!-- ========================================
+         SCREEN 5: GRAMMAR FIXER
+         ======================================== -->
+    <div class="screen" id="screen-fix">
+        <div class="progress-bar" id="progress-bar-5"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 5 · FIX</div>
+            <h2 class="mission-title">🚨 Grammar Fixer</h2>
+            <p class="mission-instruction">Click on the words that should start with a capital letter!</p>
+            <div class="rule-banner">⭐ Proper Nouns begin with CAPITAL LETTERS</div>
+        </div>
+
+        <div class="guide">
+            <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+            <div class="guide-bubble">Remember — only special names (Proper Nouns) need a capital letter. Can you spot them?</div>
+        </div>
+
+        <div class="activity-panel">
+            <p class="fixer-legend">Click the words that need fixing:</p>
+
+            <div class="fixer-sentence" id="fixer-sentence"></div>
+
+            <div id="fixer-result" class="center-col" style="display:none;"></div>
+
+            <button class="btn btn-accent" id="fixer-check-btn" onclick="chapter1Practice.checkFixer()" style="margin-top:16px;">
+                ✅ Check My Fixes
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 6: NOUN HUNT
+         ======================================== -->
+    <div class="screen" id="screen-hunt">
+        <div class="progress-bar" id="progress-bar-6"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">MISSION 6 · HUNT</div>
+            <h2 class="mission-title">🔎 Noun Hunt</h2>
+            <p class="mission-instruction">Find 5 Common Nouns, then give some of them special names to create 3 Proper Nouns!</p>
+        </div>
+
+        <div class="guide" style="margin-bottom: 6px;">
+            <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+            <div class="guide-bubble">Click a clue to classify it. Once it's a Common Noun, you can give it a special name too!</div>
+        </div>
+
+        <div class="hunt-layout">
+            <div class="world-scene" id="hunt-scene">
+                <img class="world-bg" src="assets/chapter1-practice/world/background.png" alt="Magical world to explore">
+                <!-- Hotspots injected by JS -->
+            </div>
+
+            <div class="hunt-sidebar">
+                <div class="collection-box common-collection">
+                    <div class="collection-title common-title">📘 Common Nouns</div>
+                    <div class="collection-progress" id="common-progress">Found: 0 / 5</div>
+                    <div class="collection-items" id="common-collection"></div>
+                </div>
+                <div class="collection-box proper-collection">
+                    <div class="collection-title proper-title">📕 Proper Nouns</div>
+                    <div class="collection-progress" id="proper-progress">Found: 0 / 3</div>
+                    <div class="collection-items" id="proper-collection"></div>
+                </div>
+                <button class="btn btn-next" id="hunt-complete-btn" onclick="chapter1Practice.goToScreen('screen-quickcheck')" style="display:none; width:100%;">
+                    🏆 Final Mission →
+                </button>
+            </div>
+        </div>
+
+        <!-- Hunt Classify / Naming Modal -->
+        <div class="hunt-modal" id="hunt-modal" role="dialog" aria-modal="true" aria-labelledby="hunt-modal-noun">
+            <div class="hunt-modal-content">
+                <button class="modal-close-x" aria-label="Close" onclick="chapter1Practice.huntCloseModal()">✕</button>
+                <div class="noun-display" id="hunt-modal-noun"></div>
+                <div id="hunt-modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 6.5: QUICK CHECK AND CLOSE
+         Matches the brief's Practice step 10: 3 quick oral questions,
+         teacher does a show-of-hands and taps how many got it (most/
+         some/few). "Few" flags the class for the Fix It Zone.
+         ======================================== -->
+    <div class="screen" id="screen-quickcheck">
+        <div class="progress-bar" id="progress-bar-quickcheck"></div>
+
+        <div class="mission-header">
+            <div class="mission-badge">QUICK CHECK · CLOSE</div>
+            <h2 class="mission-title">🙋 Quick Check</h2>
+            <p class="mission-instruction">Ask the class, take a show of hands, then tap how many got it right.</p>
+        </div>
+
+        <div class="guide">
+            <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+            <div class="guide-bubble" id="quickcheck-guide-bubble">Thumbs up if you know the answer!</div>
+        </div>
+
+        <div class="activity-panel" id="quickcheck-panel"></div>
+    </div>
+
+    <!-- ========================================
+         SCREEN 7: COMPLETE
+         ======================================== -->
+    <div class="screen" id="screen-complete">
+        <div class="progress-bar" id="progress-bar-7"></div>
+
+        <div class="completion-screen">
+            <span class="trophy-icon">🏆</span>
+            <h2 class="completion-title">🌟 Practice Complete! 🌟</h2>
+            <p class="completion-subtitle">You are officially Noun Detectives!</p>
+
+            <div class="guide" style="margin: 0 auto 24px;">
+                <div class="char-token token-girl"><img src="assets/chapter1-practice/characters/girl.jpg" alt="Guide"></div>
+                <div class="guide-bubble">Amazing work, detectives! You explored the magical world and mastered nouns! 🎉</div>
+            </div>
+
+            <div class="checklist" id="completion-checklist"></div>
+
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="chapter1Practice.restart()">
+                    🔄 Review Practice
+                </button>
+                <button class="btn btn-primary" id="btn-continue-create" onclick="chapter1Practice.goToNextSection()">
+                    Continue to Create →
+                </button>
+            </div>
+        </div>
+
+        <div class="confetti-container" id="confetti-container"></div>
+    </div>
+
+</div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 6: STAGE 3 - CREATE ================= -->
+            <section id="create-stage-view" class="view-section">
+                <!-- Top Stepper Bar -->
+                <div class="stage-stepper-bar">
+                    <button class="back-link-btn compact" onclick="navigateTo('chapter-detail')">
+                        <i class="fa-solid fa-arrow-left"></i> <span class="chapter-back-label">Chapter 01</span>
+                    </button>
+                    <div class="stepper-steps">
+                        <button class="step-pill" data-stage="explore" onclick="startChapterStage('explore')">1 Explore</button>
+                        <button class="step-pill" data-stage="practice" onclick="startChapterStage('practice')">2 Practice</button>
+                        <button class="step-pill active" data-stage="create" onclick="startChapterStage('create')">3 Create</button>
+                        <button class="step-pill" data-stage="perform" onclick="startChapterStage('perform')">4 Perform</button>
+                    </div>
+                    <div class="stepper-bar-right">
+                        <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
+                            <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
+                        </div>
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                            <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="create-header">
+                    <div class="create-title-group">
+                        <div class="badge-icon cyan"><i class="fa-solid fa-pen-ruler"></i></div>
+                        <div>
+                            <h2 id="createTitle">Create: My Imaginary World</h2>
+                            <p>Turn your imagination into words!</p>
+                        </div>
+                    </div>
+                    <div class="create-header-actions">
+                        <button class="btn-glass compact" onclick="openPlannerModal(appState.currentChapterId, 'class2')">
+                            <i class="fa-solid fa-clipboard-list"></i> Class 2 Planner
+                        </button>
+                        <div class="sentence-target-pill" id="sentenceTargetPill">Target: 5-6 sentences</div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Opening Ritual & Recap -->
+                <div class="ritual-card theme-create" id="createRitualSection">
+                    <div class="ritual-icon"><i class="fa-solid fa-door-open"></i></div>
+                    <p class="ritual-line">"Welcome back, explorers! Hold up your drawing. Who remembers their dragon's name? Last session, you imagined a whole new world, drew it, and learned that everything in it has a name — a noun."</p>
+                    <button class="btn-primary-glowing" onclick="revealCreateStep('createStarterSection')">
+                        <i class="fa-solid fa-arrow-right"></i> Continue
+                    </button>
+                </div>
+
+                <!-- Step 2: Story Starter -->
+                <div class="reveal-card" id="createStarterSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-flag"></i></div>
+                        <div>
+                            <h3>Story Starter</h3>
+                            <p>Copy this into your notebook to begin.</p>
+                        </div>
+                    </div>
+                    <p class="ritual-big-text" style="color:var(--text-dark); text-align:center; margin: 12px auto 24px;" id="createStarterText"></p>
+                    <p class="remote-only-note"><i class="fa-solid fa-tv"></i> Shown large on the projector</p>
+                    <div class="step-footer-banner">
+                        <img src="assets/girl_aanya.png" alt="Aanya" class="tt-avatar">
+                        <div class="tt-text">
+                            <strong>Got it written down?</strong>
+                            <span>Let's see how a model story is built.</span>
+                        </div>
+                        <button class="btn-primary-glowing compact" onclick="revealCreateStep('createModelSection')">
+                            Continue <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Teacher Models a Story -->
+                <div class="reveal-card" id="createModelSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-chalkboard"></i></div>
+                        <div>
+                            <h3>Teacher Models a Story</h3>
+                            <p>Revealed one sentence at a time. Nouns are highlighted — point them out!</p>
+                        </div>
+                    </div>
+                    <div class="draw-instruction" id="createModelText" style="min-height: 90px;"></div>
+                    <div class="storybook-nav">
+                        <span></span>
+                        <div class="storybook-dots" id="createModelDots"></div>
+                        <button class="btn-primary-glowing compact" id="createModelNextBtn" onclick="createModelNext()">
+                            Next Sentence <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Write Your Story (in the notebook) -->
+                <div class="reveal-card" id="createWriteSection">
+                    <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-pencil"></i></div>
+                        <div>
+                            <h3>Write Your Story</h3>
+                            <p>In the notebook — use at least 2 nouns from your list.</p>
+                        </div>
+                    </div>
+
+                    <div class="roving-prompts-card">
+                        <div class="roving-prompts-title"><i class="fa-solid fa-lightbulb"></i> Think about...</div>
+                        <ul class="roving-prompts-list" id="createIdeasList"></ul>
+                    </div>
+
+                    <!-- Lumora Wall word bank — the words the class built together in Explore -->
+                    <div class="lumora-wall-card">
+                        <div class="lumora-wall-header"><i class="fa-solid fa-link"></i> Word Bank (from the Lumora Wall)</div>
+                        <div class="lumora-wall-tiles" id="createWordBank"></div>
+                    </div>
+
+                    <div class="writing-studio-layout">
+                        <div class="writing-checklist-card">
+                            <div class="checklist-header">
+                                <i class="fa-solid fa-person-walking yellow"></i>
+                                <h3>Roving Prompts</h3>
+                            </div>
+                            <p class="challenge-prompt">Stuck writer? "Let's look at your drawing together. What is this? Write that word."</p>
+                            <p class="challenge-prompt">Finished early? "Can you add one more sentence? Can you add colours?"</p>
+
+                            <button class="btn-glass full-width" onclick="openRobotHintModal()">
+                                <i class="fa-solid fa-robot blue"></i> Need a Hint?
+                            </button>
+                        </div>
+
+                        <div class="writing-editor-card">
+                            <div class="sentence-starter-bar">
+                                <span class="starter-label">Sentence Starter:</span>
+                                <div id="starterBar" class="starter-bar-buttons"></div>
+                                <button class="btn-glass compact scan-upload-btn" onclick="openOcrScanModal('storyTextArea')">
+                                    <i class="fa-solid fa-camera blue"></i> Scan Student's Writing
+                                </button>
+                            </div>
+
+                            <textarea id="storyTextArea" placeholder="For testing: type here, or scan the student's handwritten notebook page above..." oninput="analyzeWritingContent()"></textarea>
+
+                            <div class="ai-feedback-panel" id="aiFeedbackPanel">
+                                <i class="fa-solid fa-robot"></i>
+                                <div>
+                                    <p class="ai-feedback-text"></p>
+                                    <span class="ai-feedback-source"></span>
+                                </div>
+                            </div>
+
+                            <div class="editor-footer">
+                                <div class="sentence-counter-badge">
+                                    <span id="sentenceCount">0</span> / <span id="sentenceTargetNum">6</span> sentences
+                                </div>
+                                <div class="editor-actions">
+                                    <button class="btn-primary-glowing" onclick="revealCreateStep('createCheckSection')">
+                                        <i class="fa-solid fa-check"></i> We're Done Writing
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Check My Story -->
+                <div class="reveal-card" id="createCheckSection">
+                        <div class="think-talk-header">
+                        <div class="chat-badge-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                        <div>
+                            <h3>Check My Story</h3>
+                            <p>Invented spelling is always okay — this is about the ideas.</p>
+                        </div>
+                    </div>
+
+                    <div class="checklist-items">
+                        <label class="check-item"><input type="checkbox"> I used at least 2 nouns from my list</label>
+                        <label class="check-item"><input type="checkbox"> My names start with capital letters</label>
+                        <label class="check-item"><input type="checkbox"> My story has a beginning</label>
+                    </div>
+
+                    <div class="step-footer-banner">
+                        <img src="assets/dragon_buddy.png" alt="Flame" class="tt-avatar">
+                        <div class="tt-text">
+                            <strong>Story checked!</strong>
+                            <span>Time to share it with the class.</span>
+                        </div>
+                        <button class="btn-primary-glowing compact" id="goToPerformBtn" onclick="finishCreateStage()">
+                            Go to Perform <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 7: STAGE 4 - PERFORM (SCANNER) ================= -->
+            <section id="perform-stage-view" class="view-section">
+                <!-- Top Stepper Bar -->
+                <div class="stage-stepper-bar">
+                    <button class="back-link-btn compact" onclick="navigateTo('chapter-detail')">
+                        <i class="fa-solid fa-arrow-left"></i> <span class="chapter-back-label">Chapter 01</span>
+                    </button>
+                    <div class="stepper-steps">
+                        <button class="step-pill" data-stage="explore" onclick="startChapterStage('explore')">1 Explore</button>
+                        <button class="step-pill" data-stage="practice" onclick="startChapterStage('practice')">2 Practice</button>
+                        <button class="step-pill" data-stage="create" onclick="startChapterStage('create')">3 Create</button>
+                        <button class="step-pill active" data-stage="perform" onclick="startChapterStage('perform')">4 Perform</button>
+                    </div>
+                    <div class="stepper-bar-right">
+                        <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
+                            <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
+                        </div>
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                            <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="perform-header">
+                    <div class="perform-title-group">
+                        <div class="badge-icon green"><i class="fa-solid fa-feather-pointed"></i></div>
+                        <div>
+                            <h2 id="performTitle">Perform: My Imaginary World</h2>
+                            <p>Share your story — ideas and courage, not spelling.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state: shown if Create hasn't been finished yet -->
+                <div class="perform-empty-state" id="performEmptyState">
+                    <i class="fa-solid fa-pen-fancy"></i>
+                    <h3>No story yet</h3>
+                    <p>Finish writing in the Create stage first, then come back here to share it.</p>
+                    <button class="btn-primary-glowing" onclick="startChapterStage('create')">
+                        Go to Create <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div id="performStepsLayout">
+                    <!-- Step 6: Feedback Frame -->
+                    <div class="ritual-card theme-perform" id="performFrameSection">
+                        <div class="ritual-icon"><i class="fa-solid fa-comments"></i></div>
+                        <p class="ritual-big-text">"I loved ___. One cool thing: ___."</p>
+                        <p class="remote-only-note"><i class="fa-solid fa-tv"></i> Shown large on the projector</p>
+                        <p class="ritual-line">Model the frame with one volunteer before pairs begin. Everyone practices it once together.</p>
+                        <button class="btn-primary-glowing" onclick="revealPerformStep('performPairSection')">
+                            <i class="fa-solid fa-arrow-right"></i> Continue
+                        </button>
+                    </div>
+
+                    <!-- Step 7: Pair Share -->
+                    <div class="reveal-card" id="performPairSection">
+                        <div class="think-talk-header">
+                            <div class="chat-badge-icon"><i class="fa-solid fa-user-group"></i></div>
+                            <div>
+                                <h3>Pair Share</h3>
+                                <p>4 minutes per partner. Read slowly — like telling a secret.</p>
+                            </div>
+                        </div>
+
+                        <div class="pair-timer-display" id="pairTimerDisplay">4:00</div>
+                        <div class="btn-row-center">
+                            <button class="btn-primary-glowing compact" id="pairTimerBtn" onclick="togglePairTimer()">
+                                <i class="fa-solid fa-play"></i> Start Partner 1
+                            </button>
+                            <button class="btn-glass compact" onclick="switchPairPartner()">
+                                <i class="fa-solid fa-rotate"></i> Switch Partner
+                            </button>
+                        </div>
+
+                        <div class="roving-prompts-card" style="margin-top:20px;">
+                            <div class="roving-prompts-title"><i class="fa-solid fa-person-walking"></i> While circulating</div>
+                            <ul class="roving-prompts-list">
+                                <li>Visit each pair once — tick them off mentally as you go.</li>
+                                <li>Nervous reader? "You can whisper to your partner."</li>
+                            </ul>
+                        </div>
+
+                        <div class="step-footer-banner">
+                            <img src="assets/girl_aanya.png" alt="Aanya" class="tt-avatar">
+                            <div class="tt-text">
+                                <strong>Both partners shared?</strong>
+                                <span>On to the Explorer's Stage.</span>
+                            </div>
+                            <button class="btn-primary-glowing compact" onclick="revealPerformStep('performStageSection')">
+                                Continue <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 8: Explorer's Stage -->
+                    <div class="reveal-card" id="performStageSection">
+                        <div class="think-talk-header">
+                            <div class="chat-badge-icon"><i class="fa-solid fa-star"></i></div>
+                            <div>
+                                <h3>Explorer's Stage</h3>
+                                <p>Volunteers only — the portal never picks a student at random.</p>
+                            </div>
+                        </div>
+
+                        <div class="explorer-spotlight" id="explorerSpotlight">
+                            <i class="fa-solid fa-microphone spotlight-icon"></i>
+                            <p>Ask for a volunteer, then pick their name below.</p>
+                        </div>
+                        <p class="remote-only-note"><i class="fa-solid fa-tv"></i> The spotlight and applause show on the projector</p>
+
+                        <div class="explorer-picker-row">
+                            <select class="custom-select" id="explorerVolunteerSelect"></select>
+                            <button class="btn-primary-glowing compact" onclick="spotlightVolunteer()">
+                                <i class="fa-solid fa-bullhorn"></i> Spotlight
+                            </button>
+                        </div>
+                        <p class="explorer-count" id="explorerCount">0 explorers have shared</p>
+
+                        <div class="step-footer-banner">
+                            <img src="assets/dragon_buddy.png" alt="Flame" class="tt-avatar">
+                            <div class="tt-text">
+                                <strong>Great sharing!</strong>
+                                <span>Time to close today's adventure.</span>
+                            </div>
+                            <button class="btn-primary-glowing compact" onclick="revealPerformStep('performCloseSection')">
+                                Continue <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 9: Close -->
+                    <div class="reveal-card" id="performCloseSection">
+                        <div class="ritual-card theme-perform" style="margin-bottom:20px;">
+                            <div class="ritual-icon"><i class="fa-solid fa-door-closed"></i></div>
+                            <p class="ritual-line">"The door closes... See you next time, explorers!"</p>
+                            <p class="remote-only-note"><i class="fa-solid fa-tv"></i> The closing door shows on the projector</p>
+                        </div>
+
+                        <label class="check-item" style="display:block; margin-bottom:8px;">Teacher reflection (optional, just for you)</label>
+                        <textarea id="performReflectionText" placeholder="One thing that went well today, one thing to try next time..." style="min-height:80px;"></textarea>
+
+                        <button class="btn-primary-glowing full-width" style="margin-top:16px;" onclick="finishChapterPerform()">
+                            <i class="fa-solid fa-flag-checkered"></i> Finish Chapter
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 8: CELEBRATION / CHAPTER COMPLETE ================= -->
+            <section id="celebration-view" class="view-section">
+                <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+                
+                <div class="celebration-card-wrapper">
+                    <div class="celebration-badge-glow">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+
+                    <h2 class="celebration-title" id="celebrationTitle">Chapter 01 Complete!</h2>
+                    <p class="celebration-subtitle" id="celebrationSubtitle">Amazing! You've finished <strong>My Imaginary World</strong>!</p>
+
+                    <div class="celebration-trio-avatars">
+                        <img src="assets/girl_aanya.png" alt="Aanya" class="trio-char girl">
+                        <img src="assets/dragon_buddy.png" alt="Flame the Dragon" class="trio-char robot">
+                        <img src="assets/boy_arjun.png" alt="Arjun" class="trio-char boy">
+                    </div>
+
+                    <div class="celebration-actions">
+                        <button class="btn-glass" onclick="navigateTo('chapters')">
+                            <i class="fa-solid fa-chart-line"></i> View My Progress
+                        </button>
+                        <button class="btn-primary-glowing" onclick="openNextChapter()">
+                            Next Chapter <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= VIEW 9: SCAN (Teacher worksheet scanner) ================= -->
+            <section id="scan-view" class="view-section">
+                <div class="roadmap-header">
+                    <div class="roadmap-title-area">
+                        <h2>Scan a Worksheet</h2>
+                        <p>Capture a student's handwritten page and send it to their portfolio — fast, no waiting.</p>
+                    </div>
+                </div>
+
+                <!-- Performance Controls & Scanner Layout -->
+                <div class="scanner-wrapper-card">
+                    <div class="scanner-selectors-bar">
+                        <div class="selector-field">
+                            <label>Student:</label>
+                            <select id="studentSelect" class="custom-select" onchange="onStudentSelectChange(this.value)"></select>
+                        </div>
+
+                        <div class="selector-field">
+                            <label>Chapter:</label>
+                            <select id="scanChapterSelect" class="custom-select" onchange="onScanChapterChange(this.value)"></select>
+                        </div>
+                    </div>
+
+                    <div class="camera-viewport">
+                        <div class="scanner-laser-beam" id="scannerLaser"></div>
+
+                        <div class="viewport-placeholder" id="viewportPlaceholder">
+                            <i class="fa-solid fa-camera camera-large-icon"></i>
+                            <p>Position handwritten worksheet within camera frame</p>
+                        </div>
+
+                        <div class="scanner-controls-overlay">
+                            <button class="btn-primary-glowing" onclick="triggerScannerProcess()">
+                                <i class="fa-solid fa-camera"></i> Take Photo
+                            </button>
+                            <button class="btn-glass" onclick="triggerScannerProcess()">
+                                <i class="fa-solid fa-folder-open"></i> Choose Photo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="fast-scan-footer">
+                        <span class="fast-scan-badge"><i class="fa-solid fa-bolt yellow"></i> FAST SCAN</span>
+                        <span>Capture → Send → Next Student. AI processing happens in the background.</span>
+                    </div>
+
+                    <img src="assets/teacher_avatar.png" alt="Teacher Avatar" class="teacher-scanner-char">
+                </div>
+            </section>
+
+            <!-- ================= VIEW: ADMIN DASHBOARD =================
+                 Admin-role-only. Shows real data (chapters, accounts) where we
+                 have it; the rest is an honest placeholder for the Phase 5
+                 content-CMS build, not a working feature yet. -->
+            <section id="admin-view" class="view-section">
+                <div class="admin-header">
+                    <h2>Admin Dashboard</h2>
+                    <p>Content, teacher accounts, and program-wide settings.</p>
+                </div>
+
+                <div class="admin-stats-row">
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" id="adminChapterCount">—</div>
+                        <div class="admin-stat-label">Chapters in the Master List</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" id="adminAccountCount">—</div>
+                        <div class="admin-stat-label">Teacher, Trainer &amp; Admin Accounts</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" id="adminFamilyAccountCount">—</div>
+                        <div class="admin-stat-label">Student &amp; Parent Accounts</div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-value" id="adminFullContentCount">—</div>
+                        <div class="admin-stat-label">Chapters with Full Real Content</div>
+                    </div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-book"></i> Chapters</h3>
+                    <div class="admin-chapter-list" id="adminChapterList"></div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-users"></i> Teacher, Trainer &amp; Admin Accounts</h3>
+                    <div class="admin-account-list" id="adminAccountList"></div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-user-tie"></i> Trainer Activity</h3>
+                    <div id="adminTrainerCard"></div>
+                </div>
+
+                <div class="admin-placeholder-grid">
+                    <div class="admin-placeholder-card">
+                        <i class="fa-solid fa-school"></i>
+                        <h4>Schools</h4>
+                        <p>Coming in a later phase</p>
+                    </div>
+                    <div class="admin-placeholder-card">
+                        <i class="fa-solid fa-pen-ruler"></i>
+                        <h4>Content Editor</h4>
+                        <p>Coming in a later phase</p>
+                    </div>
+                </div>
+
+                <button class="btn-primary-glowing" style="margin-top:20px;" onclick="openReportsHome()">
+                    <i class="fa-solid fa-chart-column"></i> Open Reports
+                </button>
+            </section>
+
+            <!-- ================= PARENT VIEW ================= -->
+            <section id="parent-dashboard-view" class="view-section">
+                <div id="parentDashboardContent"></div>
+            </section>
+
+            <!-- ================= TRAINER / ADMIN REPORTS ================= -->
+            <section id="reports-home-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('home')">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <div class="roadmap-header" style="margin-top:16px;">
+                    <div class="roadmap-title-area">
+                        <h2>Reports</h2>
+                        <p>Teacher portal usage, and each student's progress report.</p>
+                    </div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-chalkboard-user"></i> Teacher Usage</h3>
+                    <div class="admin-list-row" id="teacherReportRow" style="cursor:pointer;" onclick="openTeacherReport()">
+                        <img src="assets/teacher_avatar.png" alt="" class="admin-list-avatar">
+                        <span class="admin-list-title">Ms. Anita — prep readiness &amp; in-class time</span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-children"></i> Student Reports</h3>
+                    <p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">The same report each student's parent sees.</p>
+                    <div class="admin-chapter-list" id="reportsStudentList"></div>
+                </div>
+            </section>
+
+            <section id="teacher-report-view" class="view-section">
+                <button class="back-link-btn" onclick="navigateTo('reports-home')">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Reports
+                </button>
+                <div id="teacherReportContent"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ================= MODALS & POPUPS ================= -->
+
+    <!-- Class Planner Modal: shared by the Class 1 (Explore+Practice) and Class 2 (Create+Perform) checklists -->
+    <div id="plannerModal" class="modal-backdrop" onclick="if (event.target === this) closePlannerModal()">
+        <div class="modal-card planner-modal">
+            <button class="modal-close-btn" onclick="closePlannerModal()">&times;</button>
+
+            <div class="planner-modal-header">
+                <div class="badge-icon pink"><i class="fa-solid fa-clipboard-list"></i></div>
+                <div>
+                    <span class="planner-modal-eyebrow" id="plannerEyebrow">Chapter 01 · My Imaginary World</span>
+                    <h3 id="plannerModalTitle">Class 1 Planner · Explore &amp; Practice</h3>
+                </div>
+            </div>
+
+            <div class="planner-progress-wrap">
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="plannerProgressFill" style="width:0%;"></div></div>
+                <span id="plannerProgressText">0 / 4 done</span>
+            </div>
+
+            <div class="planner-checklist" id="plannerChecklist"></div>
+
+            <div class="modal-actions-row">
+                <button class="btn-glass" onclick="closePlannerModal()">Not Yet</button>
+                <button class="btn-primary-glowing" id="plannerContinueBtn" onclick="continuePlanner()" disabled>
+                    Complete all items <i class="fa-solid fa-lock"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trainer Follow-up Check-in Modal: "five-minute check-in" before the teacher's next session -->
+    <div id="followUpModal" class="modal-backdrop" onclick="if (event.target === this) closeFollowUpModal()">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeFollowUpModal()">&times;</button>
+
+            <div class="planner-modal-header">
+                <div class="badge-icon blue"><i class="fa-solid fa-comment-dots"></i></div>
+                <div>
+                    <h3>Five-Minute Check-In</h3>
+                    <p class="modal-sub">Before the teacher's next session, see if the suggestion helped.</p>
+                </div>
+            </div>
+
+            <div class="checklist-items">
+                <label class="check-item"><input type="checkbox" id="followUpCheckIn"> Check-in done</label>
+            </div>
+            <div class="reflection-field"><label>Did the teacher try the suggestion?</label>
+                <div class="reflection-pill-group" id="followUpTriedPills">
+                    <button type="button" class="reflection-pill" onclick="setFollowUpTried('Yes', this)">Yes</button>
+                    <button type="button" class="reflection-pill" onclick="setFollowUpTried('Partly', this)">Partly</button>
+                    <button type="button" class="reflection-pill" onclick="setFollowUpTried('No', this)">No</button>
+                </div>
+            </div>
+            <div class="reflection-field"><label>Note</label>
+                <textarea class="reflection-textarea" id="followUpNote"></textarea></div>
+
+            <div class="modal-actions-row">
+                <button class="btn-glass" onclick="closeFollowUpModal()">Cancel</button>
+                <button class="btn-primary-glowing" onclick="saveFollowUp()">Save Follow-up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Handwriting Scan Modal: shared by Create (first draft) and Perform (rewrite) -->
+    <div id="ocrScanModal" class="modal-backdrop" onclick="if (event.target === this) closeOcrScanModal()">
+        <div class="modal-card ocr-modal">
+            <button class="modal-close-btn" onclick="closeOcrScanModal()">&times;</button>
+
+            <div class="ocr-modal-header">
+                <div class="badge-icon blue"><i class="fa-solid fa-camera"></i></div>
+                <div>
+                    <h3>Scan Student's Writing</h3>
+                    <p class="modal-sub">Take or upload a photo of the handwritten page.</p>
+                </div>
+            </div>
+
+            <div class="ocr-scan-area" id="ocrScanArea">
+                <i class="fa-solid fa-camera camera-large-icon"></i>
+                <p>Position the handwritten page in frame</p>
+                <span class="ocr-accuracy-note">Works best on clear, printed handwriting — always check the result.</span>
+            </div>
+            <video id="ocrVideo" class="ocr-video" autoplay playsinline style="display:none;"></video>
+            <img id="ocrPreviewImg" class="ocr-preview-img" style="display:none;" alt="Scanned page preview">
+            <canvas id="ocrCanvas" style="display:none;"></canvas>
+
+            <input type="file" accept="image/*" capture="environment" id="ocrFileInput" style="display:none" onchange="onOcrFileChosen(event)">
+
+            <div class="modal-actions-row" id="ocrActionsIdle">
+                <button class="btn-glass" onclick="document.getElementById('ocrFileInput').click()">
+                    <i class="fa-solid fa-folder-open"></i> Choose Photo
+                </button>
+                <button class="btn-primary-glowing compact" onclick="startOcrCamera()">
+                    <i class="fa-solid fa-camera"></i> Take Photo
+                </button>
+            </div>
+
+            <div class="modal-actions-row" id="ocrActionsCamera" style="display:none;">
+                <button class="btn-glass" onclick="stopOcrCamera()">Cancel</button>
+                <button class="btn-primary-glowing compact" onclick="captureOcrPhoto()">
+                    <i class="fa-solid fa-camera"></i> Capture
+                </button>
+            </div>
+
+            <div class="modal-actions-row" id="ocrActionsPreview" style="display:none;">
+                <button class="btn-glass" onclick="retakeOcrPhoto()">
+                    <i class="fa-solid fa-rotate-left"></i> Retake
+                </button>
+                <button class="btn-primary-glowing compact" onclick="extractOcrText()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Extract Text
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot AI Hint Modal -->
+    <div id="robotHintModal" class="modal-backdrop" onclick="if (event.target === this) closeRobotHintModal()">
+        <div class="modal-card robot-modal">
+            <button class="modal-close-btn" onclick="closeRobotHintModal()">&times;</button>
+            
+            <div class="robot-modal-header">
+                <img src="assets/dragon_buddy.png" alt="Flame the Dragon" class="robot-modal-avatar">
+                <div>
+                    <h3>Your Learning Hint</h3>
+                    <p class="modal-sub">Your story stays <strong>yours</strong>.</p>
+                </div>
+            </div>
+
+            <div class="robot-hint-box">
+                <p id="robotHintText">"Have you thought about what makes your world special for the people who live there?"</p>
+            </div>
+
+            <div class="modal-actions-row">
+                <button class="btn-glass" onclick="closeRobotHintModal()">Keep Writing</button>
+                <button class="btn-primary-glowing compact" onclick="generateNewHint()">Try Another Hint</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Completed Success Modal -->
+    <div id="scanSuccessModal" class="modal-backdrop" onclick="if (event.target === this) closeScanSuccessModal()">
+        <div class="modal-card scan-modal">
+            <div class="scan-success-icon-wrapper">
+                <i class="fa-solid fa-circle-check green-check"></i>
+            </div>
+            <h2>SCANNED!</h2>
+            <p>Photo sent! Feedback will appear in the portfolio shortly. You can move to the next student now.</p>
+            <button class="btn-primary-glowing full-width" onclick="closeScanSuccessModal()">
+                Next Student <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chapter 1's dedicated Practice experience (self-contained IIFE) -->
+    <script src="chapter1-practice.js"></script>
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+    <!-- YouTube IFrame API: loaded async, calls window.onYouTubeIframeAPIReady (defined in app.js) when ready -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>

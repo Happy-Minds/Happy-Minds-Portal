@@ -1,0 +1,23 @@
+# Source documents and reference material (not loaded by the portal)
+*.pdf
+*.docx
+*.zip
+Content/
+assets/_originals/
+assets/Character_reference/
+logo.png
+logo_transparent.png
+
+# Old backups and one-off scripts
+_backup-before-student-portal-swap/
+remove_bg.py
+
+# Editor / assistant settings
+.vscode/
+.claude/
+CLAUDE.md
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store

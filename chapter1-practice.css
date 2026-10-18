@@ -1,0 +1,1378 @@
+    /* ============================================
+       CHAPTER 1 PRACTICE — NOUN DETECTIVE
+       All styles scoped to #chapter1-practice.
+       This block must never leak selectors that
+       target bare html/body/button/img/h1-h3 etc.
+       ============================================ */
+
+    #chapter1-practice, #chapter1-practice *, #chapter1-practice *::before, #chapter1-practice *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    #chapter1-practice {
+        --c-primary: #4A6CF7;
+        --c-primary-light: #6B8BFF;
+        --c-accent: #FF9F43;
+        --c-accent-dark: #E8872E;
+        --c-success: #28C76F;
+        --c-success-light: #48E08A;
+        --c-error: #FF6B6B;
+        --c-warning: #FECA57;
+        --c-purple: #A855F7;
+        --c-pink: #EC4899;
+        --c-sky: #B8E4FF;
+        --c-bg: #F0F6FF;
+        --c-bg-warm: #FFF8F0;
+        --c-text: #2D3748;
+        --c-text-light: #718096;
+        --c-white: #FFFFFF;
+        --c-card: #FFFFFF;
+        --c-common: #3B82F6;
+        --c-proper: #A855F7;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+        --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+        --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+        --shadow-glow: 0 0 20px rgba(74,108,247,0.3);
+        --radius-sm: 12px;
+        --radius-md: 20px;
+        --radius-lg: 28px;
+        --radius-xl: 36px;
+        --font-display: 'Fredoka', sans-serif;
+        --font-body: 'Outfit', sans-serif;
+        --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        font-family: var(--font-body);
+        color: var(--c-text);
+        background: linear-gradient(135deg, #E0ECFF 0%, #F0F6FF 30%, #FFF8F0 70%, #FFE8CC 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+        line-height: 1.4;
+    }
+
+    #chapter1-practice h1,
+    #chapter1-practice h2,
+    #chapter1-practice h3,
+    #chapter1-practice h4 {
+        font-family: var(--font-display);
+        line-height: 1.25;
+    }
+
+    #chapter1-practice button {
+        font-family: var(--font-body);
+    }
+
+    #chapter1-practice img {
+        max-width: 100%;
+        display: block;
+    }
+
+    /* --- SCREEN SYSTEM --- */
+    #chapter1-practice .screen {
+        display: none;
+        min-height: 100vh;
+        padding: 32px 24px 60px;
+        width: 100%;
+    }
+    #chapter1-practice .screen.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeSlideIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounceIn {
+        0% { opacity: 0; transform: scale(0.3); }
+        50% { transform: scale(1.06); }
+        70% { transform: scale(0.96); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes popIn {
+        0% { opacity: 0; transform: scale(0); }
+        70% { transform: scale(1.08); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+        50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes confettiFall {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes shineAcross {
+        0% { left: -100%; }
+        100% { left: 200%; }
+    }
+    @keyframes hotspotPulse {
+        0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,0.18), 0 0 0 0 rgba(255,200,60,0.45); }
+        50% { box-shadow: 0 4px 18px rgba(0,0,0,0.22), 0 0 0 10px rgba(255,200,60,0); }
+    }
+    @keyframes shakeX {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(8px); }
+        60% { transform: translateX(-6px); }
+        80% { transform: translateX(6px); }
+    }
+
+    /* --- LAYOUT HELPERS (fix: block cards were left-aligned inside
+         wider parents because they only had margin:X 0, not auto) --- */
+    #chapter1-practice .center-col {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* --- PROGRESS BAR --- */
+    #chapter1-practice .progress-bar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 0;
+        margin: 4px 0 32px;
+        width: 100%;
+        max-width: 920px;
+    }
+    #chapter1-practice .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        position: relative;
+        min-width: 0;
+    }
+    #chapter1-practice .progress-step::after {
+        content: '';
+        position: absolute;
+        top: 22px;
+        left: 50%;
+        width: 100%;
+        height: 4px;
+        background: #D1D5DB;
+        border-radius: 2px;
+        z-index: 0;
+    }
+    #chapter1-practice .progress-step:last-child::after { display: none; }
+    #chapter1-practice .progress-step.completed::after { background: var(--c-success); }
+    #chapter1-practice .progress-step.active::after {
+        background: linear-gradient(90deg, var(--c-primary) 50%, #D1D5DB 50%);
+    }
+
+    #chapter1-practice .progress-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #E2E8F0;
+        color: #94A3B8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        z-index: 1;
+        transition: var(--transition);
+        border: 3px solid transparent;
+        flex-shrink: 0;
+    }
+    #chapter1-practice .progress-step.active .progress-circle {
+        background: var(--c-primary);
+        color: white;
+        border-color: var(--c-primary-light);
+        box-shadow: 0 0 12px rgba(74,108,247,0.4);
+    }
+    #chapter1-practice .progress-step.completed .progress-circle {
+        background: var(--c-success);
+        color: white;
+        border-color: var(--c-success-light);
+    }
+    #chapter1-practice .progress-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #94A3B8;
+        transition: var(--transition);
+        text-align: center;
+    }
+    #chapter1-practice .progress-step.active .progress-label { color: var(--c-primary); }
+    #chapter1-practice .progress-step.completed .progress-label { color: var(--c-success); }
+
+    /* --- CHARACTER TOKEN (circular, crops out the flat studio
+         background of the source photos instead of showing it as
+         a box) --- */
+    #chapter1-practice .char-token {
+        position: relative;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid rgba(255,255,255,0.9);
+        box-shadow: var(--shadow-md);
+        flex-shrink: 0;
+    }
+    #chapter1-practice .char-token img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    #chapter1-practice .char-token::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: inset 0 -6px 10px rgba(0,0,0,0.12);
+        pointer-events: none;
+    }
+    #chapter1-practice .char-token.token-dragon img { object-position: 50% 55%; }
+    #chapter1-practice .char-token.token-girl img { object-position: 50% 12%; }
+    #chapter1-practice .char-token.token-bird img { object-position: 48% 32%; }
+
+    /* --- INTRO SCREEN --- */
+    #chapter1-practice .intro-hero {
+        position: relative;
+        width: 100%;
+        max-width: 1100px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow-lg);
+    }
+    #chapter1-practice .intro-hero img.hero-bg {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        display: block;
+    }
+    #chapter1-practice .intro-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.42) 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        text-align: center;
+    }
+    #chapter1-practice .intro-chapter-badge {
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(10px);
+        padding: 10px 28px;
+        border-radius: 50px;
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--c-primary);
+        margin-bottom: 14px;
+        box-shadow: var(--shadow-sm);
+    }
+    #chapter1-practice .intro-title {
+        font-size: 3rem;
+        color: white;
+        text-shadow: 0 3px 12px rgba(0,0,0,0.45);
+        text-align: center;
+        line-height: 1.15;
+    }
+    #chapter1-practice .intro-subtitle-badge {
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(8px);
+        padding: 6px 20px;
+        border-radius: 50px;
+        color: rgba(255,255,255,0.95);
+        font-size: 1rem;
+        margin-top: 14px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    #chapter1-practice .intro-characters {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+    #chapter1-practice .intro-token {
+        position: absolute;
+    }
+    #chapter1-practice .intro-token .token-shadow {
+        position: absolute;
+        left: 50%;
+        bottom: -8px;
+        width: 70%;
+        height: 14px;
+        background: radial-gradient(ellipse at center, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 72%);
+        transform: translateX(-50%);
+        border-radius: 50%;
+    }
+    #chapter1-practice .intro-token.dragon-token {
+        bottom: 14px;
+        right: 6%;
+        width: 128px;
+        height: 128px;
+        animation: float 3.2s ease-in-out infinite;
+    }
+    #chapter1-practice .intro-token.girl-token {
+        bottom: 6px;
+        left: 6%;
+        width: 108px;
+        height: 108px;
+    }
+    #chapter1-practice .intro-token.bird-token {
+        top: 26px;
+        right: 26%;
+        width: 76px;
+        height: 76px;
+        animation: float 2.6s ease-in-out infinite 0.4s;
+    }
+    #chapter1-practice .intro-token .char-token {
+        width: 100%;
+        height: 100%;
+        border-color: rgba(255,255,255,0.85);
+    }
+
+    /* --- NOUN DETECTIVE SECTION --- */
+    #chapter1-practice .detective-section {
+        background: var(--c-white);
+        border-radius: var(--radius-lg);
+        padding: 40px 50px;
+        max-width: 1100px;
+        width: 100%;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    #chapter1-practice .detective-title {
+        font-size: 2.6rem;
+        color: var(--c-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-bottom: 12px;
+    }
+    #chapter1-practice .detective-title .emoji { font-size: 2.3rem; }
+    #chapter1-practice .detective-subtitle {
+        font-size: 1.25rem;
+        color: var(--c-text-light);
+        margin-bottom: 28px;
+        font-weight: 500;
+    }
+
+    /* --- BUTTONS --- */
+    #chapter1-practice .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 64px;
+        padding: 0 40px;
+        border-radius: 60px;
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        line-height: 1;
+    }
+    #chapter1-practice .btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+    #chapter1-practice .btn:hover::after {
+        animation: shineAcross 0.6s ease;
+    }
+    #chapter1-practice .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    #chapter1-practice .btn-primary {
+        background: linear-gradient(135deg, var(--c-success) 0%, #20B05E 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(40,199,111,0.35);
+    }
+    #chapter1-practice .btn-primary:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(40,199,111,0.45);
+    }
+    #chapter1-practice .btn-accent {
+        background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-accent-dark) 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(255,159,67,0.35);
+    }
+    #chapter1-practice .btn-accent:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(255,159,67,0.45);
+    }
+    #chapter1-practice .btn-common {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+        min-height: 76px;
+        padding: 0 48px;
+        font-size: 1.5rem;
+        min-width: 260px;
+    }
+    #chapter1-practice .btn-common:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 8px 24px rgba(59,130,246,0.45);
+    }
+    #chapter1-practice .btn-proper {
+        background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(168,85,247,0.35);
+        min-height: 76px;
+        padding: 0 48px;
+        font-size: 1.5rem;
+        min-width: 260px;
+    }
+    #chapter1-practice .btn-proper:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 8px 24px rgba(168,85,247,0.45);
+    }
+    #chapter1-practice .btn-secondary {
+        background: var(--c-bg);
+        color: var(--c-primary);
+        border: 2px solid #D1D5DB;
+        min-height: 60px;
+    }
+    #chapter1-practice .btn-secondary:hover:not(:disabled) {
+        background: var(--c-primary);
+        color: white;
+        border-color: var(--c-primary);
+        transform: translateY(-2px);
+    }
+    #chapter1-practice .btn-next {
+        background: linear-gradient(135deg, var(--c-primary) 0%, #3A5BE7 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(74,108,247,0.35);
+    }
+    #chapter1-practice .btn-next:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(74,108,247,0.45);
+    }
+    #chapter1-practice .btn-sm {
+        min-height: 46px;
+        padding: 0 26px;
+        font-size: 1.05rem;
+    }
+    #chapter1-practice .btn:active:not(:disabled) {
+        transform: translateY(0) scale(0.98) !important;
+    }
+    #chapter1-practice .btn-row {
+        display: flex;
+        gap: 18px;
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* --- INFO CARDS --- */
+    #chapter1-practice .info-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        max-width: 1100px;
+        width: 100%;
+        align-items: stretch;
+    }
+    #chapter1-practice .info-card {
+        background: var(--c-white);
+        border-radius: var(--radius-md);
+        padding: 26px;
+        box-shadow: var(--shadow-sm);
+        text-align: left;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        display: flex;
+        flex-direction: column;
+    }
+    #chapter1-practice .info-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+    #chapter1-practice .info-card.blue { border-color: #BFDBFE; background: linear-gradient(135deg, #EFF6FF, #DBEAFE); }
+    #chapter1-practice .info-card.yellow { border-color: #FDE68A; background: linear-gradient(135deg, #FFFBEB, #FEF3C7); }
+    #chapter1-practice .info-card.green { border-color: #BBF7D0; background: linear-gradient(135deg, #F0FFF4, #DCFCE7); }
+    #chapter1-practice .info-card-title {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #chapter1-practice .info-card p {
+        font-size: 1.02rem;
+        color: var(--c-text-light);
+        line-height: 1.55;
+    }
+    #chapter1-practice .info-card strong { color: var(--c-text); }
+
+    /* --- MISSION HEADER --- */
+    #chapter1-practice .mission-header {
+        text-align: center;
+        margin-bottom: 20px;
+        max-width: 760px;
+    }
+    #chapter1-practice .mission-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--c-accent) 0%, #F59E0B 100%);
+        color: white;
+        padding: 8px 24px;
+        border-radius: 50px;
+        font-family: var(--font-display);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+    }
+    #chapter1-practice .mission-title {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+    }
+    #chapter1-practice .mission-instruction {
+        font-size: 1.2rem;
+        color: var(--c-text-light);
+        font-weight: 500;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    #chapter1-practice .rule-banner {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 8px 20px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
+        border: 2px solid #C084FC;
+        color: #6B21A8;
+        font-weight: 700;
+        font-size: 0.98rem;
+    }
+
+    /* --- GUIDE CHARACTER --- */
+    #chapter1-practice .guide {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--c-white);
+        border-radius: var(--radius-md);
+        padding: 14px 24px 14px 14px;
+        box-shadow: var(--shadow-sm);
+        max-width: 520px;
+        width: 100%;
+        margin: 14px auto;
+        animation: slideUp 0.4s ease;
+        border: 2px solid #FDE68A;
+    }
+    #chapter1-practice .guide .char-token {
+        width: 60px;
+        height: 60px;
+        border-color: var(--c-accent);
+        border-width: 3px;
+    }
+    #chapter1-practice .guide-bubble {
+        background: #FFF8F0;
+        border-radius: 16px;
+        padding: 12px 18px;
+        font-size: 1.08rem;
+        font-weight: 500;
+        color: var(--c-text);
+        position: relative;
+        border: 1px solid #FDE68A;
+        flex: 1;
+    }
+    #chapter1-practice .guide-bubble::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 18px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid #FDE68A;
+    }
+
+    /* --- MAGICAL WORLD SCENE --- */
+    #chapter1-practice .world-scene {
+        position: relative;
+        width: 100%;
+        max-width: 1100px;
+        aspect-ratio: 16/9;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        margin: 16px 0;
+    }
+    #chapter1-practice .world-bg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Hotspot markers — used instead of the raw character/object photos
+       so no rectangular white/gray studio background is ever visible.
+       Positioned in % over the matching feature already illustrated in
+       background.png. */
+    #chapter1-practice .world-hotspot {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.9);
+        background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95), rgba(255,214,120,0.55) 60%, rgba(255,170,50,0.35) 100%);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+        cursor: pointer;
+        transition: var(--transition);
+        animation: hotspotPulse 2.6s ease-in-out infinite;
+        z-index: 2;
+        padding: 0;
+        overflow: hidden;
+    }
+    #chapter1-practice .world-hotspot .hotspot-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    #chapter1-practice .world-hotspot .hotspot-emoji {
+        line-height: 1;
+        filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+    }
+    #chapter1-practice .hotspot-lg { width: 108px; height: 108px; }
+    #chapter1-practice .hotspot-lg .hotspot-emoji { font-size: 2.7rem; }
+    #chapter1-practice .hotspot-md { width: 84px; height: 84px; }
+    #chapter1-practice .hotspot-md .hotspot-emoji { font-size: 2.1rem; }
+    #chapter1-practice .hotspot-sm { width: 66px; height: 66px; }
+    #chapter1-practice .hotspot-sm .hotspot-emoji { font-size: 1.7rem; }
+
+    #chapter1-practice .world-hotspot:hover,
+    #chapter1-practice .world-hotspot:focus-visible {
+        transform: translate(-50%, -50%) scale(1.14);
+        outline: none;
+        border-color: #fff;
+    }
+    #chapter1-practice .world-hotspot.selected {
+        border-color: var(--c-primary);
+        box-shadow: 0 0 0 6px rgba(74,108,247,0.32), 0 4px 14px rgba(0,0,0,0.2);
+        animation: none;
+    }
+    #chapter1-practice .world-hotspot.found {
+        animation: none;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    }
+    #chapter1-practice .world-hotspot.found .hotspot-emoji { opacity: 0.9; }
+    #chapter1-practice .world-hotspot.found::after {
+        content: '✓';
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 26px;
+        height: 26px;
+        background: var(--c-success);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 2px solid #fff;
+    }
+    #chapter1-practice .world-hotspot.named::after {
+        content: '⭐';
+        background: var(--c-proper);
+        font-size: 0.8rem;
+    }
+
+    /* Object label tooltip */
+    #chapter1-practice .object-label {
+        position: absolute;
+        top: -42px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--c-white);
+        color: var(--c-text);
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 6px 16px;
+        border-radius: 20px;
+        box-shadow: var(--shadow-md);
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: var(--transition);
+        z-index: 10;
+    }
+    #chapter1-practice .world-hotspot:hover .object-label,
+    #chapter1-practice .world-hotspot:focus-visible .object-label,
+    #chapter1-practice .world-hotspot.selected .object-label {
+        opacity: 1;
+    }
+
+    /* --- ACTIVITY PANEL --- */
+    #chapter1-practice .activity-panel {
+        background: var(--c-white);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        max-width: 760px;
+        width: 100%;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+        margin: 16px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* --- NOUN DISPLAY --- */
+    #chapter1-practice .noun-display {
+        font-size: 2.8rem;
+        font-family: var(--font-display);
+        font-weight: 700;
+        margin: 16px 0;
+        animation: bounceIn 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    #chapter1-practice .noun-display .emoji { font-size: 2.8rem; }
+    #chapter1-practice .noun-display.common { color: var(--c-common); }
+    #chapter1-practice .noun-display.proper { color: var(--c-proper); }
+
+    /* --- RESULT CARD (fix: was margin:20px 0 with no auto, so it
+         hugged the left edge inside wider parents) --- */
+    #chapter1-practice .result-card {
+        background: linear-gradient(135deg, #F0FFF4 0%, #DCFCE7 100%);
+        border: 3px solid var(--c-success);
+        border-radius: var(--radius-lg);
+        padding: 28px 36px;
+        margin: 16px auto;
+        animation: bounceIn 0.4s ease;
+        max-width: 560px;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #chapter1-practice .result-card.incorrect {
+        background: linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%);
+        border-color: var(--c-warning);
+    }
+    #chapter1-practice .result-card .result-emoji {
+        font-size: 2.8rem;
+        margin-bottom: 8px;
+    }
+    #chapter1-practice .result-card .result-title {
+        font-size: 1.9rem;
+        color: var(--c-success);
+        margin-bottom: 8px;
+    }
+    #chapter1-practice .result-card.incorrect .result-title {
+        color: var(--c-accent-dark);
+    }
+    #chapter1-practice .result-card .result-text {
+        font-size: 1.15rem;
+        color: var(--c-text-light);
+        line-height: 1.6;
+    }
+    #chapter1-practice .result-card .hint-line {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed rgba(0,0,0,0.15);
+        font-size: 1.05rem;
+        color: var(--c-accent-dark);
+        font-weight: 600;
+    }
+    #chapter1-practice .result-actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    #chapter1-practice .noun-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 22px;
+        border-radius: 50px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.15rem;
+        margin: 4px;
+    }
+    #chapter1-practice .noun-badge.common {
+        background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
+        color: var(--c-common);
+        border: 2px solid #93C5FD;
+    }
+    #chapter1-practice .noun-badge.proper {
+        background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
+        color: var(--c-proper);
+        border: 2px solid #C084FC;
+    }
+
+    /* --- WHY SCREEN --- */
+    #chapter1-practice .comparison-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    #chapter1-practice .comparison-item {
+        text-align: center;
+        padding: 22px 32px;
+        border-radius: var(--radius-md);
+        min-width: 190px;
+    }
+    #chapter1-practice .comparison-item.common-side {
+        background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+        border: 3px solid #93C5FD;
+    }
+    #chapter1-practice .comparison-item.proper-side {
+        background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
+        border: 3px solid #C084FC;
+    }
+    #chapter1-practice .comparison-word {
+        font-family: var(--font-display);
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+    #chapter1-practice .comparison-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-top: 6px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    #chapter1-practice .comparison-sub {
+        font-size: 0.92rem;
+        color: var(--c-text-light);
+        margin-top: 6px;
+    }
+    #chapter1-practice .comparison-arrow {
+        font-size: 2.2rem;
+        color: var(--c-accent);
+        animation: pulse 1.5s infinite;
+    }
+
+    /* --- OPTIONS (fix: same missing-auto-margin centering bug) --- */
+    #chapter1-practice .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin: 20px auto 0;
+        max-width: 560px;
+        width: 100%;
+    }
+    #chapter1-practice .option-btn {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--c-white);
+        border: 3px solid #E2E8F0;
+        border-radius: var(--radius-md);
+        padding: 18px 26px;
+        font-size: 1.18rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        text-align: left;
+        font-family: var(--font-body);
+        color: var(--c-text);
+        width: 100%;
+    }
+    #chapter1-practice .option-btn:hover:not(:disabled) {
+        border-color: var(--c-primary);
+        background: #F0F4FF;
+        transform: translateX(6px);
+    }
+    #chapter1-practice .option-btn:disabled { cursor: default; }
+    #chapter1-practice .option-btn .option-letter {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--c-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+    #chapter1-practice .option-btn.selected-correct {
+        border-color: var(--c-success);
+        background: #F0FFF4;
+    }
+    #chapter1-practice .option-btn.selected-incorrect {
+        border-color: var(--c-warning);
+        background: #FFFBEB;
+    }
+
+    /* --- NAMING MACHINE --- */
+    #chapter1-practice .naming-machine {
+        background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 50%, #FDE68A 100%);
+        border-radius: var(--radius-xl);
+        padding: 36px;
+        max-width: 700px;
+        width: 100%;
+        margin: 16px 0;
+        border: 3px solid #C084FC;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+    #chapter1-practice .naming-machine::before {
+        content: '✨';
+        position: absolute;
+        font-size: 1.8rem;
+        top: 12px;
+        left: 20px;
+        animation: sparkle 2s infinite;
+    }
+    #chapter1-practice .naming-machine::after {
+        content: '✨';
+        position: absolute;
+        font-size: 1.8rem;
+        top: 12px;
+        right: 20px;
+        animation: sparkle 2s infinite 0.7s;
+    }
+    #chapter1-practice .naming-chips {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    #chapter1-practice .naming-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--c-white);
+        border: 2px solid #C084FC;
+        border-radius: 50px;
+        padding: 10px 18px;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--c-text);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    #chapter1-practice .naming-chip:hover:not(:disabled) { background: #F3E8FF; }
+    #chapter1-practice .naming-chip.active {
+        background: var(--c-purple);
+        color: white;
+        border-color: var(--c-purple);
+    }
+    #chapter1-practice .naming-chip .chip-check {
+        font-size: 0.9rem;
+    }
+    #chapter1-practice .naming-input {
+        width: 100%;
+        max-width: 380px;
+        padding: 16px 22px;
+        font-size: 1.4rem;
+        font-family: var(--font-display);
+        border: 3px solid #C084FC;
+        border-radius: var(--radius-md);
+        text-align: center;
+        background: var(--c-white);
+        color: var(--c-text);
+        outline: none;
+        transition: var(--transition);
+    }
+    #chapter1-practice .naming-input:focus {
+        border-color: var(--c-purple);
+        box-shadow: 0 0 16px rgba(168,85,247,0.3);
+    }
+    #chapter1-practice .naming-input::placeholder {
+        color: #B39DDB;
+    }
+    #chapter1-practice .naming-input.input-error {
+        border-color: var(--c-error);
+        animation: shakeX 0.4s ease;
+    }
+    #chapter1-practice .naming-error-msg {
+        color: #C0392B;
+        font-weight: 600;
+        font-size: 0.98rem;
+        margin-top: 10px;
+        min-height: 1.4em;
+    }
+    #chapter1-practice .transform-arrow {
+        font-size: 2.6rem;
+        margin: 14px 0;
+        display: block;
+        animation: pulse 1.5s infinite;
+    }
+    #chapter1-practice .transform-result { display: none; }
+    #chapter1-practice .transform-result.visible {
+        display: block;
+        animation: bounceIn 0.5s ease;
+    }
+    #chapter1-practice .naming-full-msg {
+        background: var(--c-white);
+        border: 2px dashed var(--c-purple);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        font-weight: 600;
+        color: var(--c-purple);
+    }
+
+    /* --- GRAMMAR FIXER --- */
+    #chapter1-practice .fixer-sentence {
+        font-size: 1.9rem;
+        font-family: var(--font-display);
+        line-height: 2.1;
+        margin: 20px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+    }
+    #chapter1-practice .fixer-quote {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: var(--c-text-light);
+    }
+    #chapter1-practice .fixer-word {
+        padding: 8px 16px;
+        border-radius: 12px;
+        transition: var(--transition);
+        border: 3px solid transparent;
+        font-family: var(--font-display);
+        font-size: 1.7rem;
+        font-weight: 600;
+        background: transparent;
+        color: var(--c-text);
+    }
+    #chapter1-practice .fixer-word.fixable {
+        cursor: pointer;
+        background: var(--c-white);
+        border-color: #E2E8F0;
+    }
+    #chapter1-practice .fixer-word.fixable:hover {
+        border-color: var(--c-purple);
+        background: #F3E8FF;
+    }
+    #chapter1-practice .fixer-word.fixed {
+        background: linear-gradient(135deg, #F3E8FF, #E9D5FF);
+        border-color: var(--c-purple);
+        color: var(--c-purple);
+        animation: popIn 0.3s ease;
+    }
+    #chapter1-practice .fixer-word.not-fixable {
+        cursor: default;
+        opacity: 0.55;
+    }
+    #chapter1-practice .fixer-legend {
+        font-size: 0.95rem;
+        color: var(--c-text-light);
+        margin-top: 4px;
+        margin-bottom: 4px;
+    }
+
+    /* --- NOUN HUNT COLLECTIONS --- */
+    #chapter1-practice .hunt-layout {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 24px;
+        max-width: 1100px;
+        width: 100%;
+        align-items: start;
+    }
+    #chapter1-practice .hunt-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    #chapter1-practice .collection-box {
+        background: var(--c-white);
+        border-radius: var(--radius-md);
+        padding: 18px;
+        box-shadow: var(--shadow-sm);
+    }
+    #chapter1-practice .collection-box.common-collection {
+        border: 3px solid #93C5FD;
+    }
+    #chapter1-practice .collection-box.proper-collection {
+        border: 3px solid #C084FC;
+    }
+    #chapter1-practice .collection-title {
+        font-size: 1.08rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #chapter1-practice .collection-title.common-title { color: var(--c-common); }
+    #chapter1-practice .collection-title.proper-title { color: var(--c-proper); }
+    #chapter1-practice .collection-progress {
+        font-size: 0.95rem;
+        color: var(--c-text-light);
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+    #chapter1-practice .collection-items {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    #chapter1-practice .collection-slot {
+        background: #F8FAFC;
+        border: 2px dashed #D1D5DB;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-size: 0.98rem;
+        font-weight: 600;
+        color: #CBD5E1;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+    }
+    #chapter1-practice .collection-slot.filled {
+        background: var(--c-white);
+        border-style: solid;
+        color: var(--c-text);
+        animation: slideUp 0.3s ease;
+    }
+    #chapter1-practice .collection-slot.filled.common-filled { border-color: #93C5FD; background: #EFF6FF; }
+    #chapter1-practice .collection-slot.filled.proper-filled { border-color: #C084FC; background: #F3E8FF; }
+
+    /* --- HUNT CLASSIFY MODAL --- */
+    #chapter1-practice .hunt-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(20,20,30,0.55);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    #chapter1-practice .hunt-modal.visible {
+        display: flex;
+    }
+    #chapter1-practice .hunt-modal-content {
+        position: relative;
+        background: var(--c-white);
+        border-radius: var(--radius-lg);
+        padding: 40px 44px;
+        max-width: 560px;
+        width: 100%;
+        max-height: 88vh;
+        overflow-y: auto;
+        text-align: center;
+        animation: bounceIn 0.35s ease;
+        box-shadow: var(--shadow-lg);
+    }
+    #chapter1-practice .modal-close-x {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: #F1F5F9;
+        color: var(--c-text-light);
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+    #chapter1-practice .modal-close-x:hover { background: #E2E8F0; color: var(--c-text); }
+
+    /* --- COMPLETION SCREEN --- */
+    #chapter1-practice .completion-screen {
+        text-align: center;
+        padding: 20px;
+        max-width: 640px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #chapter1-practice .trophy-icon {
+        font-size: 4.6rem;
+        animation: bounceIn 0.6s ease;
+        display: block;
+        margin-bottom: 16px;
+    }
+    #chapter1-practice .completion-title {
+        font-size: 2.7rem;
+        background: linear-gradient(135deg, var(--c-accent) 0%, var(--c-pink) 50%, var(--c-purple) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+    }
+    #chapter1-practice .completion-subtitle {
+        font-size: 1.3rem;
+        color: var(--c-text-light);
+        margin-bottom: 26px;
+    }
+    #chapter1-practice .checklist {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto 28px;
+        text-align: left;
+    }
+    #chapter1-practice .checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.08rem;
+        font-weight: 600;
+        padding: 12px 20px;
+        background: var(--c-white);
+        border-radius: 14px;
+        box-shadow: var(--shadow-sm);
+        animation: slideUp 0.4s ease;
+    }
+    #chapter1-practice .checklist-item .check-icon {
+        width: 30px;
+        height: 30px;
+        background: var(--c-success);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    /* --- CONFETTI --- */
+    #chapter1-practice .confetti-container {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1000;
+        overflow: hidden;
+    }
+    #chapter1-practice .confetti-piece {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        top: -20px;
+        animation: confettiFall linear forwards;
+    }
+
+    /* --- SPARKLE DECORATIONS --- */
+    #chapter1-practice .sparkle {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        animation: sparkle 2s infinite;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    /* --- SCREEN-READER ONLY --- */
+    #chapter1-practice .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 900px) {
+        #chapter1-practice .info-cards { grid-template-columns: 1fr; }
+        #chapter1-practice .hunt-layout { grid-template-columns: 1fr; }
+        #chapter1-practice .intro-hero img.hero-bg { height: 300px; }
+        #chapter1-practice .intro-title { font-size: 2.1rem; }
+        #chapter1-practice .intro-token.dragon-token { width: 90px; height: 90px; right: 4%; bottom: 10px; }
+        #chapter1-practice .intro-token.girl-token { width: 78px; height: 78px; left: 4%; }
+        #chapter1-practice .intro-token.bird-token { width: 56px; height: 56px; top: 16px; }
+        #chapter1-practice .btn { min-height: 56px; padding: 0 28px; font-size: 1.1rem; }
+        #chapter1-practice .btn-common,
+        #chapter1-practice .btn-proper { min-height: 64px; padding: 0 32px; font-size: 1.25rem; min-width: 0; }
+        #chapter1-practice .mission-title { font-size: 1.7rem; }
+        #chapter1-practice .noun-display { font-size: 2rem; }
+        #chapter1-practice .noun-display .emoji { font-size: 2rem; }
+        #chapter1-practice .screen { padding: 20px 16px 48px; }
+        #chapter1-practice .activity-panel { padding: 28px 20px; }
+        #chapter1-practice .hunt-modal-content { padding: 30px 22px; }
+        /* Hotspot markers are fixed-px circles positioned by %, so on a
+           narrower (and therefore shorter, aspect-ratio-locked) scene
+           they crowd together — scale them down to keep clearance. */
+        #chapter1-practice .hotspot-lg { width: 84px; height: 84px; }
+        #chapter1-practice .hotspot-lg .hotspot-emoji { font-size: 2.1rem; }
+        #chapter1-practice .hotspot-md { width: 64px; height: 64px; }
+        #chapter1-practice .hotspot-md .hotspot-emoji { font-size: 1.6rem; }
+        #chapter1-practice .hotspot-sm { width: 50px; height: 50px; }
+        #chapter1-practice .hotspot-sm .hotspot-emoji { font-size: 1.3rem; }
+    }
+    @media (max-width: 600px) {
+        #chapter1-practice .btn-row { flex-direction: column; align-items: stretch; }
+        #chapter1-practice .comparison-box { flex-direction: column; gap: 16px; }
+        #chapter1-practice .progress-label { display: none; }
+        #chapter1-practice .fixer-sentence { font-size: 1.4rem; }
+        #chapter1-practice .fixer-word { font-size: 1.3rem; padding: 6px 10px; }
+        #chapter1-practice .hotspot-lg { width: 62px; height: 62px; }
+        #chapter1-practice .hotspot-lg .hotspot-emoji { font-size: 1.55rem; }
+        #chapter1-practice .hotspot-md { width: 50px; height: 50px; }
+        #chapter1-practice .hotspot-md .hotspot-emoji { font-size: 1.25rem; }
+        #chapter1-practice .hotspot-sm { width: 40px; height: 40px; }
+        #chapter1-practice .hotspot-sm .hotspot-emoji { font-size: 1.05rem; }
+        #chapter1-practice .world-hotspot.found::after { width: 20px; height: 20px; font-size: 0.7rem; }
+    }

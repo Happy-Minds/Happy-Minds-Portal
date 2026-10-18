@@ -1,0 +1,732 @@
+/* ==========================================================================
+   Projector View — the SAME Happy Minds UI as the teacher's screen, just
+   large-format for the back of the room. Reuses the app's real design
+   system (sky-gradient background, white glass cards, the exact ritual/
+   stage gradients) instead of inventing a separate dark "presentation"
+   theme — this page never loads styles.css, so the values below are
+   duplicated on purpose, not reinvented.
+   ========================================================================== */
+
+:root {
+    --primary-blue: #0EA5E9;
+    --accent-green: #10B981;
+    --accent-orange: #F59E0B;
+    --accent-pink: #EC4899;
+    --accent-cyan: #06B6D4;
+    --text-dark: #1E293B;
+    --text-muted: #64748B;
+
+    --bg-gradient-sky: linear-gradient(135deg, #E0F2FE 0%, #F0F9FF 50%, #E0F2FE 100%);
+    --shadow-soft: 0 10px 30px rgba(14, 116, 144, 0.08);
+
+    --font-display: 'Fredoka', 'Outfit', sans-serif;
+    --font-main: 'Outfit', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-gradient-sky);
+    font-family: var(--font-main);
+    color: var(--text-dark);
+}
+
+.projector-stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+.proj-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5vh 6vw;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.98);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.proj-screen.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* A floating white card, scaled up — the same surface as .hero-card /
+   .reveal-card / .think-talk-section, just bigger. Most screens sit on
+   this; the few full-bleed colour screens (settle, rituals) opt out via
+   the .proj-full-bleed modifier below. */
+.proj-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(14, 116, 144, 0.12);
+    padding: clamp(32px, 5vw, 72px) clamp(32px, 6vw, 96px);
+    max-width: 1300px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.proj-badge, .proj-thinktalk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #F0F9FF;
+    color: var(--primary-blue);
+    border-radius: 9999px;
+    padding: 10px 24px;
+    font-weight: 800;
+    font-size: clamp(14px, 1.3vw, 18px);
+    margin-bottom: clamp(24px, 3vw, 40px);
+}
+
+/* ---------- Waiting ---------- */
+.proj-waiting-icon {
+    font-size: 56px;
+    color: var(--primary-blue);
+    opacity: 0.5;
+    margin-bottom: 24px;
+}
+
+.proj-waiting h1 {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 36px);
+    color: var(--text-dark);
+    margin-bottom: 12px;
+}
+
+.proj-waiting p {
+    font-size: clamp(14px, 1.4vw, 18px);
+    color: var(--text-muted);
+    max-width: 480px;
+}
+
+/* ---------- 1. Settle & breathe ---------- */
+/* Full-bleed, exactly .settle-card's blue gradient — the same "opening
+   ritual" colour the teacher's own screen uses for this step. */
+.proj-settle {
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
+    color: white;
+}
+
+.proj-door {
+    width: clamp(120px, 14vw, 200px);
+    height: clamp(120px, 14vw, 200px);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(50px, 7vw, 90px);
+    margin-bottom: 40px;
+    animation: proj-float 3s ease-in-out infinite;
+}
+
+.proj-breathe-text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(36px, 6vw, 72px);
+    letter-spacing: 0.5px;
+}
+
+@keyframes proj-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* ---------- 2. Video ---------- */
+/* Deliberately the one dark screen — matches .video-player-card's own
+   near-black background elsewhere in the app, which is how video already
+   looks everywhere, not an invented theme. */
+.proj-video {
+    background: #0F172A;
+    padding: 3vh 3vw;
+}
+
+.proj-video-el {
+    width: 100%;
+    height: 100%;
+    max-width: 1700px;
+    border-radius: 28px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    background: black;
+}
+
+video.proj-video-el { object-fit: contain; }
+
+/* ---------- 3. Storybook ---------- */
+/* The exact .storybook-card treatment (warm cream/gold), just bigger. */
+.proj-storybook-card {
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    border: 3px solid #FDE68A;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(217, 119, 6, 0.15);
+    padding: clamp(32px, 5vw, 72px) clamp(40px, 6vw, 96px);
+    max-width: 1400px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(32px, 5vw, 64px);
+}
+
+.proj-storybook-char {
+    flex-shrink: 0;
+    width: clamp(160px, 18vw, 280px);
+    height: clamp(160px, 18vw, 280px);
+    border-radius: 50%;
+    background: white;
+    border: 5px solid #FCD34D;
+    box-shadow: 0 10px 28px rgba(217, 119, 6, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.proj-storybook-char.empty {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+}
+
+.proj-storybook-char.empty::after {
+    content: '\f52d';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: clamp(36px, 4vw, 56px);
+    color: #D97706;
+    opacity: 0.6;
+}
+
+.proj-storybook-char img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.proj-storybook-text {
+    font-family: 'Fredoka', var(--font-main);
+    font-size: clamp(24px, 2.8vw, 38px);
+    line-height: 1.6;
+    font-weight: 500;
+    color: #78350F;
+    text-align: left;
+}
+
+.proj-storybook-dots {
+    position: absolute;
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.proj-storybook-dots .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(14, 116, 144, 0.18);
+}
+
+.proj-storybook-dots .dot.active {
+    background: var(--primary-blue);
+    box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.18);
+}
+
+/* Illustrated storybook page on the projector — same gradient-scrim
+   caption technique as the teacher/student screens, scaled up for
+   viewing-distance legibility. No read-aloud button here: narration plays
+   from whichever device's teacher or student tapped it, not duplicated. */
+.proj-storybook-illustrated { display: none; }
+
+.proj-storybook-card.illustrated {
+    display: block;
+    padding: 0;
+    border-width: 0;
+    background: #0F172A;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    overflow: hidden;
+    max-width: 1400px;
+}
+
+.proj-storybook-card.illustrated .proj-storybook-char,
+.proj-storybook-card.illustrated .proj-storybook-text {
+    display: none;
+}
+
+.proj-storybook-card.illustrated .proj-storybook-illustrated {
+    display: block;
+    position: relative;
+}
+
+.proj-storybook-illustration {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2048 / 768;
+    object-fit: cover;
+}
+
+.proj-storybook-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: clamp(20px, 3vw, 40px);
+    background: linear-gradient(to top, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.6) 60%, transparent 100%);
+    color: white;
+    font-family: 'Fredoka', var(--font-main);
+    font-size: clamp(20px, 2.4vw, 32px);
+    line-height: 1.5;
+    font-weight: 500;
+    text-align: left;
+}
+
+@media (max-width: 900px) {
+    .proj-storybook-card { flex-direction: column; text-align: center; gap: 28px; }
+    .proj-storybook-text { text-align: center; }
+}
+
+/* ---------- 4. Think & Talk ---------- */
+.proj-thinktalk-question {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(32px, 4.6vw, 58px);
+    max-width: 1000px;
+    line-height: 1.35;
+    color: var(--text-dark);
+}
+
+/* ---------- 5. Draw ---------- */
+.proj-draw h1 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4vw, 50px);
+    margin-bottom: 16px;
+    color: var(--text-dark);
+}
+
+.proj-draw h1 i { color: var(--accent-pink); margin-right: 14px; }
+
+.proj-draw-sub {
+    font-size: clamp(16px, 1.8vw, 22px);
+    color: var(--text-muted);
+    margin-bottom: 44px;
+}
+
+.proj-draw-timer {
+    position: relative;
+    width: clamp(140px, 16vw, 220px);
+    height: clamp(140px, 16vw, 220px);
+}
+
+.proj-timer-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.proj-timer-track {
+    fill: none;
+    stroke: #E0F2FE;
+    stroke-width: 8;
+}
+
+.proj-timer-fill {
+    fill: none;
+    stroke: var(--accent-green);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 339.3;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+
+.proj-timer-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(24px, 3vw, 38px);
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+/* ---------- 6. Wrap up ---------- */
+.proj-wrapup-emoji {
+    font-size: clamp(60px, 8vw, 110px);
+    margin-bottom: 24px;
+}
+
+.proj-wrapup h1 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4.5vw, 56px);
+    margin-bottom: 12px;
+    color: var(--text-dark);
+}
+
+.proj-wrapup p {
+    font-size: clamp(16px, 1.8vw, 22px);
+    color: var(--text-muted);
+}
+
+/* ---------- Create stage ---------- */
+/* Opening ritual is full-bleed cyan, matching .ritual-card.theme-create. */
+.proj-create-ritual {
+    background: linear-gradient(135deg, #06B6D4, #0E7490);
+    color: white;
+}
+
+.proj-create-ritual h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 48px);
+    margin-bottom: 36px;
+}
+
+.proj-wall-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 1000px;
+}
+
+.proj-wall-tiles .tile {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 9999px;
+    padding: 10px 22px;
+    font-size: clamp(14px, 1.6vw, 20px);
+    font-weight: 700;
+}
+
+.proj-wall-tiles-empty {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+}
+
+.proj-starter-text {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 58px);
+    max-width: 1000px;
+    line-height: 1.35;
+    color: var(--text-dark);
+}
+
+.proj-model-text {
+    font-size: clamp(26px, 3.2vw, 42px);
+    line-height: 1.55;
+    font-weight: 500;
+    max-width: 1000px;
+    margin-bottom: 36px;
+    color: var(--text-dark);
+}
+
+.proj-model-text .noun-highlight {
+    color: var(--primary-blue);
+    background: #E0F2FE;
+    padding: 1px 8px;
+    border-radius: 8px;
+}
+
+.proj-create-write h1, .proj-create-check h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 46px);
+    margin-bottom: 12px;
+    color: var(--text-dark);
+}
+
+.proj-create-write h1 i, .proj-create-check h1 i { color: var(--accent-pink); margin-right: 14px; }
+
+#proj-write-reminder { margin-bottom: 36px; }
+
+.proj-create-write .proj-wall-tiles .tile,
+.proj-create-write .proj-wall-tiles-empty {
+    color: var(--text-dark);
+    background: #F0F9FF;
+    border: 1.5px solid #BAE6FD;
+}
+
+.proj-checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 20px;
+    font-size: clamp(20px, 2.4vw, 30px);
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.proj-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.proj-checklist li::before {
+    content: '\f0c8';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 400;
+    color: var(--accent-green);
+    font-size: 0.8em;
+}
+
+/* ---------- Practice stage (generic 5-activity template) ---------- */
+.proj-practice-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.proj-practice-counter {
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.proj-practice-body {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.proj-practice-clue, .proj-practice-question {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.4;
+    color: var(--text-dark);
+}
+
+.proj-sort-zones {
+    display: flex;
+    gap: 32px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* The real .noun-zone look: white card, dashed border. */
+.proj-sort-zone {
+    background: #F8FAFC;
+    border: 2px dashed #CBD5E1;
+    border-radius: 20px;
+    padding: 24px;
+    min-width: 280px;
+    flex: 1;
+    max-width: 420px;
+}
+
+.proj-sort-zone h4 {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 2vw, 26px);
+    margin-bottom: 6px;
+    color: var(--text-dark);
+}
+
+.proj-sort-zone .hint { color: var(--text-muted); font-size: 14px; font-style: italic; margin-bottom: 16px; display: block; }
+
+.proj-sort-zone-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 40px;
+    justify-content: center;
+}
+
+/* The real .noun-zone-chip look: solid green pill. */
+.proj-sort-zone-items .chip {
+    background: var(--accent-green);
+    color: white;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 15px;
+}
+
+.proj-builder-assembly {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    min-height: 70px;
+    align-items: center;
+}
+
+/* The real .word-tile look */
+.proj-builder-assembly .word {
+    background: #F8FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 12px 22px;
+    font-size: clamp(18px, 2.2vw, 28px);
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.proj-ws-layout { display: flex; gap: 48px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+
+.proj-ws-grid {
+    display: grid;
+    gap: 4px;
+    background: #F8FAFC;
+    padding: 12px;
+    border-radius: 16px;
+    border: 2px solid #E2E8F0;
+}
+
+.proj-ws-grid .cell {
+    width: clamp(28px, 2.6vw, 42px);
+    height: clamp(28px, 2.6vw, 42px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: clamp(14px, 1.3vw, 18px);
+    border-radius: 6px;
+    color: var(--text-dark);
+}
+
+.proj-ws-grid .cell.found { background: var(--accent-green); color: white; }
+
+.proj-ws-word-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: clamp(16px, 1.6vw, 22px);
+    font-weight: 700;
+}
+
+.proj-ws-word-list .word { color: var(--text-muted); transition: color 0.3s; }
+.proj-ws-word-list .word.found { color: var(--accent-green); text-decoration: line-through; }
+
+.proj-quickcheck-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin-top: 32px;
+}
+
+.proj-quickcheck-options .option {
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 18px;
+    padding: 18px 22px;
+    font-size: clamp(16px, 1.8vw, 22px);
+    font-weight: 600;
+    text-align: left;
+    display: flex;
+    gap: 14px;
+    color: var(--text-dark);
+}
+
+.proj-quickcheck-options .option .letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.proj-practice-result {
+    position: absolute;
+    bottom: 6vh;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 700;
+    padding: 14px 32px;
+    border-radius: 9999px;
+}
+
+.proj-practice-result.correct { background: #ECFDF5; color: #047857; border: 2px solid #A7F3D0; }
+.proj-practice-result.wrong { background: #FDF2F8; color: #9D174D; border: 2px solid #FBCFE8; }
+
+/* Chapter 1's Noun Detective projector mirror reuses chapter1-practice.css's
+   own classes directly (loaded alongside this file) so it's pixel-faithful
+   to the teacher's own screen — only the interactive controls (buttons,
+   text inputs, the Hunt modal) are left out, since the projector shows
+   state, not controls a student would click. Two overrides are needed to
+   fit that reused markup into this page's full-bleed .proj-screen shell
+   instead of its native full-page scroll layout. */
+.proj-practice-c1 {
+    align-items: stretch;
+    overflow-y: auto;
+    padding: 4vh 4vw;
+}
+
+.proj-practice-c1 #chapter1-practice .screen {
+    min-height: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.proj-practice-c1 #chapter1-practice .screen.active {
+    justify-content: center;
+}
+
+/* ---------- Perform stage ---------- */
+/* Feedback frame & close share .ritual-card.theme-perform's green gradient. */
+.proj-perform-frame, .proj-perform-close {
+    background: linear-gradient(135deg, #10B981, #047857);
+    color: white;
+}
+
+.proj-perform-frame h1 {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1.4;
+}
+
+.proj-perform-close h1 {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4.4vw, 48px);
+    margin-top: 20px;
+}
+
+.proj-perform-close .proj-door { background: rgba(255, 255, 255, 0.16); animation: none; }
+
+.proj-spotlight-icon {
+    font-size: clamp(50px, 7vw, 90px);
+    color: var(--accent-orange);
+    margin-bottom: 28px;
+}
+
+.proj-spotlight-icon.active {
+    color: var(--accent-pink);
+    animation: proj-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes proj-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.proj-perform-spotlight h1 {
+    font-family: var(--font-display);
+    font-size: clamp(34px, 5vw, 64px);
+    color: var(--text-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .proj-door { animation: none; }
+    .proj-spotlight-icon.active { animation: none; }
+    .proj-screen { transition: opacity 0.2s linear; transform: none; }
+}

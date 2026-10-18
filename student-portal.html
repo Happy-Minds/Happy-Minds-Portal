@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Minds — My Learning Space</title>
+    <meta name="description" content="Your personal learning adventure with Happy Minds. Track progress, practice, and create amazing things!">
+    <link rel="icon" type="image/png" href="assets/logo_icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="config.js"></script>
+    <script src="chapters-data.js"></script>
+    <link rel="stylesheet" href="student-portal.css">
+    <!-- Student-side Chapter 1 practice (separate from the teacher app's chapter1-practice.*) -->
+    <link rel="stylesheet" href="student-practice.css">
+</head>
+<body>
+<div id="sp-login" class="sp-login-screen">
+    <div class="sp-login-card">
+        <div class="sp-login-character">
+            <img src="assets/girl_aanya.png" alt="Aanya" class="sp-login-char-img">
+            <div class="sp-login-speech">Hi! Ready to learn? 🌟</div>
+        </div>
+        <img src="assets/logo_icon.png" alt="Happy Minds" class="sp-login-logo">
+        <h1 class="sp-login-title">My Learning Space</h1>
+        <p class="sp-login-sub">Happy Minds · Grade 4</p>
+
+        <form class="sp-login-form" id="spLoginForm" onsubmit="spAttemptLogin(event)">
+            <label class="sp-field">
+                <span>Username</span>
+                <div class="sp-input-wrap">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="spLoginUser" placeholder="e.g. arjun1" autocomplete="username" required>
+                </div>
+            </label>
+            <label class="sp-field">
+                <span>Password</span>
+                <div class="sp-input-wrap">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="spLoginPass" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+            </label>
+            <p class="sp-login-error" id="spLoginError"></p>
+            <button type="submit" class="sp-btn-primary full">
+                <i class="fa-solid fa-star"></i> Let's Go! 🚀
+            </button>
+        </form>
+        <div class="sp-demo-hint">
+            <strong>Try these demo accounts:</strong>
+            <div><i class="fa-solid fa-child"></i> <code>arjun1</code> / <code>arjun123</code></div>
+            <div><i class="fa-solid fa-child"></i> <code>aanya1</code> / <code>aanya123</code></div>
+        </div>
+
+        <a href="index.html" class="sp-teacher-link">
+            <i class="fa-solid fa-chalkboard-user"></i> Teacher? Go to Classroom →
+        </a>
+    </div>
+</div>
+<div id="sp-app" class="sp-app sp-hidden">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sp-sidebar" id="spSidebar">
+        <div class="sp-sidebar-brand" onclick="spNav('home')">
+            <img src="assets/logo_icon.png" alt="Happy Minds">
+            <div>
+                <div class="sp-brand-name">Happy Minds</div>
+                <div class="sp-brand-sub">My Learning Space</div>
+            </div>
+        </div>
+
+        <div class="sp-sidebar-student" id="spSidebarStudent">
+            <div class="sp-student-avatar-wrap">
+                <img src="assets/boy_arjun.png" alt="Student" id="spSideAvatar" class="sp-student-avatar">
+                <div class="sp-xp-ring" title="XP Level"></div>
+            </div>
+            <div class="sp-student-info">
+                <div class="sp-student-name" id="spSideName">Aarav</div>
+                <div class="sp-student-meta">Grade 4 · <span id="spSideXP">0</span> XP</div>
+                <div class="sp-streak-pill"><i class="fa-solid fa-fire"></i> <span id="spSideStreak">0</span> day streak</div>
+            </div>
+        </div>
+
+        <nav class="sp-nav">
+            <button class="sp-nav-btn active" data-section="home" onclick="spNav('home')">
+                <i class="fa-solid fa-house-chimney"></i> <span>Home</span>
+            </button>
+            <button class="sp-nav-btn" data-section="journey" onclick="spNav('journey')">
+                <i class="fa-solid fa-map-location-dot"></i> <span>My Journey</span>
+            </button>
+            <button class="sp-nav-btn" data-section="practice" onclick="spNav('practice')">
+                <i class="fa-solid fa-puzzle-piece"></i> <span>Practice</span>
+            </button>
+            <button class="sp-nav-btn" data-section="fixit" onclick="spNav('fixit')">
+                <i class="fa-solid fa-wrench"></i> <span>FixIt Zone</span>
+                <span class="sp-nav-badge" id="spFixItBadge" style="display:none">!</span>
+            </button>
+            <button class="sp-nav-btn" data-section="studio" onclick="spNav('studio')">
+                <i class="fa-solid fa-palette"></i> <span>Create Studio</span>
+            </button>
+            <button class="sp-nav-btn" data-section="achievements" onclick="spNav('achievements')">
+                <i class="fa-solid fa-trophy"></i> <span>Achievements</span>
+            </button>
+            <button class="sp-nav-btn" data-section="myprogress" onclick="spNav('myprogress')">
+                <i class="fa-solid fa-chart-line"></i> <span>My Progress</span>
+            </button>
+            <button class="sp-nav-btn" data-section="history" onclick="spNav('history')">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span>Activity History</span>
+            </button>
+            <button class="sp-nav-btn" data-section="profile" onclick="spNav('profile')">
+                <i class="fa-solid fa-circle-user"></i> <span>My Profile</span>
+            </button>
+        </nav>
+
+        <button class="sp-logout-btn" onclick="spLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+        </button>
+    </aside>
+
+    <!-- ===== MOBILE TOP BAR ===== -->
+    <div class="sp-topbar">
+        <button class="sp-menu-btn" onclick="toggleSidebar()" aria-label="Menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="sp-topbar-brand">
+            <img src="assets/logo_icon.png" alt="Happy Minds">
+            <span>Happy Minds</span>
+        </div>
+        <div class="sp-topbar-right">
+            <span class="sp-xp-chip"><i class="fa-solid fa-star"></i> <span id="spTopXP">0</span></span>
+            <img src="assets/boy_arjun.png" alt="me" id="spTopAvatar" class="sp-topbar-avatar" onclick="spNav('profile')">
+        </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT AREA ===== -->
+    <main class="sp-main">
+
+        <!-- ============================================================
+             SECTION 1: HOME
+             ============================================================ -->
+        <section id="sp-home" class="sp-section active-sp">
+
+            <!-- Greeting Banner -->
+            <div class="sp-greeting-card">
+                <div class="sp-greeting-text">
+                    <div class="sp-greeting-hey" id="spGreetingTime">Good morning</div>
+                    <h1 class="sp-greeting-name">Hi, <span id="spGreetName">Aarav</span>! 👋</h1>
+                    <p class="sp-greeting-sub">You're doing amazing! Keep going! 🌟</p>
+                    <div class="sp-greeting-chips">
+                        <div class="sp-chip orange"><i class="fa-solid fa-fire"></i> <span id="spGreetStreak">0</span> day streak</div>
+                        <div class="sp-chip blue"><i class="fa-solid fa-star"></i> <span id="spGreetXP">0</span> XP</div>
+                        <div class="sp-chip green"><i class="fa-solid fa-book-open"></i> Chapter <span id="spGreetChapter">1</span></div>
+                    </div>
+                </div>
+                <div class="sp-greeting-char">
+                    <img src="assets/girl_aanya.png" alt="Aanya" class="sp-greeting-aanya">
+                    <img src="assets/dragon_buddy.png" alt="Flame" class="sp-greeting-flame">
+                </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="sp-quick-stats">
+                <div class="sp-qstat-card blue" onclick="spNav('journey')">
+                    <div class="sp-qstat-icon"><i class="fa-solid fa-map"></i></div>
+                    <div class="sp-qstat-val" id="spQChapComp">0</div>
+                    <div class="sp-qstat-label">Chapters Done</div>
+                    <div class="sp-qstat-sub">with your class</div>
+                </div>
+                <div class="sp-qstat-card orange" onclick="spNav('practice')">
+                    <div class="sp-qstat-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
+                    <div class="sp-qstat-val" id="spQPractice">0</div>
+                    <div class="sp-qstat-label">Practice Done</div>
+                    <div class="sp-qstat-sub">sets finished</div>
+                </div>
+                <div class="sp-qstat-card pink" onclick="spNav('fixit')">
+                    <div class="sp-qstat-icon"><i class="fa-solid fa-wrench"></i></div>
+                    <div class="sp-qstat-val" id="spQFixIt">0</div>
+                    <div class="sp-qstat-label">FixIt Done</div>
+                    <div class="sp-qstat-sub">help boxes</div>
+                </div>
+                <div class="sp-qstat-card purple" onclick="spNav('studio')">
+                    <div class="sp-qstat-icon"><i class="fa-solid fa-palette"></i></div>
+                    <div class="sp-qstat-val" id="spQCreate">0</div>
+                    <div class="sp-qstat-label">Creations</div>
+                    <div class="sp-qstat-sub">submitted</div>
+                </div>
+            </div>
+
+            <!-- Overall Progress Bar -->
+            <div class="sp-progress-card">
+                <div class="sp-pc-header">
+                    <div>
+                        <div class="sp-pc-title">🗺 Overall Journey</div>
+                        <div class="sp-pc-sub" id="spOverallSub">0 of 24 chapters completed</div>
+                    </div>
+                    <div class="sp-pc-pct" id="spOverallPct">0%</div>
+                </div>
+                <div class="sp-progress-track">
+                    <div class="sp-progress-fill rainbow" id="spOverallFill" style="width:0%"></div>
+                </div>
+                <div class="sp-progress-milestones">
+                    <span>🌱 Start</span>
+                    <span>⭐ Chapter 6</span>
+                    <span>🏆 Chapter 12</span>
+                    <span>🌟 Chapter 18</span>
+                    <span>🎓 Chapter 24</span>
+                </div>
+            </div>
+
+            <!-- Two-column lower area -->
+            <div class="sp-home-lower">
+                <!-- Current Chapter Card -->
+                <div class="sp-card">
+                    <div class="sp-card-header">
+                        <div class="sp-card-icon blue"><i class="fa-solid fa-book-open"></i></div>
+                        <h2 class="sp-card-title">Current Chapter</h2>
+                    </div>
+                    <div class="sp-current-chapter" id="spCurrentChapterCard">
+                        <div class="sp-cc-num" id="spCCNum">01</div>
+                        <div class="sp-cc-info">
+                            <div class="sp-cc-title" id="spCCTitle">My Imaginary World</div>
+                            <div class="sp-cc-stages" id="spCCStages"></div>
+                        </div>
+                    </div>
+                    <button class="sp-btn-primary" onclick="spNav('journey')" style="width:100%;justify-content:center;margin-top:16px;">
+                        Continue Learning <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Recent Achievements -->
+                <div class="sp-card">
+                    <div class="sp-card-header">
+                        <div class="sp-card-icon orange"><i class="fa-solid fa-trophy"></i></div>
+                        <h2 class="sp-card-title">Recent Badges</h2>
+                    </div>
+                    <div class="sp-recent-badges" id="spRecentBadges">
+                        <div class="sp-empty-state-small">
+                            <div class="sp-empty-char">🏅</div>
+                            <p>Keep learning to earn your first badge!</p>
+                        </div>
+                    </div>
+                    <button class="sp-btn-glass" onclick="spNav('achievements')" style="width:100%;justify-content:center;margin-top:12px;">
+                        See All Badges <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="sp-recommendations">
+                <h2 class="sp-section-heading">✨ Recommended For You</h2>
+                <div class="sp-rec-grid" id="spRecommendations"></div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================
+             SECTION 2: MY LEARNING JOURNEY
+             ============================================================ -->
+        <section id="sp-journey" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">My Learning Journey</h1>
+                    <p class="sp-page-sub">24 chapters · One amazing adventure 🗺</p>
+                </div>
+            </div>
+
+            <!-- Journey Progress Bar -->
+            <div class="sp-progress-card">
+                <div class="sp-pc-header">
+                    <div>
+                        <div class="sp-pc-title">Journey Progress</div>
+                        <div class="sp-pc-sub" id="spJourneySub">0 chapters completed</div>
+                    </div>
+                    <div class="sp-pc-pct" id="spJourneyPct">0%</div>
+                </div>
+                <div class="sp-progress-track">
+                    <div class="sp-progress-fill rainbow" id="spJourneyFill" style="width:0%"></div>
+                </div>
+            </div>
+
+            <!-- Chapter Map / Path -->
+            <div class="sp-journey-path" id="spJourneyPath">
+                <!-- Rendered dynamically -->
+            </div>
+
+        </section>
+
+        <!-- ============================================================
+             SECTION 3: PRACTICE
+             ============================================================ -->
+        <section id="sp-practice" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706)">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">Practice</h1>
+                    <p class="sp-page-sub">Revisit activities and beat your best score! 🎯</p>
+                </div>
+            </div>
+
+            <!-- Encouragement Banner -->
+            <div class="sp-encourage-banner">
+                <img src="assets/dragon_buddy.png" alt="Flame" class="sp-enc-char">
+                <div class="sp-enc-text">
+                    <strong>You can do this! 💪</strong>
+                    <p>Retrying is how you get better. Every attempt counts!</p>
+                </div>
+            </div>
+
+            <!-- Practice Chapter List -->
+            <div class="sp-practice-filters">
+                <button class="sp-filter-btn active" onclick="spPracticeFilter('all', this)">All Chapters</button>
+                <button class="sp-filter-btn" onclick="spPracticeFilter('done', this)">✅ Completed</button>
+                <button class="sp-filter-btn" onclick="spPracticeFilter('inprogress', this)">🔄 In Progress</button>
+            </div>
+
+            <div class="sp-practice-grid" id="spPracticeGrid">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 4: FIXIT ZONE
+             ============================================================ -->
+        <section id="sp-fixit" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#EC4899,#DB2777)">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">FixIt Zone 🛠</h1>
+                    <p class="sp-page-sub">Let's practice the things that need a little more love!</p>
+                </div>
+            </div>
+
+            <!-- FixIt Mascot & Intro -->
+            <div class="sp-fixit-hero">
+                <img src="assets/girl_aanya.png" alt="Aanya" class="sp-fixit-char">
+                <div class="sp-fixit-hero-text">
+                    <h2>You're getting better every day! 🌟</h2>
+                    <p>FixIt Zone is your personal practice space. It's totally okay to need more practice — that's how learning works!</p>
+                </div>
+            </div>
+
+            <!-- FixIt Activity Area -->
+            <div class="sp-fixit-selector">
+                <h3 class="sp-section-heading">Choose a Chapter to Fix</h3>
+                <select class="sp-select" id="spFixItChapterSel" onchange="spRenderFixItActivities()">
+                    <!-- Filled dynamically -->
+                </select>
+            </div>
+
+            <div id="spFixItContent">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 5: CREATE STUDIO
+             ============================================================ -->
+        <section id="sp-studio" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#8B5CF6,#7C3AED)">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">Create Studio 🎨</h1>
+                    <p class="sp-page-sub">Show your ideas! Upload your creations here.</p>
+                </div>
+            </div>
+
+            <!-- Mission Banner -->
+            <div class="sp-studio-hero">
+                <div class="sp-studio-hero-text">
+                    <div class="sp-studio-tag">⭐ Create Mission</div>
+                    <h2 id="spStudioMissionTitle">Chapter 1: My Imaginary World</h2>
+                    <p id="spStudioMissionDesc">Write a short story about your magical world.</p>
+                </div>
+                <img src="assets/orb_create.png" alt="Create" class="sp-studio-orb">
+            </div>
+
+            <!-- Chapter Selector -->
+            <div class="sp-studio-chapter-sel">
+                <label class="sp-field-label">
+                    <i class="fa-solid fa-book-open"></i> Choose a Chapter
+                </label>
+                <select class="sp-select" id="spStudioChapterSel" onchange="spStudioChapterChanged()">
+                    <!-- Filled dynamically -->
+                </select>
+            </div>
+
+            <!-- Upload Limit Indicator -->
+            <div class="sp-upload-limit" id="spUploadLimit">
+                <div class="sp-limit-info">
+                    <i class="fa-solid fa-upload"></i>
+                    <div>
+                        <strong>Submissions for this chapter</strong>
+                        <div class="sp-limit-sub" id="spLimitSub">0 / 2 used</div>
+                    </div>
+                </div>
+                <div class="sp-limit-dots" id="spLimitDots">
+                    <div class="sp-limit-dot empty"></div>
+                    <div class="sp-limit-dot empty"></div>
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="sp-studio-form" id="spStudioForm">
+                <h3 class="sp-section-heading">📝 Your Submission</h3>
+
+                <div class="sp-studio-field-row">
+                    <label class="sp-field-label">Title of your creation</label>
+                    <input type="text" class="sp-text-input" id="spSubTitle" placeholder="e.g. My Magical World by Arjun">
+                </div>
+
+                <div class="sp-studio-field-row">
+                    <label class="sp-field-label">Short description (what did you write about?)</label>
+                    <textarea class="sp-textarea" id="spSubDesc" rows="3" placeholder="Tell us about your creation in 1-2 sentences..."></textarea>
+                </div>
+
+                <div class="sp-studio-field-row">
+                    <label class="sp-field-label">Upload your work (photo or file)</label>
+                    <div class="sp-upload-area" id="spUploadArea" onclick="spTriggerUpload()">
+                        <div class="sp-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                        <div class="sp-upload-text">Tap to upload a photo of your work</div>
+                        <div class="sp-upload-hint">JPG, PNG, PDF — max 10 MB</div>
+                        <input type="file" id="spFileInput" accept="image/*,.pdf" style="display:none" onchange="spHandleFile(event)">
+                        <div class="sp-upload-preview" id="spUploadPreview" style="display:none"></div>
+                    </div>
+                </div>
+
+                <button class="sp-btn-primary full sp-submit-btn" id="spSubmitBtn" onclick="spSubmitCreation()">
+                    <i class="fa-solid fa-rocket"></i> Submit My Creation! 🚀
+                </button>
+            </div>
+
+            <!-- Submission History -->
+            <div class="sp-studio-history">
+                <h3 class="sp-section-heading">🎨 My Creations</h3>
+                <div id="spSubmissionHistory">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 6: ACHIEVEMENTS
+             ============================================================ -->
+        <section id="sp-achievements" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">Achievements 🏆</h1>
+                    <p class="sp-page-sub">Collect badges and show what you've learned!</p>
+                </div>
+            </div>
+
+            <!-- XP & Stats row -->
+            <div class="sp-achieve-stats">
+                <div class="sp-achieve-stat">
+                    <div class="sp-as-icon" style="background:#FEF3C7;color:#F59E0B"><i class="fa-solid fa-star"></i></div>
+                    <div class="sp-as-val" id="spAchXP">0</div>
+                    <div class="sp-as-label">Total XP</div>
+                </div>
+                <div class="sp-achieve-stat">
+                    <div class="sp-as-icon" style="background:#FEE2E2;color:#EF4444"><i class="fa-solid fa-fire"></i></div>
+                    <div class="sp-as-val" id="spAchStreak">0</div>
+                    <div class="sp-as-label">Day Streak</div>
+                </div>
+                <div class="sp-achieve-stat">
+                    <div class="sp-as-icon" style="background:#DBEAFE;color:#3B82F6"><i class="fa-solid fa-book"></i></div>
+                    <div class="sp-as-val" id="spAchChapters">0</div>
+                    <div class="sp-as-label">Chapters Done</div>
+                </div>
+                <div class="sp-achieve-stat">
+                    <div class="sp-as-icon" style="background:#D1FAE5;color:#10B981"><i class="fa-solid fa-check-circle"></i></div>
+                    <div class="sp-as-val" id="spAchActivities">0</div>
+                    <div class="sp-as-label">Activities Done</div>
+                </div>
+            </div>
+
+            <!-- Badge Grid -->
+            <h3 class="sp-section-heading">🏅 Your Badges</h3>
+            <div class="sp-badge-grid" id="spBadgeGrid">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 7: MY PROGRESS
+             ============================================================ -->
+        <section id="sp-myprogress" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#10B981,#059669)">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">My Progress 📊</h1>
+                    <p class="sp-page-sub">See how far you've come on your journey!</p>
+                </div>
+            </div>
+
+            <!-- Overall Summary -->
+            <div class="sp-progress-summary">
+                <div class="sp-ps-big" id="spProgressBig">
+                    <div class="sp-ps-circle">
+                        <svg viewBox="0 0 120 120" class="sp-donut">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="#E2E8F0" stroke-width="12"/>
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="url(#progressGrad)" stroke-width="12"
+                                stroke-dasharray="314" stroke-dashoffset="314" id="spDonutCircle"
+                                stroke-linecap="round" transform="rotate(-90 60 60)"/>
+                            <defs>
+                                <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#10B981"/>
+                                    <stop offset="100%" style="stop-color:#06B6D4"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="sp-donut-text">
+                            <div class="sp-donut-pct" id="spDonutPct">0%</div>
+                            <div class="sp-donut-label">Complete</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sp-ps-stats">
+                    <div class="sp-ps-row">
+                        <span>📚 Chapters Completed</span>
+                        <strong id="spPSChap">0 / 24</strong>
+                    </div>
+                    <div class="sp-ps-row">
+                        <span>🎯 Practice Sets Finished</span>
+                        <strong id="spPSPractice">0</strong>
+                    </div>
+                    <div class="sp-ps-row">
+                        <span>🛠 FixIt Boxes Done</span>
+                        <strong id="spPSFixIt">0</strong>
+                    </div>
+                    <div class="sp-ps-row">
+                        <span>🎨 Creations Submitted</span>
+                        <strong id="spPSCreate">0</strong>
+                    </div>
+                    <div class="sp-ps-row">
+                        <span>⭐ Total XP Earned</span>
+                        <strong id="spPSXP">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage Progress -->
+            <h3 class="sp-section-heading">📈 Stage Progress</h3>
+            <div class="sp-stage-progress" id="spStageProgress">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 8: ACTIVITY HISTORY
+             ============================================================ -->
+        <section id="sp-history" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#06B6D4,#0891B2)">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">Activity History 📅</h1>
+                    <p class="sp-page-sub">Every step you've taken on your journey!</p>
+                </div>
+            </div>
+
+            <div class="sp-timeline" id="spTimeline">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SECTION 9: PROFILE
+             ============================================================ -->
+        <section id="sp-profile" class="sp-section">
+            <div class="sp-page-header">
+                <div class="sp-page-header-icon" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">
+                    <i class="fa-solid fa-circle-user"></i>
+                </div>
+                <div>
+                    <h1 class="sp-page-title">My Profile</h1>
+                    <p class="sp-page-sub">This is you — a Happy Minds learner! 🌟</p>
+                </div>
+            </div>
+
+            <div class="sp-profile-layout">
+                <!-- Profile Card -->
+                <div class="sp-profile-card">
+                    <div class="sp-profile-avatar-wrap">
+                        <img src="assets/boy_arjun.png" alt="Me" id="spProfileAvatar" class="sp-profile-avatar">
+                        <div class="sp-profile-xp-ring"></div>
+                    </div>
+                    <h2 class="sp-profile-name" id="spProfileName">Aarav</h2>
+                    <div class="sp-profile-grade">Grade 4 · Happy Minds</div>
+
+                    <div class="sp-profile-chips">
+                        <div class="sp-chip orange"><i class="fa-solid fa-fire"></i> <span id="spProfileStreak">0</span> day streak</div>
+                        <div class="sp-chip blue"><i class="fa-solid fa-star"></i> <span id="spProfileXP">0</span> XP</div>
+                    </div>
+
+                    <!-- Avatar Selector -->
+                    <h4 style="margin-top:20px;margin-bottom:10px;">Choose your Avatar</h4>
+                    <div class="sp-avatar-picker">
+                        <img src="assets/boy_arjun.png" alt="Arjun" class="sp-avatar-opt active" onclick="spPickAvatar(this,'assets/boy_arjun.png')">
+                        <img src="assets/girl_aanya.png" alt="Aanya" class="sp-avatar-opt" onclick="spPickAvatar(this,'assets/girl_aanya.png')">
+                    </div>
+                </div>
+
+                <!-- Profile Stats -->
+                <div class="sp-profile-stats">
+                    <div class="sp-card">
+                        <h3 class="sp-card-title" style="margin-bottom:16px">📊 Learning Stats</h3>
+                        <div class="sp-profile-stat-list" id="spProfileStatList"></div>
+                    </div>
+
+                    <div class="sp-card">
+                        <h3 class="sp-card-title" style="margin-bottom:16px">🏅 Your Badges</h3>
+                        <div class="sp-profile-badges" id="spProfileBadges"></div>
+                        <button class="sp-btn-glass" onclick="spNav('achievements')" style="width:100%;justify-content:center;margin-top:12px">
+                            View All <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div class="sp-toast" id="spToast"></div>
+
+<!-- ========== CHAPTER DETAIL MODAL ========== -->
+<div class="sp-modal-backdrop" id="spChapterModal" onclick="closeChapterModal()">
+    <div class="sp-modal" onclick="event.stopPropagation()">
+        <button class="sp-modal-close" onclick="closeChapterModal()"><i class="fa-solid fa-xmark"></i></button>
+        <div id="spChapterModalContent"></div>
+    </div>
+</div>
+
+<!-- ========== FIXIT ACTIVITY MODAL ========== -->
+<div class="sp-modal-backdrop" id="spFixItModal" onclick="closeFixItModal()">
+    <div class="sp-modal sp-modal-wide" onclick="event.stopPropagation()">
+        <button class="sp-modal-close" onclick="closeFixItModal()"><i class="fa-solid fa-xmark"></i></button>
+        <div id="spFixItModalContent"></div>
+    </div>
+</div>
+
+<!-- ========== CHAPTER 1 PRACTICE MOUNT ========== -->
+<div id="chapter1PracticeMount" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; background:white; overflow-y:auto;">
+    <button onclick="closeChapter1Practice()" style="position:fixed; top:20px; right:24px; z-index:100000; padding:12px 24px; background:var(--sp-primary); color:white; border:none; border-radius:99px; cursor:pointer; font-weight:800; font-size:15px; box-shadow:0 8px 24px rgba(0,0,0,0.15); font-family:var(--sp-font-body); transition:all 0.2s ease;">
+        <i class="fa-solid fa-xmark"></i> Close Practice
+    </button>
+    <div id="chapter1-practice"></div>
+</div>
+
+<script src="student-practice.js"></script>
+<script src="student-portal.js"></script>
+</body>
+</html>
