@@ -119,6 +119,9 @@
                     <i class="fa-solid fa-angle-down"></i>
 
                     <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button class="user-menu-neutral" data-roles="teacher,trainer,admin" onclick="event.stopPropagation(); toggleUserMenu(); openProjectorView()">
+                            <i class="fa-solid fa-display"></i> Projector mode
+                        </button>
                         <button onclick="handleLogout(event)">
                             <i class="fa-solid fa-right-from-bracket"></i> Log Out
                         </button>

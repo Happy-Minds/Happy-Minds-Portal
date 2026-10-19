@@ -111,6 +111,54 @@ html, body {
     font-size: clamp(14px, 1.4vw, 18px);
     color: var(--text-muted);
     max-width: 480px;
+    margin: 0 auto;
+}
+
+[hidden] { display: none !important; }
+
+.proj-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    padding: 18px 40px;
+    border: none;
+    border-radius: 9999px;
+    background: var(--primary-blue);
+    color: white;
+    font-family: var(--font-main);
+    font-size: clamp(18px, 1.6vw, 22px);
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(14, 165, 233, 0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.proj-start-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(14, 165, 233, 0.35); }
+.proj-start-btn:focus-visible { outline: 4px solid var(--text-dark); outline-offset: 4px; }
+
+.proj-connection {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 22px;
+    border-radius: 9999px;
+    background: #FEF3C7;
+    color: #92400E;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: var(--shadow-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .proj-start-btn { transition: none; }
+    .proj-start-btn:hover { transform: none; }
 }
 
 /* ---------- 1. Settle & breathe ---------- */

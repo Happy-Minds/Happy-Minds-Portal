@@ -1,20 +1,16 @@
 /* ============================================
-   PROJECTOR VIEW — receives state over BroadcastChannel from the teacher's
-   Explore screen (see app.js) and renders only student-safe content.
-
-   Same-device, same-origin, no backend: BroadcastChannel only reaches other
-   windows/tabs of this site open in the same browser. Phase 2 (a real
-   separate phone-as-remote over Wi-Fi) swaps this channel for a Supabase
-   Realtime channel keyed by a pairing code — the render functions below
-   don't need to change, only how messages arrive.
+   PROJECTOR VIEW — runs on the classroom laptop/screen and renders only
+   student-safe content. The teacher's phone (or laptop) drives it over
+   that teacher's private Supabase Realtime channel (HMCloud.openProjectorLink
+   in cloud.js): both are signed in as the same teacher, so they connect
+   automatically. Every message carries chapterId, so this screen follows
+   whichever chapter the teacher's device is on.
    ============================================ */
 
-const REMOTE_CHANNEL_NAME = 'happyminds_remote_v1';
-const channel = new BroadcastChannel(REMOTE_CHANNEL_NAME);
+let projectorLink = null;
 
 const params = new URLSearchParams(location.search);
-const chapterId = parseInt(params.get('chapter'), 10) || 1;
-const chapter = (typeof getChapterById === 'function') ? getChapterById(chapterId) : CHAPTERS.find(c => c.id === chapterId);
+let chapter = getChapterById(parseInt(params.get('chapter'), 10) || 1);
 
 // Duplicated intentionally from app.js's STORYBOOK_CHARACTERS — this page
 // never loads app.js, by design (no path for teacher-only data to leak in).
@@ -589,8 +585,11 @@ function renderPerformClose() {
 }
 
 // ---------- Message routing ----------
-channel.onmessage = (event) => {
-    const msg = event.data || {};
+function handleProjectorMessage(msg) {
+    if (msg.chapterId && msg.chapterId !== chapter.id) {
+        const next = getChapterById(msg.chapterId);
+        if (next) chapter = next;
+    }
     switch (msg.type) {
         case 'settle': renderSettle(); break;
         case 'video-load': renderVideoLoad(msg); break;
@@ -622,10 +621,72 @@ channel.onmessage = (event) => {
         case 'perform-pair': renderPerformPair(msg.seconds, msg.totalSeconds); break;
         case 'perform-spotlight': renderPerformSpotlight(msg.name); break;
         case 'perform-close': renderPerformClose(); break;
-        case 'ping': channel.postMessage({ type: 'projector-ready' }); break;
     }
-};
+}
 
-// Announce presence so the teacher's window can show a "Connected" status.
-channel.postMessage({ type: 'projector-ready' });
-window.addEventListener('beforeunload', () => channel.postMessage({ type: 'projector-closed' }));
+// ---------- Connection & start-up ----------
+// The waiting screen has three states: sign in first, press Start (browsers
+// only allow video sound after a click on this page, and Start also goes
+// full screen and keeps the screen awake), then waiting for the teacher.
+function showWaiting(state, detail) {
+    showProjScreen('proj-waiting');
+    document.querySelectorAll('[data-waiting]').forEach(el => { el.hidden = el.dataset.waiting !== state; });
+    if (detail) document.getElementById('proj-waiting-detail').textContent = detail;
+}
+
+let projectorStarted = false;
+let teacherOnline = false;
+let wakeLock = null;
+
+function updateWaitingDetail() {
+    if (!projectorStarted || !document.getElementById('proj-waiting').classList.contains('active')) return;
+    showWaiting('ready', teacherOnline
+        ? "Teacher's device connected. The lesson will appear here as soon as they start."
+        : 'Open this chapter on your phone, signed in with the same account. It connects automatically.');
+}
+
+async function keepScreenAwake() {
+    try {
+        if ('wakeLock' in navigator && document.visibilityState === 'visible') wakeLock = await navigator.wakeLock.request('screen');
+    } catch (err) { /* not supported or refused; the screen may dim */ }
+}
+document.addEventListener('visibilitychange', () => { if (projectorStarted && !wakeLock) keepScreenAwake(); });
+
+async function startProjector() {
+    projectorStarted = true;
+    try { await document.documentElement.requestFullscreen(); } catch (err) { /* full screen is optional */ }
+    keepScreenAwake();
+    updateWaitingDetail();
+    if (projectorLink) projectorLink.send({ type: 'projector-ready' });
+}
+
+async function connectProjector() {
+    const account = await HMCloud.restoreSession();
+    if (!account || !['teacher', 'trainer', 'admin'].includes(account.role)) {
+        showWaiting('signin');
+        return;
+    }
+    document.getElementById('proj-teacher-name').textContent = account.name;
+    showWaiting('start');
+    try {
+        projectorLink = await HMCloud.openProjectorLink({
+            role: 'projector',
+            // Until Start is pressed, lesson screens wait (the video could not
+            // play with sound yet); Start asks the teacher's device to resend.
+            onMessage: msg => { if (projectorStarted) handleProjectorMessage(msg); },
+            onDevices: roles => {
+                teacherOnline = roles.includes('teacher');
+                updateWaitingDetail();
+            },
+            onStatus: status => {
+                document.getElementById('proj-connection').hidden = status === 'connected';
+                if (status === 'connected' && projectorStarted) projectorLink.send({ type: 'projector-ready' });
+            }
+        });
+    } catch (err) {
+        console.warn('Happy Minds: projector could not connect', err);
+        document.getElementById('proj-connection').hidden = false;
+    }
+}
+
+connectProjector();

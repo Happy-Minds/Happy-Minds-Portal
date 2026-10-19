@@ -184,6 +184,27 @@ revoke all on function public.admin_reset_password(text, text) from public, anon
 grant execute on function public.admin_reset_password(text, text) to authenticated;
 
 -- --------------------------------------------------------------------------
+-- Projector remote. The teacher's phone and the projector laptop talk over a
+-- private Realtime channel named "projector:<teacher's user id>". Only that
+-- signed-in staff account can join it, send on it or see who is connected.
+-- --------------------------------------------------------------------------
+drop policy if exists "Staff receive on their own projector channel" on realtime.messages;
+create policy "Staff receive on their own projector channel"
+    on realtime.messages for select to authenticated
+    using (
+        (select realtime.topic()) = 'projector:' || (select auth.uid())::text
+        and (select private.is_staff())
+    );
+
+drop policy if exists "Staff send on their own projector channel" on realtime.messages;
+create policy "Staff send on their own projector channel"
+    on realtime.messages for insert to authenticated
+    with check (
+        (select realtime.topic()) = 'projector:' || (select auth.uid())::text
+        and (select private.is_staff())
+    );
+
+-- --------------------------------------------------------------------------
 -- Data API access. New tables are not exposed automatically in this project,
 -- so grant exactly what the portal needs. Signed-out visitors get nothing.
 -- --------------------------------------------------------------------------

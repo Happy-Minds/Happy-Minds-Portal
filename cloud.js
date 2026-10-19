@@ -33,6 +33,8 @@ const HMCloud = (() => {
     let failing = false;
     const statusListeners = [];
 
+    let signedInUserId = null;
+
     const keyOf = (doc, studentId) => `${doc}|${studentId || ''}`;
     const clone = value => (value == null ? null : JSON.parse(JSON.stringify(value)));
 
@@ -81,6 +83,7 @@ const HMCloud = (() => {
         unsaved.clear();
         documents.data.forEach(row => docs.set(keyOf(row.doc, row.student_id), row.data));
 
+        signedInUserId = userId;
         return toAccount(me);
     }
 
@@ -151,6 +154,8 @@ const HMCloud = (() => {
         // Writes anything unsaved first, so nothing is lost on logout.
         async signOut() {
             try { await writeUnsaved(); } catch (err) { /* signing out anyway */ }
+            await client.removeAllChannels();
+            signedInUserId = null;
             await client.auth.signOut();
             docs.clear();
             unsaved.clear();
@@ -183,6 +188,42 @@ const HMCloud = (() => {
             }
             console.warn('Happy Minds: password reset failed', error);
             throw new Error("Couldn't change the password. Please try again.");
+        },
+
+        // Live link between the teacher's devices and the projector screen,
+        // on a private Realtime channel only this signed-in teacher can use
+        // (see "Projector remote" in supabase/schema.sql). `role` is
+        // 'teacher' or 'projector'; every open copy announces itself, so each
+        // side can see whether the other is online.
+        //   onMessage(msg)      — a message sent from another device
+        //   onDevices(roles)    — roles currently connected, e.g. ['teacher', 'projector']
+        //   onStatus(status)    — 'connected' | 'reconnecting'
+        async openProjectorLink({ role, onMessage, onDevices, onStatus }) {
+            const { data } = await client.auth.getSession();
+            if (!data.session || !signedInUserId) throw new Error('Sign in first.');
+            await client.realtime.setAuth(data.session.access_token);
+
+            const channel = client.channel(`projector:${signedInUserId}`, {
+                config: { private: true, broadcast: { self: false }, presence: { key: `${role}-${Math.random().toString(36).slice(2, 10)}` } }
+            });
+            channel.on('broadcast', { event: 'msg' }, ({ payload }) => onMessage && onMessage(payload || {}));
+            channel.on('presence', { event: 'sync' }, () => {
+                const roles = Object.values(channel.presenceState()).flat().map(meta => meta.role);
+                if (onDevices) onDevices(roles);
+            });
+            channel.subscribe(async status => {
+                if (status === 'SUBSCRIBED') {
+                    await channel.track({ role });
+                    if (onStatus) onStatus('connected');
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    if (onStatus) onStatus('reconnecting');
+                }
+            });
+
+            return {
+                send(msg) { channel.send({ type: 'broadcast', event: 'msg', payload: msg }); },
+                close() { client.removeChannel(channel); }
+            };
         },
 
         // fn('error') when saving starts failing, fn('recovered') once it works again.

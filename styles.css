@@ -270,6 +270,8 @@ body {
 }
 
 .user-menu-dropdown button:hover { background: #FEF2F2; }
+.user-menu-dropdown button.user-menu-neutral { color: var(--text-dark); white-space: nowrap; }
+.user-menu-dropdown button.user-menu-neutral:hover { background: #F0F9FF; color: var(--primary-blue); }
 
 /* ================= Notification Center =================
    Real dropdown fed by actual app state (pending Chapter Reflections

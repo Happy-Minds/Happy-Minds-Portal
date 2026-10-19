@@ -366,6 +366,7 @@ function enterApp(account) {
     reloadSavedState();
     renderChaptersRoadmap();
     renderChapterHub();
+    ensureRemoteChannel();
 
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('app').classList.remove('app-hidden');
@@ -413,6 +414,7 @@ async function handleLogout(event) {
     event.stopPropagation();
     // Record time on the open stage before the session (and save access) ends.
     stopTimer();
+    closeRemoteChannel();
     await HMCloud.signOut();
     appState.currentUser = null;
     reloadSavedState();
@@ -827,49 +829,64 @@ function continuePlanner() {
     }
 }
 
-// ================= Projector Remote (BroadcastChannel) =================
-// Phase 1 of the brief's "teacher's phone as remote" feature: same-device,
-// two-window sync via BroadcastChannel (no backend). The teacher opens
-// projector.html on a second window/display; this channel pushes only
-// student-safe state to it (video, storybook pages, one Think & Talk
-// question at a time, the draw prompt, wrap-up) — never the script, sample
-// answers or roving prompts, which stay in chapter.prep and never get
-// posted to this channel. Phase 2 swaps this channel for a Supabase
-// Realtime channel keyed by a pairing code so a genuinely separate phone can
-// drive a genuinely separate projector device; everything downstream of
-// broadcastToProjector() stays the same.
-const REMOTE_CHANNEL_NAME = 'happyminds_remote_v1';
+// ================= Projector Remote (Supabase Realtime) =================
+// The teacher's phone (or laptop) drives projector.html on the classroom
+// screen. Both are signed in as the same teacher, so they find each other
+// automatically on that teacher's private Realtime channel (HMCloud.
+// openProjectorLink, cloud.js) — no pairing code. Only student-safe state is
+// sent (video, storybook pages, one Think & Talk question at a time, the
+// draw prompt, wrap-up…) — never the script, sample answers or roving
+// prompts, which stay in chapter.prep on the teacher's device.
+const PROJECTOR_ROLES = ['teacher', 'trainer', 'admin'];
 let remoteChannel = null;
 let projectorConnected = false;
 
-function ensureRemoteChannel() {
-    if (remoteChannel) return remoteChannel;
-    remoteChannel = new BroadcastChannel(REMOTE_CHANNEL_NAME);
-    remoteChannel.onmessage = (event) => {
-        const msg = event.data || {};
-        if (msg.type === 'projector-ready') {
-            projectorConnected = true;
-            updateProjectorStatusUI();
-            // The projector window may have opened mid-step (or reloaded) and
-            // missed earlier broadcasts — catch it up to whatever is actually
-            // on screen right now instead of leaving it on the waiting screen.
-            broadcastCurrentState();
-        }
-        if (msg.type === 'projector-closed') { projectorConnected = false; updateProjectorStatusUI(); }
-    };
-    return remoteChannel;
+async function ensureRemoteChannel() {
+    if (remoteChannel || !appState.currentUser || !PROJECTOR_ROLES.includes(appState.currentUser.role)) return;
+    remoteChannel = 'opening';
+    try {
+        remoteChannel = await HMCloud.openProjectorLink({
+            role: 'teacher',
+            onMessage: msg => {
+                // A projector that opens (or reloads) mid-step asks what to show.
+                if (msg.type === 'projector-ready') broadcastCurrentState();
+            },
+            onDevices: roles => {
+                const wasConnected = projectorConnected;
+                projectorConnected = roles.includes('projector');
+                updateProjectorStatusUI();
+                if (projectorConnected && !wasConnected) broadcastCurrentState();
+            }
+        });
+    } catch (err) {
+        console.warn('Happy Minds: projector link unavailable', err);
+        remoteChannel = null;
+    }
 }
 
-function broadcastToProjector(msg) {
-    if (!remoteChannel) return;
-    remoteChannel.postMessage(msg);
-}
-
-function openProjectorView() {
-    ensureRemoteChannel();
-    window.open(`projector.html?chapter=${appState.currentChapterId}`, 'happyminds_projector', 'width=1280,height=720');
-    broadcastToProjector({ type: 'ping' });
+function closeRemoteChannel() {
+    if (remoteChannel && remoteChannel !== 'opening') remoteChannel.close();
+    remoteChannel = null;
+    projectorConnected = false;
     updateProjectorStatusUI();
+}
+
+// Every message carries the chapter, so the projector follows whichever
+// chapter the teacher's device is on.
+function broadcastToProjector(msg) {
+    if (!remoteChannel || remoteChannel === 'opening') return;
+    remoteChannel.send({ ...msg, chapterId: appState.currentChapterId });
+}
+
+// On the classroom laptop: opens the projector screen in its own window
+// (drag it onto the projector display). On a phone the projector is already
+// running on the laptop, so the button only reports the connection.
+function openProjectorView() {
+    if (projectorConnected) {
+        showNotification('The projector is connected. Your taps on this device control it.');
+        return;
+    }
+    window.open('projector.html', 'happyminds_projector', 'width=1280,height=720');
 }
 
 function updateProjectorStatusUI() {

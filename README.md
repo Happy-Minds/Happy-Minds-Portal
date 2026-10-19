@@ -35,6 +35,16 @@ Sign-in, the class roster and all saved progress live in Supabase, so every devi
 - **Access rules:** Row Level Security in `supabase/schema.sql` decides who sees what. Staff (teacher, trainer, admin) see everything. A student sees and writes only their own records. A parent sees only their own child's records. Class progress and the Lumora Wall are readable by every signed-in account.
 - **Accounts:** people sign in with a username. Behind the scenes it is stored as `<username>@happyminds.local`, and no email is ever sent there. Accounts are created by running `supabase/seed-accounts.sql` in the Supabase SQL Editor. That file holds passwords, so it is kept out of git. Ask the project admin for it. Sign-up is off.
 
+### Projector remote
+
+The teacher's phone controls the classroom projector.
+
+1. On the laptop connected to the projector, sign in and choose **Projector mode** from the account menu (or the projector button in any lesson stage). Press **Start projector**.
+2. On the phone, sign in with the same account and open the chapter. The two connect automatically.
+3. Every step the teacher takes on the phone (settle, video, storybook pages, Think & Talk, practice, Create, Perform) appears on the projector. The script and prompts stay on the phone.
+
+The devices talk over a private Supabase Realtime channel (`projector:<teacher's user id>`) that only that signed-in teacher can join.
+
 ### Setting up a new Supabase project
 
 1. In the SQL Editor, run `supabase/schema.sql`.
