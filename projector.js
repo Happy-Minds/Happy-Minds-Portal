@@ -657,9 +657,9 @@ function handleProjectorMessage(msg) {
 }
 
 // ---------- Connection & start-up ----------
-// The waiting screen has three states: sign in first, press Start (browsers
-// only allow video sound after a click on this page, and Start also goes
-// full screen and keeps the screen awake), then waiting for the teacher.
+// The waiting screen states: sign in first, press Start (browsers only allow
+// video sound after a click on this page, and Start also goes full screen
+// and keeps the screen awake), waiting for the teacher, and stopped.
 function showWaiting(state, detail) {
     showProjScreen('proj-waiting');
     document.querySelectorAll('[data-waiting]').forEach(el => { el.hidden = el.dataset.waiting !== state; });
@@ -692,6 +692,52 @@ async function startProjector() {
     if (projectorLink) projectorLink.send({ type: 'projector-ready' });
 }
 
+// Stops projector mode: leaves the teacher's channel (so their device leaves
+// remote mode), stops reading and video, exits full screen. `reason`:
+//   'here'       — Stop projector pressed on this screen
+//   'teacher'    — the teacher chose Stop projector on their device
+//   'signed-out' — the teacher logged out; this screen signs out too, so a
+//                  classroom laptop is never left signed in to their account
+let projectorStopping = false;
+async function stopProjector(reason) {
+    projectorStopping = true;
+    projectorNarration.stop();
+    pauseProjVideo();
+    if (projectorLink) { projectorLink.close(); projectorLink = null; }
+    projectorStarted = false;
+    teacherOnline = false;
+    document.getElementById('proj-connection').hidden = true;
+    document.getElementById('proj-stop-btn').hidden = true;
+    if (wakeLock) { try { await wakeLock.release(); } catch (err) { /* already released */ } wakeLock = null; }
+    if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch (err) { /* not in full screen */ } }
+
+    const signedOut = reason === 'signed-out';
+    if (signedOut) await HMCloud.signOut();
+    document.getElementById('proj-stopped-detail').textContent = signedOut
+        ? 'The teacher signed out, so this screen has signed out too.'
+        : reason === 'teacher'
+            ? "Stopped from the teacher's device."
+            : 'Projector mode is off. The teacher\'s device is no longer connected to this screen.';
+    document.getElementById('proj-restart-btn').hidden = signedOut;
+    document.getElementById('proj-signin-again').hidden = !signedOut;
+    showWaiting('stopped');
+}
+
+function restartProjector() {
+    projectorStopping = false;
+    connectProjector();
+}
+
+// The Stop button appears for 3 seconds whenever the mouse moves.
+let stopBtnTimer = null;
+document.addEventListener('mousemove', () => {
+    if (!projectorLink) return;
+    const btn = document.getElementById('proj-stop-btn');
+    btn.hidden = false;
+    clearTimeout(stopBtnTimer);
+    stopBtnTimer = setTimeout(() => { if (!btn.matches(':hover')) btn.hidden = true; }, 3000);
+});
+
 async function connectProjector() {
     const account = await HMCloud.restoreSession();
     if (!account || !['teacher', 'trainer', 'admin'].includes(account.role)) {
@@ -705,12 +751,16 @@ async function connectProjector() {
             role: 'projector',
             // Until Start is pressed, lesson screens wait (the video could not
             // play with sound yet); Start asks the teacher's device to resend.
-            onMessage: msg => { if (projectorStarted) handleProjectorMessage(msg); },
+            onMessage: msg => {
+                if (msg.type === 'projector-stop') { stopProjector(msg.reason === 'signed-out' ? 'signed-out' : 'teacher'); return; }
+                if (projectorStarted) handleProjectorMessage(msg);
+            },
             onDevices: roles => {
                 teacherOnline = roles.includes('teacher');
                 updateWaitingDetail();
             },
             onStatus: status => {
+                if (projectorStopping) return;
                 document.getElementById('proj-connection').hidden = status === 'connected';
                 if (status === 'connected' && projectorStarted) projectorLink.send({ type: 'projector-ready' });
             }

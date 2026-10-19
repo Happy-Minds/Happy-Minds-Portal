@@ -420,6 +420,7 @@ async function handleLogout(event) {
     event.stopPropagation();
     // Record time on the open stage before the session (and save access) ends.
     stopTimer();
+    await stopProjectorForSignOut();
     closeRemoteChannel();
     updateScriptFab('login');
     await HMCloud.signOut();
@@ -904,6 +905,24 @@ function openProjectorView() {
     window.open('projector.html', 'happyminds_projector', 'width=1280,height=720');
 }
 
+// Account menu: Projector mode when none is connected, Stop projector when one is.
+function projectorMenuAction() {
+    if (projectorConnected) {
+        broadcastToProjector({ type: 'projector-stop', reason: 'teacher' });
+        showNotification('Projector stopped.');
+    } else {
+        openProjectorView();
+    }
+}
+
+// Before signing out: tell the projector, and wait (briefly) for it to go
+// out, so the projector stops and signs out instead of staying connected.
+async function stopProjectorForSignOut() {
+    if (!projectorConnected || !remoteChannel || remoteChannel === 'opening') return;
+    const msg = { type: 'projector-stop', reason: 'signed-out', chapterId: appState.currentChapterId };
+    await Promise.race([remoteChannel.send(msg), new Promise(resolve => setTimeout(resolve, 1500))]);
+}
+
 function updateProjectorStatusUI() {
     // Remote Mode applies app-wide (Explore, Practice, Create, Perform all
     // read this class), so it's always kept in sync even on views without
@@ -913,6 +932,12 @@ function updateProjectorStatusUI() {
     // One "Open projector view" button per stage (Explore/Practice/Create/
     // Perform) so the teacher can start it from wherever they already are —
     // all four share the .projector-status-dot class and stay in sync together.
+    const menuItem = document.getElementById('projectorMenuItem');
+    if (menuItem) {
+        menuItem.innerHTML = projectorConnected
+            ? '<i class="fa-solid fa-power-off"></i> Stop projector'
+            : '<i class="fa-solid fa-display"></i> Projector mode';
+    }
     document.querySelectorAll('.projector-status-dot').forEach(dot => {
         dot.classList.toggle('connected', projectorConnected);
         dot.title = projectorConnected ? 'Projector connected' : 'Projector not connected';

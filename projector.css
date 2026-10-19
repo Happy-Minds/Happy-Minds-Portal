@@ -799,3 +799,26 @@ video.proj-video-el { object-fit: contain; }
 
 /* Activity timer paused by the teacher: dim the ring so the class can see it. */
 .proj-draw-timer.paused { opacity: 0.55; }
+
+/* Stop projector — shows only while the mouse moves (see projector.js). */
+.proj-stop-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(15, 23, 42, 0.85);
+    color: white;
+    font-family: var(--font-main);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+}
+.proj-stop-btn:hover { background: #DC2626; }
+.proj-stop-btn:focus-visible { outline: 3px solid white; outline-offset: 3px; }

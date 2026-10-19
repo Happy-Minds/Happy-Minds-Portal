@@ -221,7 +221,7 @@ const HMCloud = (() => {
             });
 
             return {
-                send(msg) { channel.send({ type: 'broadcast', event: 'msg', payload: msg }); },
+                send(msg) { return channel.send({ type: 'broadcast', event: 'msg', payload: msg }); },
                 close() { client.removeChannel(channel); }
             };
         },
