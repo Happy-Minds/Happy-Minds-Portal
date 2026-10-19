@@ -4294,3 +4294,87 @@ body.remote-mode .explorer-spotlight { display: none; }
     .stage-orbs { right: 8px; gap: 3px; }
     .stage-orb img { width: 95px; }
 }
+
+/* ==========================================================================
+   ADMIN: RESET A PASSWORD
+   ========================================================================== */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.admin-card-explain {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    margin: -4px 0 12px;
+}
+
+.admin-search-input { margin-bottom: 10px; }
+
+.btn-glass.compact {
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.btn-glass:focus-visible { outline: 3px solid var(--primary-blue); outline-offset: 2px; }
+
+.reset-password-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.reset-password-input-row .reflection-text-input {
+    flex: 1;
+    min-width: 0;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 15px;
+}
+
+.reset-password-help {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 8px 0 0;
+}
+
+.reset-password-result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    background: #F0F9FF;
+    border: 1.5px solid #BAE6FD;
+    border-radius: 14px;
+    padding: 14px 16px;
+}
+
+.reset-password-result span { flex-basis: 100%; font-size: 13.5px; font-weight: 600; color: var(--text-dark); }
+
+.reset-password-result code {
+    flex: 1;
+    min-width: 0;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    overflow-wrap: anywhere;
+    user-select: all;
+}
+
+#resetPasswordDone .modal-actions-row { margin-top: 18px; }
+
+@media (max-width: 560px) {
+    #adminPasswordList .admin-list-row { flex-wrap: wrap; }
+    #adminPasswordList .admin-list-title { flex-basis: calc(100% - 60px); }
+    #adminPasswordList .btn-glass.compact { margin-left: auto; }
+}

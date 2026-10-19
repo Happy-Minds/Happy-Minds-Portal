@@ -453,6 +453,112 @@ function renderAdminDashboard() {
         </div>`).join('');
 
     renderAdminTrainerCard();
+    document.getElementById('adminPasswordSearch').value = '';
+    renderAdminPasswordList('');
+}
+
+// ================= ADMIN: Reset a Password =================
+// Every account (staff, students, parents), filtered by the search box.
+// The reset itself runs in the database (admin_reset_password), which
+// re-checks that the signed-in account really is an admin.
+const ADMIN_ROLE_ORDER = ['teacher', 'trainer', 'admin', 'student', 'parent'];
+let resetPasswordUsername = null;
+
+function renderAdminPasswordList(query) {
+    const q = (query || '').trim().toLowerCase();
+    const accounts = HappyMindsConfig.ACCOUNTS
+        .filter(a => !q || a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q))
+        .sort((a, b) => ADMIN_ROLE_ORDER.indexOf(a.role) - ADMIN_ROLE_ORDER.indexOf(b.role) || a.name.localeCompare(b.name));
+
+    const list = document.getElementById('adminPasswordList');
+    if (!accounts.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No account matches "${escapeReportText(query)}".</p>`;
+        return;
+    }
+    list.innerHTML = accounts.map(acc => `
+        <div class="admin-list-row">
+            <img src="${escapeReportText(acc.avatar)}" alt="" class="admin-list-avatar">
+            <span class="admin-list-title">${escapeReportText(acc.name)} <span class="admin-list-username">@${escapeReportText(acc.username)}</span></span>
+            <span class="admin-list-tag role-${acc.role}">${ADMIN_ROLE_LABELS[acc.role]}</span>
+            <button type="button" class="btn-glass compact" data-username="${escapeReportText(acc.username)}" onclick="openResetPasswordModal(this.dataset.username)">Reset password</button>
+        </div>`).join('');
+}
+
+function openResetPasswordModal(username) {
+    const account = HappyMindsConfig.ACCOUNTS.find(a => a.username === username);
+    if (!account) return;
+    resetPasswordUsername = username;
+    document.getElementById('resetPasswordFor').textContent = `${account.name} (@${account.username})`;
+    document.getElementById('resetPasswordForm').reset();
+    document.getElementById('resetPasswordForm').hidden = false;
+    document.getElementById('resetPasswordDone').hidden = true;
+    document.getElementById('resetPasswordError').textContent = '';
+    document.getElementById('resetPasswordModal').classList.add('active-modal');
+    document.getElementById('resetPasswordInput').focus();
+}
+
+function closeResetPasswordModal() {
+    resetPasswordUsername = null;
+    document.getElementById('resetPasswordModal').classList.remove('active-modal');
+    // Don't leave a new password sitting in the page.
+    document.getElementById('resetPasswordDoneValue').textContent = '';
+}
+
+// Two simple words and four digits, e.g. "sunny-river-4827": easy to read
+// out to a child or parent, and far from the demo-style passwords.
+const PASSWORD_WORDS = ['apple', 'tiger', 'river', 'sunny', 'cloud', 'mango', 'rocket', 'garden', 'pencil', 'forest',
+    'dragon', 'castle', 'bridge', 'meadow', 'planet', 'lemon', 'violet', 'eagle', 'island', 'candle', 'maple', 'ocean'];
+
+function suggestPassword() {
+    const random = new Uint32Array(3);
+    crypto.getRandomValues(random);
+    const word = i => PASSWORD_WORDS[random[i] % PASSWORD_WORDS.length];
+    const digits = String(random[2] % 10000).padStart(4, '0');
+    const input = document.getElementById('resetPasswordInput');
+    input.value = `${word(0)}-${word(1)}-${digits}`;
+    input.focus();
+    document.getElementById('resetPasswordError').textContent = '';
+}
+
+async function submitPasswordReset(event) {
+    event.preventDefault();
+    const input = document.getElementById('resetPasswordInput');
+    const errorEl = document.getElementById('resetPasswordError');
+    const submit = document.getElementById('resetPasswordSubmit');
+    const password = input.value.trim();
+
+    if (password.length < 8) {
+        errorEl.textContent = 'The new password must be at least 8 characters.';
+        input.focus();
+        return;
+    }
+
+    errorEl.textContent = '';
+    submit.disabled = true;
+    submit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving…';
+    try {
+        await HMCloud.resetPassword(resetPasswordUsername, password);
+        const account = HappyMindsConfig.ACCOUNTS.find(a => a.username === resetPasswordUsername);
+        document.getElementById('resetPasswordDoneName').textContent = account ? account.name : resetPasswordUsername;
+        document.getElementById('resetPasswordDoneValue').textContent = password;
+        document.getElementById('resetPasswordForm').hidden = true;
+        document.getElementById('resetPasswordDone').hidden = false;
+    } catch (err) {
+        errorEl.textContent = err.message;
+    } finally {
+        submit.disabled = false;
+        submit.textContent = 'Set New Password';
+    }
+}
+
+async function copyResetPassword() {
+    const value = document.getElementById('resetPasswordDoneValue').textContent;
+    try {
+        await navigator.clipboard.writeText(value);
+        showNotification('Password copied.');
+    } catch (err) {
+        showNotification("Couldn't copy. Select the password and copy it yourself.");
+    }
 }
 
 // Real trainer activity instead of the old "Trainers — Coming in a later

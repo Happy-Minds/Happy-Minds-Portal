@@ -171,6 +171,20 @@ const HMCloud = (() => {
             if (!saveTimer && !failing) saveTimer = setTimeout(writeUnsaved, SAVE_DELAY_MS);
         },
 
+        // Admin only (enforced by the database). Throws an Error whose
+        // message is safe to show in the reset dialog.
+        async resetPassword(username, newPassword) {
+            const { error } = await client.rpc('admin_reset_password', { target_username: username, new_password: newPassword });
+            if (!error) return;
+            const known = /only an admin|at least 8 characters|no account with that username/i;
+            if (known.test(error.message || '')) throw new Error(error.message);
+            if (/failed to fetch|network/i.test(error.message || '')) {
+                throw new Error("Couldn't reach Happy Minds. Check your internet connection and try again.");
+            }
+            console.warn('Happy Minds: password reset failed', error);
+            throw new Error("Couldn't change the password. Please try again.");
+        },
+
         // fn('error') when saving starts failing, fn('recovered') once it works again.
         onSaveStatus(fn) {
             statusListeners.push(fn);

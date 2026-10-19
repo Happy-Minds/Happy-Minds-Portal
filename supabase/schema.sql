@@ -146,6 +146,44 @@ create policy "Update documents allowed for this role"
     with check (private.can_write_document(doc, student_id));
 
 -- --------------------------------------------------------------------------
+-- Admin password reset. Accounts have no real email, so a forgotten password
+-- is reset by an admin from the portal. Signs the person out everywhere else
+-- so the old password stops working on devices already signed in.
+-- --------------------------------------------------------------------------
+create or replace function public.admin_reset_password(target_username text, new_password text)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+    v_uid uuid;
+begin
+    if private.my_role() is distinct from 'admin' then
+        raise exception 'Only an admin can reset passwords.' using errcode = '42501';
+    end if;
+    if length(coalesce(new_password, '')) < 8 then
+        raise exception 'The new password must be at least 8 characters.' using errcode = '22023';
+    end if;
+
+    select id into v_uid from public.profiles where username = target_username;
+    if v_uid is null then
+        raise exception 'No account with that username.' using errcode = 'P0002';
+    end if;
+
+    update auth.users
+        set encrypted_password = extensions.crypt(new_password, extensions.gen_salt('bf')),
+            updated_at = now()
+        where id = v_uid;
+
+    -- An admin resetting their own password stays signed in here.
+    if v_uid is distinct from auth.uid() then
+        delete from auth.refresh_tokens where user_id = v_uid::text;
+        delete from auth.sessions where user_id = v_uid;
+    end if;
+end
+$$;
+
+revoke all on function public.admin_reset_password(text, text) from public, anon;
+grant execute on function public.admin_reset_password(text, text) to authenticated;
+
+-- --------------------------------------------------------------------------
 -- Data API access. New tables are not exposed automatically in this project,
 -- so grant exactly what the portal needs. Signed-out visitors get nothing.
 -- --------------------------------------------------------------------------

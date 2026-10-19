@@ -1721,6 +1721,14 @@
                 </div>
 
                 <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-key"></i> Reset a Password</h3>
+                    <p class="admin-card-explain">Accounts have no email, so when someone forgets their password you set a new one here and give it to them.</p>
+                    <label class="visually-hidden" for="adminPasswordSearch">Find an account</label>
+                    <input type="search" id="adminPasswordSearch" class="reflection-text-input admin-search-input" placeholder="Find by name or username" autocomplete="off" oninput="renderAdminPasswordList(this.value)">
+                    <div class="admin-account-list" id="adminPasswordList"></div>
+                </div>
+
+                <div class="admin-section-card">
                     <h3><i class="fa-solid fa-user-tie"></i> Trainer Activity</h3>
                     <div id="adminTrainerCard"></div>
                 </div>
@@ -1846,6 +1854,53 @@
             <div class="modal-actions-row">
                 <button class="btn-glass" onclick="closeFollowUpModal()">Cancel</button>
                 <button class="btn-primary-glowing" onclick="saveFollowUp()">Save Follow-up</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin: reset someone's password -->
+    <div id="resetPasswordModal" class="modal-backdrop" onclick="if (event.target === this) closeResetPasswordModal()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
+            <button class="modal-close-btn" onclick="closeResetPasswordModal()" aria-label="Close">&times;</button>
+
+            <div class="planner-modal-header">
+                <div class="badge-icon blue"><i class="fa-solid fa-key"></i></div>
+                <div>
+                    <h3 id="resetPasswordTitle">Reset password</h3>
+                    <p class="modal-sub" id="resetPasswordFor"></p>
+                </div>
+            </div>
+
+            <form id="resetPasswordForm" onsubmit="submitPasswordReset(event)" novalidate>
+                <div class="reflection-field">
+                    <label for="resetPasswordInput">New password</label>
+                    <div class="reset-password-input-row">
+                        <input type="text" id="resetPasswordInput" class="reflection-text-input" minlength="8" required autocomplete="new-password" spellcheck="false" aria-describedby="resetPasswordHelp resetPasswordError">
+                        <button type="button" class="btn-glass compact" onclick="suggestPassword()">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Suggest
+                        </button>
+                    </div>
+                    <p class="reset-password-help" id="resetPasswordHelp">At least 8 characters. Easy to type, hard to guess.</p>
+                    <p class="login-error" id="resetPasswordError" role="alert"></p>
+                </div>
+                <div class="modal-actions-row">
+                    <button type="button" class="btn-glass" onclick="closeResetPasswordModal()">Cancel</button>
+                    <button type="submit" class="btn-primary-glowing" id="resetPasswordSubmit">Set New Password</button>
+                </div>
+            </form>
+
+            <div id="resetPasswordDone" hidden>
+                <div class="reset-password-result">
+                    <span>New password for <strong id="resetPasswordDoneName"></strong></span>
+                    <code id="resetPasswordDoneValue"></code>
+                    <button type="button" class="btn-glass compact" onclick="copyResetPassword()">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                </div>
+                <p class="reset-password-help">Give them this password. They have been signed out on their other devices, so the old password no longer works.</p>
+                <div class="modal-actions-row">
+                    <button type="button" class="btn-primary-glowing" onclick="closeResetPasswordModal()">Done</button>
+                </div>
             </div>
         </div>
     </div>
