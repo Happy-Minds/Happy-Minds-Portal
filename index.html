@@ -804,24 +804,21 @@
                     <div class="think-talk-header">
                         <div class="chat-badge-icon"><i class="fa-solid fa-palette"></i></div>
                         <div>
-                            <h3>Draw Your World</h3>
-                            <p>On paper — add at least 6–7 things.</p>
+                            <h3 id="drawTitle">Class activity</h3>
+                            <p>On paper, in notebooks.</p>
                         </div>
                     </div>
 
-                    <p class="draw-instruction">"Now, we are going to capture this world. You are going to draw a map of your magical world. Use colors. Add trees, castles, clouds, animals, rivers — anything that belongs in your world. You have about 7 minutes to draw. Let's begin!"</p>
+                    <!-- Filled per chapter from its script (chapter.prep.activityStep) -->
+                    <p class="draw-instruction" id="drawInstruction"></p>
 
                     <button class="btn-glass" onclick="startDrawTimer()">
                         <i class="fa-solid fa-stopwatch"></i> Start 7-min timer on projector
                     </button>
 
-                    <div class="roving-prompts-card">
-                        <div class="roving-prompts-title"><i class="fa-solid fa-person-walking"></i> Roving prompts while students draw</div>
-                        <ul class="roving-prompts-list">
-                            <li>"Wow! Tell me about this. What is this tall thing here?"</li>
-                            <li>"I see you have a river here. What color is the water in your world?"</li>
-                            <li>Stuck student? "Remember that dragon you heard snoring? Where is its cave?"</li>
-                        </ul>
+                    <div class="roving-prompts-card" id="drawRovingCard">
+                        <div class="roving-prompts-title"><i class="fa-solid fa-person-walking"></i> Roving prompts while students work</div>
+                        <ul class="roving-prompts-list" id="drawRovingList"></ul>
                     </div>
 
                     <div class="think-talk-footer-banner">
@@ -1386,8 +1383,8 @@
                                 <i class="fa-solid fa-person-walking yellow"></i>
                                 <h3>Roving Prompts</h3>
                             </div>
-                            <p class="challenge-prompt">Stuck writer? "Let's look at your drawing together. What is this? Write that word."</p>
-                            <p class="challenge-prompt">Finished early? "Can you add one more sentence? Can you add colours?"</p>
+                            <!-- Filled per chapter from its Session 2 script -->
+                            <div id="createRovingPrompts"></div>
 
                             <button class="btn-glass full-width" onclick="openRobotHintModal()">
                                 <i class="fa-solid fa-robot blue"></i> Need a Hint?
@@ -1860,6 +1857,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Lesson script, available during any lesson stage without leaving it:
+         the video keeps playing and the projector does not change. -->
+    <button type="button" class="script-fab" id="scriptFab" onclick="openScriptPanel()" aria-haspopup="dialog" aria-controls="scriptPanel" hidden>
+        <i class="fa-solid fa-scroll"></i> Script
+    </button>
+    <div class="script-panel-backdrop" id="scriptPanelBackdrop" onclick="closeScriptPanel()" hidden></div>
+    <aside class="script-panel" id="scriptPanel" role="dialog" aria-labelledby="scriptPanelTitle" hidden>
+        <div class="script-panel-head">
+            <div>
+                <span class="script-panel-eyebrow" id="scriptPanelEyebrow"></span>
+                <h3 id="scriptPanelTitle">Lesson script</h3>
+            </div>
+            <button type="button" class="script-panel-close" id="scriptPanelClose" onclick="closeScriptPanel()" aria-label="Close script">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="script-panel-tabs" role="tablist">
+            <button type="button" role="tab" id="scriptTab1" onclick="renderScriptPanel(1)">Session 1</button>
+            <button type="button" role="tab" id="scriptTab2" onclick="renderScriptPanel(2)">Session 2</button>
+        </div>
+        <div class="script-panel-body" id="scriptPanelBody"></div>
+    </aside>
 
     <!-- Admin: reset someone's password -->
     <div id="resetPasswordModal" class="modal-backdrop" onclick="if (event.target === this) closeResetPasswordModal()">

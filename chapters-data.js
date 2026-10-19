@@ -140,6 +140,8 @@ const CHAPTERS = [
         // types) so the same data could later feed both this page and the
         // in-class teacher remote.
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 5,
             lessonPlan: {
                 objectives: [
                     'Use imagination and sensory detail to describe an invented world',
@@ -379,6 +381,8 @@ const CHAPTERS = [
             ]
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 5,
             lessonPlan: {
                 objectives: [
                     'Set personal goals and express them using the Simple Present Tense',
@@ -604,6 +608,8 @@ const CHAPTERS = [
             ]
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 5,
             lessonPlan: {
                 objectives: [
                     'Describe themselves and others using adjectives',
@@ -828,6 +834,8 @@ const CHAPTERS = [
             ]
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 5,
             lessonPlan: {
                 objectives: [
                     'Use pronouns (he, she, they, it) to talk about others without repeating names',
@@ -982,6 +990,8 @@ const CHAPTERS = [
             modelNouns: ['on', 'next to', 'under', 'in', 'behind']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use prepositions of place (on, under, in, next to, behind) to say exactly where things are',
@@ -1201,6 +1211,8 @@ const CHAPTERS = [
             modelNouns: ['woke', 'ate', 'went', 'played', 'felt', 'watched']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the simple past tense to talk about yesterday, with regular (-ed) and irregular verbs',
@@ -1422,6 +1434,8 @@ const CHAPTERS = [
             modelNouns: ['happily', 'joyfully', 'quickly', 'loudly']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use adverbs of manner (happily, quickly, politely, early) to describe how actions happen',
@@ -1642,6 +1656,8 @@ const CHAPTERS = [
             modelNouns: ['an', 'a', 'the']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the articles a, an and the correctly (a before a consonant sound, an before a vowel sound, the for one specific thing)',
@@ -1866,6 +1882,8 @@ const CHAPTERS = [
             modelNouns: ['found', 'took', 'saw', 'played', 'felt', 'pressed', 'returned']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Tell the difference between present tense (now, every day) and past tense (yesterday, before)',
@@ -2086,6 +2104,8 @@ const CHAPTERS = [
             modelNouns: ['and', 'but', 'because', 'so']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the conjunctions and (adds ideas), but (shows contrast) and because (gives a reason) to join ideas',
@@ -2318,6 +2338,8 @@ const CHAPTERS = [
             modelNouns: ['can', 'must', 'should']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the modal verbs can (ability or permission), must (strong rule) and should (good advice)',
@@ -2551,6 +2573,8 @@ const CHAPTERS = [
             modelNouns: ['apples', 'bananas', 'milk', 'rice', 'cheese', 'notebooks']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Tell countable nouns (apples, pens) from uncountable nouns (milk, rice) and use a/an, some, many and containers correctly',
@@ -2775,6 +2799,8 @@ const CHAPTERS = [
             modelNouns: ['am drinking', 'am eating', 'am going', 'am sleeping', 'am washing', 'am feeling']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the present continuous tense (am / is / are + verb + -ing) for actions happening right now',
@@ -3002,6 +3028,8 @@ const CHAPTERS = [
             modelNouns: ['at', 'in', 'on']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the prepositions of time at (exact times), on (days and dates) and in (months, years, parts of the day)',
@@ -3234,6 +3262,8 @@ const CHAPTERS = [
             modelNouns: ['kind', 'thoughtful', 'delicious', 'huge', 'thrilled', 'exhausted']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Understand synonyms (words with the same meaning) and antonyms (words with the opposite meaning)',
@@ -3459,6 +3489,8 @@ const CHAPTERS = [
             modelNouns: ['blue', 'shiny', 'round', 'smooth', 'cool', 'fresh']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use adjectives (describing words) for colour, size, shape, texture, sound and smell',
@@ -3683,6 +3715,8 @@ const CHAPTERS = [
             modelNouns: ['!', '"', '.', '?']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use punctuation marks correctly: full stop (.), exclamation mark (!), question mark (?), comma (,) and quotation marks (" ")',
@@ -3925,6 +3959,8 @@ const CHAPTERS = [
             modelNouns: ['One day', 'Then', 'Suddenly', 'In the end']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Know the four ingredients of a good story: character, setting, problem and solution',
@@ -4155,6 +4191,8 @@ const CHAPTERS = [
             modelNouns: ['kite', 'night', 'bright', 'delight']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Recognise and make rhyming words that share the same ending sound (cat, hat, mat)',
@@ -4382,6 +4420,8 @@ const CHAPTERS = [
             modelNouns: ['Who', 'What', 'How']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the question words who, what, where, when, why and how to ask for the right information',
@@ -4613,6 +4653,8 @@ const CHAPTERS = [
             modelNouns: ['because', 'so']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Understand cause (why something happens) and effect (what happens as a result)',
@@ -4842,6 +4884,8 @@ const CHAPTERS = [
             modelNouns: ['was', 'studied', 'became', 'went', 'admire']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Use the past simple tense (was/were, lived, helped, studied, won, taught) to tell a life story',
@@ -5070,6 +5114,8 @@ const CHAPTERS = [
             modelNouns: ['said that', 'was', 'were']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Change direct speech to reported speech: remove quotation marks, add "said that", and change am/is → was, are → were',
@@ -5298,6 +5344,8 @@ const CHAPTERS = [
             modelNouns: ['learned', 'proud', 'difficult', 'advice']
         },
         prep: {
+            // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
+            activityStep: 8,
             lessonPlan: {
                 objectives: [
                     'Review the year\'s skills: nouns and adjectives, tenses, articles, prepositions, conjunctions, synonyms, cause and effect, reported speech and question words',

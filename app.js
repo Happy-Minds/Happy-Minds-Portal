@@ -215,6 +215,7 @@ function navigateTo(viewId) {
 
     if (viewId === 'home') renderHomeHeroStats();
     renderNotificationCenter();
+    updateScriptFab(viewId);
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -415,6 +416,7 @@ async function handleLogout(event) {
     // Record time on the open stage before the session (and save access) ends.
     stopTimer();
     closeRemoteChannel();
+    updateScriptFab('login');
     await HMCloud.signOut();
     appState.currentUser = null;
     reloadSavedState();
@@ -1195,8 +1197,23 @@ function renderExploreStage(chapter) {
             <p>${q}</p>
         </div>`).join('');
 
+    renderExploreActivity(chapter);
     renderLumoraWall();
     broadcastToProjector({ type: 'settle' });
+}
+
+// The Explore activity card (on paper, with a projector timer) shows this
+// chapter's own hands-on task and roving prompts from its script.
+function renderExploreActivity(chapter) {
+    const activity = chapter.prep && chapter.prep.session1Script.find(s => s.step === chapter.prep.activityStep);
+    const say = activity && activity.lines.find(l => l.type === 'teacher_says');
+    document.getElementById('drawTitle').textContent = activity ? activity.title : 'Class activity';
+    document.getElementById('drawInstruction').textContent = say ? `"${say.text}"` : 'Students work on today\'s activity on paper.';
+
+    const prompts = scriptPromptLines(activity);
+    document.getElementById('drawRovingCard').hidden = !prompts.length;
+    document.getElementById('drawRovingList').innerHTML = prompts
+        .map(l => `<li>${l.type === 'support_prompt' ? 'Stuck student? ' : ''}"${escapeReportText(l.text)}"</li>`).join('');
 }
 
 function onChapterVideoEnded() {
@@ -1976,6 +1993,14 @@ function renderCreateStage(chapter) {
 
     document.getElementById('createIdeasList').innerHTML = chapter.create.bullets
         .map(b => `<li>${b}</li>`).join('');
+
+    // Roving prompts come from this chapter's own Session 2 (Create) script.
+    const createPrompts = chapter.prep
+        ? chapter.prep.session2Script.filter(s => s.stage === 'Create').flatMap(scriptPromptLines)
+        : [];
+    document.getElementById('createRovingPrompts').innerHTML = createPrompts.length
+        ? createPrompts.map(l => `<p class="challenge-prompt">${l.type === 'support_prompt' ? 'Stuck writer? ' : ''}"${escapeReportText(l.text)}"</p>`).join('')
+        : '<p class="challenge-prompt">Walk around, read over shoulders, and ask each writer one question that helps them add a detail.</p>';
 
     renderLumoraWall();
 
@@ -3219,6 +3244,123 @@ function renderPrepScriptLine(line) {
     }
     return '';
 }
+
+// ================= Lesson script panel (during class) =================
+// The full script for the chapter, opened over any lesson stage from the
+// Script button. Opening it changes nothing else: the video keeps playing
+// and the projector keeps showing what it was showing.
+const LESSON_VIEWS = ['explore-stage', 'practice-stage', 'create-stage', 'perform-stage'];
+const SCRIPT_ROLES = ['teacher', 'trainer', 'admin'];
+let scriptPanelPosition = null;
+
+function scriptPromptLines(step) {
+    return step ? step.lines.filter(l => l.type === 'roving_prompt' || l.type === 'support_prompt') : [];
+}
+
+function updateScriptFab(viewId) {
+    const chapter = getCurrentChapter();
+    const show = LESSON_VIEWS.includes(viewId)
+        && !!appState.currentUser && SCRIPT_ROLES.includes(appState.currentUser.role)
+        && !!(chapter && chapter.prep);
+    document.getElementById('scriptFab').hidden = !show;
+    document.body.classList.toggle('has-script-fab', show);
+    if (!show) closeScriptPanel();
+}
+
+// Which script step matches what is on the teacher's screen right now.
+// Explore and Create follow their on-screen steps; Practice and Perform
+// open at their first step.
+function currentScriptPosition() {
+    const prep = getCurrentChapter().prep;
+    const at = (session, stage, offset) => {
+        const steps = (session === 1 ? prep.session1Script : prep.session2Script).filter(s => s.stage === stage);
+        const step = steps[Math.max(0, Math.min(steps.length - 1, offset))];
+        return { session, step: step ? step.step : 1 };
+    };
+    const revealed = id => document.getElementById(id).classList.contains('revealed');
+    const view = appState.currentView;
+
+    if (view === 'explore-stage') {
+        const s1 = prep.session1Script;
+        const storyStep = (s1.find(s => /storybook/i.test(s.title)) || s1[0]).step;
+        const exploreSteps = s1.filter(s => s.stage === 'Explore');
+        if (revealed('wrapupSection')) return { session: 1, step: exploreSteps[exploreSteps.length - 1].step };
+        if (revealed('drawSection')) return { session: 1, step: prep.activityStep || storyStep + 2 };
+        if (revealed('thinkTalkSection')) return { session: 1, step: storyStep + 1 };
+        if (revealed('storybookSection')) return { session: 1, step: storyStep };
+        if (document.getElementById('videoPlayerCard').style.display !== 'none') {
+            return { session: 1, step: (s1.find(s => /video/i.test(s.title)) || s1[0]).step };
+        }
+        return at(1, 'Explore', 0);
+    }
+    if (view === 'practice-stage') return at(1, 'Practice', 0);
+    if (view === 'create-stage') {
+        if (revealed('createCheckSection')) return at(2, 'Create', 4);
+        if (revealed('createWriteSection')) return at(2, 'Create', 3);
+        if (revealed('createModelSection')) return at(2, 'Create', 2);
+        if (revealed('createStarterSection')) return at(2, 'Create', 1);
+        return at(2, 'Create', 0);
+    }
+    if (view === 'perform-stage') {
+        if (revealed('performCloseSection')) return at(2, 'Perform', 99);
+        if (revealed('performStageSection')) return at(2, 'Perform', 2);
+        if (revealed('performPairSection')) return at(2, 'Perform', 1);
+        return at(2, 'Perform', 0);
+    }
+    return { session: 1, step: 1 };
+}
+
+function openScriptPanel() {
+    scriptPanelPosition = currentScriptPosition();
+    document.getElementById('scriptPanel').hidden = false;
+    document.getElementById('scriptPanelBackdrop').hidden = false;
+    document.getElementById('scriptFab').setAttribute('aria-expanded', 'true');
+    renderScriptPanel(scriptPanelPosition.session);
+    document.getElementById('scriptPanelClose').focus();
+}
+
+function closeScriptPanel() {
+    const panel = document.getElementById('scriptPanel');
+    if (panel.hidden) return;
+    panel.hidden = true;
+    document.getElementById('scriptPanelBackdrop').hidden = true;
+    const fab = document.getElementById('scriptFab');
+    fab.setAttribute('aria-expanded', 'false');
+    if (!fab.hidden) fab.focus();
+}
+
+function renderScriptPanel(session) {
+    const chapter = getCurrentChapter();
+    const steps = session === 1 ? chapter.prep.session1Script : chapter.prep.session2Script;
+    const currentStep = scriptPanelPosition && scriptPanelPosition.session === session ? scriptPanelPosition.step : null;
+
+    document.getElementById('scriptPanelEyebrow').textContent = `Chapter ${String(chapter.id).padStart(2, '0')} · ${chapter.title}`;
+    document.getElementById('scriptPanelTitle').textContent = session === 1 ? 'Session 1 · Explore & Practice' : 'Session 2 · Create & Perform';
+    [1, 2].forEach(n => {
+        const tab = document.getElementById(`scriptTab${n}`);
+        tab.classList.toggle('active', n === session);
+        tab.setAttribute('aria-selected', String(n === session));
+    });
+
+    const body = document.getElementById('scriptPanelBody');
+    body.innerHTML = steps.map(step => `
+        <div class="prep-step-card script-step${step.step === currentStep ? ' is-current' : ''}" data-step="${step.step}">
+            <div class="prep-step-head">
+                <span class="prep-step-num">${step.step}</span>
+                <span class="prep-step-stage">${step.stage}</span>
+                <h4>${step.title}</h4>
+                ${step.step === currentStep ? '<span class="script-here">You are here</span>' : ''}
+            </div>
+            ${step.lines.map(renderPrepScriptLine).join('')}
+        </div>`).join('');
+
+    const current = body.querySelector('.script-step.is-current');
+    body.scrollTop = current ? current.offsetTop - body.offsetTop - 8 : 0;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeScriptPanel();
+});
 
 function showPrepSession(sessionNum, btnEl) {
     document.querySelectorAll('.prep-session-tab').forEach(b => b.classList.remove('active'));
