@@ -981,6 +981,113 @@ const CHAPTERS = [
             ],
             modelNouns: ['on', 'next to', 'under', 'in', 'behind']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use prepositions of place (on, under, in, next to, behind) to say exactly where things are',
+                    'Describe a room and personal space with clear, detailed sentences',
+                    'Write a short paragraph about a favourite room and give a room tour to a partner'
+                ],
+                studentOutputs: {
+                    session1: 'Three preposition sentences + a labelled dream room drawing with 3 sentences underneath',
+                    session2: 'A 4-6 sentence paragraph about their favourite room + a room tour role play with a partner'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper for drawing', 'Pencils', 'Optional: coloured pencils or crayons'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use all five prepositions in your paragraph. Can you add a sentence about how the room makes you feel?' },
+                    { level: 'Struggling', action: 'Write 3 sentences using the starter "My favourite room is my ___." Pick just two prepositions: on and under.' },
+                    { level: 'Very Shy', action: 'You can give your room tour by pointing to your drawing and reading your paragraph to one partner.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils, colours)',
+                'Preposition table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Think about home', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone! Today we talk about a very special place — home. Close your eyes. Where is your bed? Where do you keep your favourite toy or book? Hold that picture in your mind." },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice what the character loves most about their home.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 5 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Today Sela shows Aanya her home inside a hollow oak tree. Listen for where she keeps her things — on the shelf, under the table, behind the curtain." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what does your room look like? Think about the colours, the furniture, the things on your wall. Tell your partner.' },
+                    { type: 'expected_answers', text: 'My room has blue walls. / I have a big window. / My bed is near the door.' },
+                    { type: 'teacher_says', text: 'Where do you keep your favourite things — your favourite toy or book?' },
+                    { type: 'expected_answers', text: 'I keep my books on a shelf. / My toy car is under my bed. / My teddy is on my pillow.' },
+                    { type: 'teacher_says', text: 'What is your favourite place at home? It can be anywhere — the kitchen, the balcony.' },
+                    { type: 'expected_answers', text: 'The kitchen because my mom makes food there. / The balcony because I can see the stars.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'From talking to grammar', lines: [
+                    { type: 'teacher_says', text: "You just said 'my books are ON a shelf' and 'my toy car is UNDER my bed.' Words like on and under tell us WHERE something is. They are called prepositions of place." }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Prepositions of Place', lines: [
+                    { type: 'teacher_says', text: 'On means resting above: the book is on the table. Under means below: the cat is under the bed. In means inside, next to means beside, behind means at the back.' },
+                    { type: 'stage_direction', text: "Quick call-out: 'The pencil is inside the pencil case' (In). 'The poster is at the back of the door' (Behind). 'The water bottle is beside the laptop' (Next to)." },
+                    { type: 'expected_answers', text: 'In! / Behind! / Next to!' }
+                ]},
+                { step: 7, stage: 'Practice', title: "Let's Practice: three sentences", lines: [
+                    { type: 'teacher_says', text: "Write 3 sentences using different prepositions. Look around the classroom or think about your home. For example: 'The clock is on the wall.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'Pick one word — on. What is on your desk? Write that sentence.' },
+                    { type: 'support_prompt', text: 'What is under your chair? Start with that.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Draw your dream room', lines: [
+                    { type: 'teacher_says', text: 'Draw your dream bedroom or study area. Include your bed, a bookshelf, a table, toys and one special object. Label each item, then write 3 sentences underneath saying where things are.' },
+                    { type: 'roving_prompt', text: 'Where will you put your bookshelf? Next to the bed, or near the table?' },
+                    { type: 'support_prompt', text: "Start with the bed — draw a rectangle. Now, where is your table? Write 'The table is next to the bed.'" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'The shoes are in the box' — which word tells us where? Hold up your drawing and read one sentence to your partner." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few. Remind students to keep their drawing for next session.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back! Last session you designed your dream room and learned on, under, in, next to and behind. Today you will describe your REAL favourite room so clearly that someone who has never seen it can picture it.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Paragraph starter', lines: [
+                    { type: 'teacher_says', text: "Your paragraph will have 4 to 6 sentences. If you want a starter: 'My favourite room is my ___. It has a ___. I keep my ___ on/in/under the ___.'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a paragraph', lines: [
+                    { type: 'teacher_says', text: "'My favourite room is my bedroom. It has a blue bed and a wooden bookshelf. I keep my books on the shelf. My schoolbag is under the table. My lamp is next to my bed.' See? I used on, under and next to." },
+                    { type: 'stage_direction', text: 'Read slowly and point to each preposition as you say it.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your paragraph', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Use at least three different prepositions. Begin!' },
+                    { type: 'roving_prompt', text: 'Where do you keep your favourite thing? Use on, under, next to, in or behind to show where.' },
+                    { type: 'support_prompt', text: 'Look at your dream room drawing from last time. Take one idea from it and write it about your real room.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my paragraph', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle every preposition you used. Did you use at least three? If you have time, add a sentence about how the room makes you feel — cosy, happy, safe.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Room tour setup', lines: [
+                    { type: 'teacher_says', text: "Now you become a tour guide! One partner gives a tour of their favourite room, the other is a friend visiting for the first time. Use sentences like 'Here is my bed. My books are on the shelf.'" },
+                    { type: 'stage_direction', text: 'Model a 1-minute tour with a volunteer, pointing with your hands to show where things are.' }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Pair room tours', lines: [
+                    { type: 'teacher_says', text: "Partner A gives the tour first — about 3 minutes. Partner B listens and can ask one question, like 'Where is your lamp?' Then switch." },
+                    { type: 'roving_prompt', text: 'Point to where things are as you speak. Use your prepositions.' },
+                    { type: 'support_prompt', text: 'You can simply read your paragraph aloud — that is a perfect tour.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One cool thing', lines: [
+                    { type: 'teacher_says', text: "Write one cool thing you learned about your partner's room. Who wants to share it? No names — just the cool thing." },
+                    { type: 'expected_answers', text: 'They have a star sticker on the ceiling! / They keep their teddy under the pillow.' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you described your favourite room using on, under, next to, in and behind, and you gave a room tour. Thank your partner for the tour. Keep your paragraph — read it when you want to remember what makes your room yours." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Prepositions of Place Sort',
             sortZones: [
@@ -1092,6 +1199,114 @@ const CHAPTERS = [
                 'Finally, I watched a cartoon and went to bed at 9 p.m.'
             ],
             modelNouns: ['woke', 'ate', 'went', 'played', 'felt', 'watched']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the simple past tense to talk about yesterday, with regular (-ed) and irregular verbs',
+                    'Sequence the events of a day with words like first, then and later',
+                    'Write a diary entry about yesterday and share it in a small Story Time Circle'
+                ],
+                studentOutputs: {
+                    session1: 'Five fill-in-the-blank past tense sentences + "My Yesterday in Pictures" (3 drawings with captions)',
+                    session2: 'A "Dear Diary" entry of 5-6 past tense sentences + one interesting thing learned in the Story Time Circle'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper or notebook', 'Pencils', 'Optional: coloured pencils or crayons'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Write 8 sentences instead of 6. Add a feeling to each part of your day — happy, tired, proud.' },
+                    { level: 'Struggling', action: 'Write 3 sentences — one for each picture from last session. Use the grammar table on the board.' },
+                    { level: 'Very Shy', action: 'In the Story Time Circle you can show one picture and say one past tense sentence about it.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils, colours)',
+                'Past tense table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Think about yesterday', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Today we talk about something that happened just one day ago — yesterday. Close your eyes. When did you wake up? What did you eat? What made you smile?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice the first thing the character does in their day, and which part looks the most fun.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 6 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Pip missed yesterday because of the rain, so Aanya, Flame and Sela each tell Pip about their day. Listen for the words that show it already happened — woke, ate, flew, played." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: "First question: when did you wake up yesterday? Say it like 'I woke up at 7 o'clock.' Tell your partner." },
+                    { type: 'expected_answers', text: "I woke up at 7 o'clock. / I woke up at 6:30. / I woke up at 8 because it was a holiday." },
+                    { type: 'teacher_says', text: 'What did you eat yesterday? And who did you talk to?' },
+                    { type: 'expected_answers', text: 'I ate rice and curry for lunch. / I talked to my grandmother. / I talked to my dog!' },
+                    { type: 'teacher_says', text: 'What made yesterday fun or different?' },
+                    { type: 'expected_answers', text: 'I played football with my cousins. / My dad came home early. / I found a lost toy under my bed.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'From talking to grammar', lines: [
+                    { type: 'teacher_says', text: "Notice — you didn't say 'I eat cereal.' You said 'I ATE cereal.' You didn't say 'I wake up at 7.' You said 'I WOKE up.' These are past tense verbs. They tell us an action already happened." }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Simple Past Tense', lines: [
+                    { type: 'teacher_says', text: "Some verbs are regular — just add -ed: play, played; watch, watched. Some are irregular — they change completely: go, went; eat, ate; wake, woke. We just have to remember those." },
+                    { type: 'stage_direction', text: "Fast call-out: you say the base verb, students call the past tense — play, go, eat, watch, wake, read. Point out that 'read' keeps its spelling but sounds like 'red'." },
+                    { type: 'expected_answers', text: 'Played! / Went! / Ate! / Watched! / Woke! / Read (red)!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try This: fill in the blanks', lines: [
+                    { type: 'teacher_says', text: "Fill in the past tense: 'I ___ (eat) a sandwich.' 'My friend and I ___ (go) to the library.' 'We ___ (read) a funny story.' 'I ___ (watch) a movie.' 'I ___ (sleep) early.' You have 4 minutes." },
+                    { type: 'expected_answers', text: 'Ate. / Went. / Read. / Watched. / Slept.' },
+                    { type: 'roving_prompt', text: "Number 5 — 'sleep' yesterday. Is it sleeped? Or slept?" },
+                    { type: 'support_prompt', text: 'Look at the grammar table on the board. Find the verb, then copy its past tense.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'My Yesterday in Pictures', lines: [
+                    { type: 'teacher_says', text: "Draw 3 moments from yesterday. Under each one, write a past tense sentence: 'I ___', 'Then I ___', 'Later, I ___'. Stick figures are fine — the sentence is the important part." },
+                    { type: 'roving_prompt', text: 'What did you do first yesterday morning? Draw that, then write your sentence.' },
+                    { type: 'support_prompt', text: 'What did you eat yesterday? Draw that for Scene 1 and write "I ate ___."' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'I go to school yesterday' — is that right, or should it be 'I went to school yesterday'? Keep your pictures safe — next time they become a diary entry." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: "Welcome back! Last session you drew three moments from yesterday and wrote past tense sentences — 'I ate breakfast,' 'I went to school.' Today you become a diary writer." },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Diary starter', lines: [
+                    { type: 'teacher_says', text: "Start your diary like a letter to a friend: 'Dear Diary, Yesterday was a special day. I woke up and...' Then write 5 to 6 sentences about what you did. Use your pictures from last time to remember." }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a diary entry', lines: [
+                    { type: 'teacher_says', text: "'Dear Diary, Yesterday was a special day. I woke up at 7 o'clock and ate toast. Then I went to school. We played football at break. After school, I watched a cartoon. I felt very happy.' See the past tense verbs? Woke, ate, went, played, watched, felt." },
+                    { type: 'stage_direction', text: 'Read slowly and point to each past tense verb.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your diary entry', lines: [
+                    { type: 'teacher_says', text: "You have about 15 minutes. It doesn't have to be perfect — it just has to be YOUR story. Begin!" },
+                    { type: 'roving_prompt', text: "Where did you go yesterday? Write 'I went to ___.' How did you feel at the end of the day?" },
+                    { type: 'support_prompt', text: 'Use your pictures — describe each picture in one sentence. Three sentences is a great start.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my diary', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Circle your past tense verbs — did you use at least five? Check: not 'I eat' but 'I ate.' Add a closing line like 'Good night, Diary.'" }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Story Time Circle setup', lines: [
+                    { type: 'teacher_says', text: "Now we sit in small groups — a Story Time Circle. Each person reads their diary entry or describes one picture using past tense. While others share, listen for one interesting thing about a friend's day." },
+                    { type: 'stage_direction', text: "Write on the board: 'One interesting thing I learned about my friend's day:'. Model it once with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Share in groups', lines: [
+                    { type: 'teacher_says', text: 'Form groups of 3 or 4 and sit in a circle. Each person has about 1-2 minutes. Remember to use past tense. Begin!' },
+                    { type: 'roving_prompt', text: "Listeners, ask one question when the speaker finishes — 'What happened next?' or 'How did you feel?'" },
+                    { type: 'support_prompt', text: 'You can just show one picture and say one sentence about it.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One interesting thing', lines: [
+                    { type: 'teacher_says', text: "Write one interesting thing you learned about a friend's day. Who wants to share it? No names — just the interesting thing." },
+                    { type: 'expected_answers', text: 'They saw a monkey near their house! / They helped their little brother with homework.' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a diary entry using past tense and shared it in a Story Time Circle. Say 'Thank you for sharing your day with me' to your group. Every day is a story — keep writing yours." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'Past Tense Verb Sort',
@@ -1206,6 +1421,113 @@ const CHAPTERS = [
             ],
             modelNouns: ['happily', 'joyfully', 'quickly', 'loudly']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use adverbs of manner (happily, quickly, politely, early) to describe how actions happen',
+                    'Talk about festivals and celebrations, and listen to classmates\' traditions with respect',
+                    'Draw and describe a favourite celebration moment, then answer questions in a Festival Talk Show'
+                ],
+                studentOutputs: {
+                    session1: 'Five sentences completed with adverbs + a 4-event celebration timeline with an adverb in each',
+                    session2: 'A Festival Snapshot drawing with a 5-6 sentence paragraph using adverbs + Festival Talk Show answers'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper for drawing', 'Pencils', 'Optional: coloured pencils or crayons'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use a different adverb in every sentence — try ones that don\'t end in -ly, like fast, early or late.' },
+                    { level: 'Struggling', action: 'Write 3 sentences using the starter. Choose adverbs from the board: happily, quickly, carefully.' },
+                    { level: 'Very Shy', action: 'In the Talk Show you can be the host and read the questions from the board.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils, colours)',
+                'Adverb table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Think about celebrations', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Today we talk about lights, food, music and smiles — celebrations! Close your eyes and picture your favourite festival or special day. What do you see, hear and smell? Who is with you?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice HOW people celebrate — do they dance slowly or happily? Do they arrive late or early?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 7 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "It's the Festival of Fireflies in Lumora! Listen for the words that tell us how the friends celebrate — Sela eats quickly, the creatures ask politely, everyone dances happily." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what is your favourite festival or celebration? A religious festival, a birthday, a family gathering — anything. Tell your partner.' },
+                    { type: 'expected_answers', text: 'Diwali! / Eid! / Christmas! / Holi! / Pongal! / My birthday!' },
+                    { type: 'teacher_says', text: 'What do you do on that day, and who do you celebrate with?' },
+                    { type: 'expected_answers', text: 'We light lamps. / We wear new clothes and eat biryani. / With my whole family — grandparents, cousins.' },
+                    { type: 'teacher_says', text: 'What do you wear, eat or enjoy most?' },
+                    { type: 'expected_answers', text: 'I love the fireworks at night. / I love the special dish my grandmother makes.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'From talking to grammar', lines: [
+                    { type: 'teacher_says', text: 'You told me what you do — dance, eat, dress up. But HOW do you do it? Do you dance happily? Eat quickly? Speak politely? Words that tell us how are called adverbs.' }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Adverbs of Manner', lines: [
+                    { type: 'teacher_says', text: "An adverb tells us more about a verb. 'We danced' is okay. 'We danced happily' tells us how. Dance — happily. Eat — quickly. Speak — politely. Arrive — early." },
+                    { type: 'stage_direction', text: "Quick call-out: say a sentence without an adverb — 'She sang.' 'He ran.' 'They talked.' — and students call out an adverb that fits. Accept any that make sense." },
+                    { type: 'expected_answers', text: 'Beautifully! Loudly! / Quickly! Fast! / Politely! Quietly!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: add an adverb', lines: [
+                    { type: 'teacher_says', text: "Complete each sentence with an adverb — there's no single right answer. 'I opened my gift ___.' 'We shouted ___ when the lights turned on.' 'My cousin danced ___ on the stage.' You have 4 minutes." },
+                    { type: 'roving_prompt', text: 'How would you open a gift if you were very excited?' },
+                    { type: 'support_prompt', text: 'Pick from the board: happily, quickly, carefully, loudly. Which one fits?' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Celebration timeline', lines: [
+                    { type: 'teacher_says', text: "List 4 things you do on your celebration day, from morning to night, with an adverb in each. For Diwali: 'Morning — I woke up excitedly. Evening — We lit lamps carefully.'" },
+                    { type: 'roving_prompt', text: 'What is the last thing you do that day? Write it with an adverb.' },
+                    { type: 'support_prompt', text: "Start with 'I woke up ___.' Choose: early, happily, quickly." }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'We danced happy' — is that right, or should it be 'We danced happily'? Keep your timeline safe for next session." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back! Last session you made a celebration timeline with adverbs like early, quickly and joyfully. Today you become an artist and a writer — you will capture one celebration moment.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Festival Snapshot starter', lines: [
+                    { type: 'teacher_says', text: "First draw your favourite celebration moment — stick figures are fine. Then write 5 to 6 sentences. Starter: 'This is a picture of me celebrating ___. We danced ___ and played ___. My family smiled ___ as we enjoyed the day...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a paragraph', lines: [
+                    { type: 'teacher_says', text: "'This is a picture of me celebrating Diwali. We danced happily and played with sparklers. My family smiled joyfully. I quickly ate my favourite sweets. Everyone laughed loudly when the fireworks lit up the sky.'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to each adverb: happily, joyfully, quickly, loudly.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Draw and write your snapshot', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes — draw first, then write. Use your timeline from last time to remember. Begin!' },
+                    { type: 'roving_prompt', text: "What did someone else do? Write 'My brother laughed ___.' Choose an adverb." },
+                    { type: 'support_prompt', text: 'Pick one event from your timeline, draw that moment, and write 3 sentences with adverbs.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my paragraph', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle every adverb you used. How many did you find? Add one more sentence about how the celebration ended if you have time.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Festival Talk Show setup', lines: [
+                    { type: 'teacher_says', text: "Our classroom is now a TV studio! In groups of 3 or 4, one person is the host and asks questions. Guests answer in full sentences with adverbs." },
+                    { type: 'stage_direction', text: "Write the host questions on the board: What's your favourite celebration? What do you enjoy most? How do you prepare for it? Model one interview with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Run the talk show', lines: [
+                    { type: 'teacher_says', text: 'Decide who hosts first. About 2 minutes per guest, then switch hosts so everyone gets a turn. Begin!' },
+                    { type: 'roving_prompt', text: "Guest, answer in a full sentence with an adverb: 'I celebrate Eid happily with my family.'" },
+                    { type: 'support_prompt', text: 'You can read a sentence straight from your snapshot paragraph.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One thing I learned', lines: [
+                    { type: 'teacher_says', text: "Write one thing you learned from someone's story. Who wants to share it? No names — just the interesting thing." },
+                    { type: 'expected_answers', text: "Someone's family makes 10 different sweets for Diwali! / Someone celebrates Onam with a feast on banana leaves." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you created a festival snapshot using adverbs and hosted a Festival Talk Show. Say 'Thank you for sharing your celebration with me!' to your group. Every celebration has its own magic." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Adverb Sort',
             sortZones: [
@@ -1318,6 +1640,115 @@ const CHAPTERS = [
                 'The animal liked to play in the river.'
             ],
             modelNouns: ['an', 'a', 'the']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the articles a, an and the correctly (a before a consonant sound, an before a vowel sound, the for one specific thing)',
+                    'Talk about animals — where they live, what they eat and one fun fact',
+                    'Write a short animal story and present an animal in a Show-and-Tell'
+                ],
+                studentOutputs: {
+                    session1: 'Five article fill-in-the-blank sentences + an Animal Discovery Poster (name, habitat, food, fun fact, article sentence)',
+                    session2: 'A 4-6 sentence animal story using a, an and the + an Animal Show-and-Tell'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper for posters', 'Pencils', 'Optional: coloured pencils, or an animal toy or picture from home'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Give your animal a special power or habit and add two more sentences about it. Circle every article you used.' },
+                    { level: 'Struggling', action: "Write 3 sentences: 'My favourite animal is a ___. It lives in ___. It likes to ___.' Copy ideas from your poster." },
+                    { level: 'Very Shy', action: 'In Show-and-Tell you can show your picture and say one sentence, or whisper to the teacher who repeats it.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils, colours)',
+                'Article table (a / an / the) ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Enter the wild', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone! Today we enter the world of animals. Close your eyes — imagine a jungle, a desert, the ocean, or your own backyard. Think of one animal. What does it look like? Where does it live?" },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, look for a new animal. Where does it live, and what is special about it?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 8 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: 'The friends meet Nima, the oldest owl in the forest, and she shows them a very rare bird — the Glimmerwing. Listen for the small words before the animals: an owl, a fox, the Glimmerwing.' },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what is your favourite animal? A pet, a wild animal, a bird, a fish — even an imaginary one. Tell your partner.' },
+                    { type: 'expected_answers', text: 'Tiger! / Elephant! / Dog! / Peacock! / Dolphin! / Dragon!' },
+                    { type: 'teacher_says', text: 'Where does your animal live, and what does it eat or do?' },
+                    { type: 'expected_answers', text: 'The tiger lives in the jungle. It eats meat. / The dolphin lives in the ocean. / My dog loves to play fetch.' },
+                    { type: 'teacher_says', text: 'Have you ever seen your favourite animal in real life?' },
+                    { type: 'expected_answers', text: 'I saw a tiger at the zoo. / I have a pet dog at home. / I have only seen it on TV.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'From talking to grammar', lines: [
+                    { type: 'teacher_says', text: "You just said 'a tiger,' 'an elephant,' 'the penguin.' These small words are called articles. They tell us if we mean any animal — a tiger — or one specific animal — the tiger at the zoo." }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: a, an, the', lines: [
+                    { type: 'teacher_says', text: "Use 'a' before a consonant sound: a tiger, a monkey. Use 'an' before a vowel sound: an elephant, an owl. Use 'the' for one specific thing: the moon, the Amazon River. We go by the SOUND, not just the letter." },
+                    { type: 'stage_direction', text: 'Fast call-out: say elephant, dog, sun, owl, tiger, iguana — students call the article.' },
+                    { type: 'expected_answers', text: 'An! / A! / The! / An! / A! / An!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try This: choose the article', lines: [
+                    { type: 'teacher_says', text: "Fill in a, an or the: 'I saw ___ elephant at the zoo.' 'We visited ___ farm.' '___ sun was shining.' 'There was ___ owl in the tree.' 'My friend adopted ___ dog.' You have 3 minutes." },
+                    { type: 'expected_answers', text: 'An elephant. / A farm. / The sun. / An owl. / A dog.' },
+                    { type: 'roving_prompt', text: "Say the word out loud. Does 'owl' start with a vowel sound or a consonant sound?" },
+                    { type: 'support_prompt', text: 'Look at the table on the board. Vowel sound — an. Consonant sound — a. Only one in the world — the.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Animal Discovery Poster', lines: [
+                    { type: 'teacher_says', text: "Make a poster for a real or imaginary animal: its name, where it lives, what it eats, one fun fact, and one sentence using a, an or the — like 'An ostrich can run very fast.'" },
+                    { type: 'roving_prompt', text: "What is one fun fact — its size, speed, colour or special ability?" },
+                    { type: 'support_prompt', text: "For your article sentence, try 'A ___ is amazing.' Fill in your animal." }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'I saw a owl' — is that right, or should it be 'an owl'? Hold up your poster. Keep it safe — next session it helps you write a story." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back! Last session you made an Animal Discovery Poster and learned a, an and the. Today you become an animal storyteller — real animal or imaginary, your choice.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Story starter', lines: [
+                    { type: 'teacher_says', text: "Write 4 to 6 sentences. Starter: 'I saw an animal in the jungle. It was a ___. The ___ was very ___. I gave it a name — it was called ___. The animal liked to...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a story', lines: [
+                    { type: 'teacher_says', text: "'I saw an animal in the jungle. It was a glowing tiger with blue stripes. The tiger was very gentle. I called it Starlight. The animal liked to play with fireflies.' First I say 'a tiger' — then, once you know which one, 'the tiger'." },
+                    { type: 'stage_direction', text: 'Read slowly and point to each article.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your animal story', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Use your poster from last session for ideas. Begin!' },
+                    { type: 'roving_prompt', text: "Once you have introduced your animal, call it 'the' — 'The dragon flew over the river.'" },
+                    { type: 'support_prompt', text: 'Copy the animal name, home and fun fact from your poster into 3 sentences.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my story', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Circle every a, an and the. Check each one — vowel sound gets 'an'. If you have time, draw your animal next to your story." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Show-and-Tell setup', lines: [
+                    { type: 'teacher_says', text: 'Show your animal toy, picture or drawing and tell us four things: what animal it is, why you like it, one interesting fact, and one sentence with a, an or the.' },
+                    { type: 'stage_direction', text: "Write the four points on the board, plus 'One animal I learned about today:'. Model one turn yourself." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Animal Show-and-Tell', lines: [
+                    { type: 'teacher_says', text: "About 1 minute each. Listeners, look at the speaker — you will write down one animal you hear about." },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5. Use a timer to keep turns moving.' },
+                    { type: 'roving_prompt', text: 'Tell us what animal it is first. Now — why do you like it?' },
+                    { type: 'support_prompt', text: 'You can just show your picture and say one sentence — that is fine.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One animal I learned about', lines: [
+                    { type: 'teacher_says', text: 'Write one animal you learned about today. Who wants to share?' },
+                    { type: 'expected_answers', text: 'I learned about the red panda! / I learned about an octopus with three hearts!' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote an animal story using a, an and the, and shared your animal in a Show-and-Tell. Say 'Thank you for sharing your animal with me!' to your neighbour. Keep your curiosity about animals." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'A / An Sort',
@@ -1434,6 +1865,114 @@ const CHAPTERS = [
             ],
             modelNouns: ['found', 'took', 'saw', 'played', 'felt', 'pressed', 'returned']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Tell the difference between present tense (now, every day) and past tense (yesterday, before)',
+                    'Change present tense sentences to past tense, including irregular verbs like go/went and see/saw',
+                    'Write a time machine story and share it using both present and past tense sentences'
+                ],
+                studentOutputs: {
+                    session1: 'Today / Yesterday / Now / Last weekend sentences + three present-to-past sentences + a Then vs Now table',
+                    session2: 'A 5-6 sentence Time Machine story + a Time Travel Talk with a partner (the year and one thing they saw)'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add how you felt in the past and how you travelled back. Underline every past tense verb.' },
+                    { level: 'Struggling', action: "Write 3 sentences: 'I went to the year ___. I saw ___. I came back home.' Use the verb table on the board." },
+                    { level: 'Very Shy', action: 'In the Time Travel Talk you can read your story to your partner from your paper.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Present vs past verb table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Become time travellers', lines: [
+                    { type: 'teacher_says', text: 'Good morning, time travellers! Close your eyes and imagine a time machine. What do you do every day? What did you do yesterday? Notice how the words change.' },
+                    { type: 'stage_direction', text: 'Pause for 5 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice what things were like long ago and what they are like now.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 9 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: 'Nima takes the friends to the Clock Tree, and it shows them Lumora long ago. Listen for how things WERE then and how they ARE now.' },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and compare', lines: [
+                    { type: 'teacher_says', text: 'First question: what is something you do every day? Tell your partner.' },
+                    { type: 'expected_answers', text: 'I brush my teeth. / I eat lunch at school. / I read a book before bed.' },
+                    { type: 'teacher_says', text: 'Second question: what is something you did yesterday?' },
+                    { type: 'expected_answers', text: 'I played football. / I ate pizza. / I went to the park.' },
+                    { type: 'stage_direction', text: "Point out the change: play → played, eat → ate, go → went. Write on the board: 'Today I play football. Yesterday I played football.'" }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Fill in: today and yesterday', lines: [
+                    { type: 'teacher_says', text: "Finish these four sentences: 'Today I ___.' 'Yesterday I ___.' 'Now I ___.' 'Last weekend I ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'Yesterday I — use the same action as Today, but change it to past tense.' },
+                    { type: 'support_prompt', text: "Try: 'Today I play cricket. Yesterday I played cricket.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Past vs Present', lines: [
+                    { type: 'teacher_says', text: "Present tense is for now or every day: I play chess. Past tense is for what already happened: I played chess. Some verbs add -ed — cook, cooked. Some change completely — go, went; see, saw; is, was." },
+                    { type: 'stage_direction', text: 'Fast call-out: say play, go, see, cook, eat, wake, read — students call the past tense.' },
+                    { type: 'expected_answers', text: 'Played! / Went! / Saw! / Cooked! / Ate! / Woke! / Read (red)!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Practice Time: present to past', lines: [
+                    { type: 'teacher_says', text: "Change each sentence to past tense: 'I wake up early.' 'We play outside.' 'She eats breakfast.' You have 3 minutes." },
+                    { type: 'expected_answers', text: 'I woke up early. / We played outside. / She ate breakfast.' },
+                    { type: 'support_prompt', text: "'Eats' comes from 'eat'. What is the past of eat? Look at the table." }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Then vs Now table', lines: [
+                    { type: 'teacher_says', text: "Write 3 rows: something you did when you were younger (THEN, past tense) and what you do now (NOW, present tense). 'I watched cartoons' — 'I read books.'" },
+                    { type: 'roving_prompt', text: 'What did you do when you were 4 years old? What do you do now instead?' },
+                    { type: 'support_prompt', text: "Think about food: THEN 'I ate mashed bananas.' NOW 'I eat whole bananas.'" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'Yesterday I see a bird' — is that right, or should it be 'Yesterday I saw a bird'? Keep your Then vs Now table safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, time travellers! Last session you compared past and present and made a Then vs Now table. Today you step into a time machine — in your imagination.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Time Machine starter', lines: [
+                    { type: 'teacher_says', text: "Write 5 to 6 sentences. Starter: 'One morning, I found a strange machine in my backyard. It took me back to the year ___. I looked around and saw...' Once you are in the past, use past tense." }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a story', lines: [
+                    { type: 'teacher_says', text: "'One morning, I found a strange machine in my backyard. It took me back to the year 1985. I saw kids playing outside with no phones. They played hopscotch. I felt surprised. Then I returned home.'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to each past tense verb: found, took, saw, played, felt, returned.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your story', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. You can meet your grandparents as kids, see dinosaurs, or visit an old market. Begin!' },
+                    { type: 'roving_prompt', text: 'What did you see that is different from today? Old cars? Different clothes?' },
+                    { type: 'support_prompt', text: 'Pick a year — maybe when your mom was little — and write two things you saw there.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my story', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Underline your past tense verbs. Check: not 'I see' but 'I saw', not 'I go' but 'I went'." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Time Travel Talk setup', lines: [
+                    { type: 'teacher_says', text: "Share your story with a partner. The challenge: say one present tense sentence, like 'I live in 2025,' and one past tense sentence, like 'I saw a dinosaur.'" },
+                    { type: 'stage_direction', text: "Write the listener prompts on the board: 'My friend travelled to the year: ___' and 'Something they saw or did: ___'. Model one share with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Pair sharing', lines: [
+                    { type: 'teacher_says', text: 'About 4 minutes each. Speaker shares, listener writes the year and one thing they saw. Then switch. Begin!' },
+                    { type: 'roving_prompt', text: "Listener, ask one question when they finish: 'How did you feel there?'" },
+                    { type: 'support_prompt', text: "Start with 'I live in the present.' Then read your story." }
+                ]},
+                { step: 8, stage: 'Perform', title: 'Where did your friend go?', lines: [
+                    { type: 'teacher_says', text: 'Who wants to share where their friend travelled and what they saw?' },
+                    { type: 'expected_answers', text: 'My friend went to 1995 and saw an old phone. / They met their grandmother as a little girl.' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a Time Machine story and shared it using present and past tense. Say 'Thank you for the time travel adventure!' to your partner. Your words can take you anywhere." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Then vs Now Sort',
             sortZones: [
@@ -1545,6 +2084,116 @@ const CHAPTERS = [
                 'I hope tomorrow will be sunny!'
             ],
             modelNouns: ['and', 'but', 'because', 'so']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the conjunctions and (adds ideas), but (shows contrast) and because (gives a reason) to join ideas',
+                    'Describe the weather and how it changes what we do and how we feel',
+                    'Write a 4-line weather poem and perform it with voice expression and gestures'
+                ],
+                studentOutputs: {
+                    session1: 'Three weather sentences + five conjunction fill-in-the-blanks + a short weather report read like a TV reporter',
+                    session2: 'A 4-line weather poem using at least 2 conjunctions + a performance with expression and gestures'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use and, but AND because in your poem. Can you make two lines rhyme?' },
+                    { level: 'Struggling', action: 'Use the starter for your first two lines and add just one line of your own with "because".' },
+                    { level: 'Very Shy', action: 'You can perform your poem to one partner, and show the weather with gestures instead of a big voice.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Conjunction table (and / but / because) ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Look at the sky', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Today we look up at the sky and talk about weather. Close your eyes — is it sunny today? Cloudy? Rainy? Windy? How does it make you feel?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, gesture toward the window, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice how the weather changes and what the characters do because of it.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 10 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: 'A storm is coming to Lumora, so the friends hurry to shelter in the Clock Tree. Listen for joining words: they had to hurry BECAUSE of the storm; the wind was strong BUT it would pass.' },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: "First question: what's your favourite kind of weather? Tell your partner." },
+                    { type: 'expected_answers', text: 'Sunny! / Rainy! / Windy! / Snowy! / Thunderstorms!' },
+                    { type: 'teacher_says', text: 'What do you do on a rainy day, or a sunny day?' },
+                    { type: 'expected_answers', text: 'On sunny days, I play cricket. / On rainy days, I make paper boats.' },
+                    { type: 'teacher_says', text: 'Have you ever seen snow or a big storm?' },
+                    { type: 'expected_answers', text: 'I saw snow in the mountains. / I saw a big storm and the lights went out.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these on your paper: 'I feel happy when the weather is ___.' 'I stay indoors when it is ___.' 'On sunny days, I like to ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'When do you stay inside? Stormy? Very hot? Too cold?' },
+                    { type: 'support_prompt', text: "No wrong answer — just write the weather that makes you happy: sunny, rainy, cool." }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: and, but, because', lines: [
+                    { type: 'teacher_says', text: "A conjunction joins two ideas. AND adds more: 'The sun is shining and the sky is blue.' BUT shows a difference: 'It's hot but I forgot my hat.' BECAUSE gives a reason: 'I wore my raincoat because it was raining.'" },
+                    { type: 'stage_direction', text: "Read two short sentences and students choose the joining word: 'It was raining. I took my umbrella.' 'I wanted to play outside. It was too hot.' 'The sun was shining. The birds were singing.'" },
+                    { type: 'expected_answers', text: 'Because! / But! / And!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: choose the conjunction', lines: [
+                    { type: 'teacher_says', text: "Fill in and, but or because: 'I wanted to play outside ___ it started to rain.' 'The clouds were grey ___ the wind was strong.' 'I wore my jacket ___ it was cold.' 'I like summer ___ I can swim.'" },
+                    { type: 'expected_answers', text: 'But. / And. / Because. / Because.' },
+                    { type: 'roving_prompt', text: 'Ask yourself: is the second idea the same kind, a difference, or a reason?' },
+                    { type: 'support_prompt', text: 'Why did you wear a jacket? Because it was cold. A "why" answer gets because.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Weather report role play', lines: [
+                    { type: 'teacher_says', text: "Become a TV weather reporter! Write 3-4 sentences with at least one conjunction: 'Today, the weather is ___. The sky is cloudy and it might rain. Don't forget your umbrella because it could be stormy!'" },
+                    { type: 'stage_direction', text: 'After 5 minutes, invite 2-3 volunteers to read their report using a hand as a microphone. Applaud each one.' },
+                    { type: 'support_prompt', text: 'Choose one weather word first — sunny, rainy, windy — then copy the frame from the board.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'I stayed inside because it was sunny' — does the reason make sense? What weather would make you stay inside? Keep your weather report safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, weather watchers! Last session you learned and, but and because, and gave a weather report. Today you become a weather poet.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Poem starter', lines: [
+                    { type: 'teacher_says', text: "Your poem has 4 lines and uses at least 2 conjunctions. It can rhyme, but it doesn't have to. Starter: 'The wind is strong and trees sway wide, I want to go out but stay inside...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a poem', lines: [
+                    { type: 'teacher_says', text: "'The rain is falling and the sky is grey, I love to splash puddles but I must obey. I wear my boots because it's wet outside, Rainy days are perfect when I stay inside.'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to and, but and because.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your poem', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Write about sunny, rainy, windy, snowy — any weather you love. Begin!' },
+                    { type: 'roving_prompt', text: "Is there a contrast? Use but — 'I love the sun but it is too hot.'" },
+                    { type: 'support_prompt', text: "Start with 'I love sunny days' — then add 'and the sky is blue.' That's two lines already." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my poem', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle your conjunctions — do you have at least 2? Read your poem quietly. Practise saying it with feeling.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Performance setup', lines: [
+                    { type: 'teacher_says', text: "Now you present your poem — or your weather report — with expression. Slow down. Add emotion. Use gestures — point to the sky, shiver like it's cold, open an imaginary umbrella." },
+                    { type: 'stage_direction', text: "Write on the board: Slow down / Add emotion / Use gestures, and 'One interesting weather idea I heard was:'. Model one poem with gestures." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Present in groups', lines: [
+                    { type: 'teacher_says', text: 'Groups of 3-4. Each person has about 1-2 minutes. Listeners — watch the gestures and hear the expression. Begin!' },
+                    { type: 'roving_prompt', text: 'Take a breath between lines. Show us the rain with your hands.' },
+                    { type: 'support_prompt', text: 'You can read your poem slowly and add just one gesture.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One interesting weather idea', lines: [
+                    { type: 'teacher_says', text: 'Write one interesting weather idea you heard. Who wants to share it? No names — just the idea.' },
+                    { type: 'expected_answers', text: "Someone said 'the wind whistles a song.' / One person described rain as 'silver needles falling.'" },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a weather poem with and, but and because, and performed it with expression. Say 'Thank you for your weather performance!' to your group. Keep watching the sky — and keep writing." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'Conjunction Sort',
@@ -1668,6 +2317,117 @@ const CHAPTERS = [
             ],
             modelNouns: ['can', 'must', 'should']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the modal verbs can (ability or permission), must (strong rule) and should (good advice)',
+                    'Imagine and describe a dream school with its own rules and ideas',
+                    'Write about a day at a dream school and give a guided tour using modal verbs'
+                ],
+                studentOutputs: {
+                    session1: 'Three can / must / should sentences + five completed modal sentences + a Dream School Poster with 3 rules or ideas',
+                    session2: 'A 5-6 sentence paragraph about a day at their dream school + a 30-60 second tour guide presentation'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper for posters', 'Pencils', 'Optional: coloured pencils or crayons'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use can, must AND should at least twice each. Add a title: "A Day at ___ School".' },
+                    { level: 'Struggling', action: 'Write 3 sentences — one can, one must, one should — using the sentences from your poster.' },
+                    { level: 'Very Shy', action: 'For the tour you can read one sentence from your paragraph, or present together with a friend.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils, colours)',
+                'Modal verb table (can / must / should) ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Imagine a perfect school', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Close your eyes. Imagine you could build your own school any way you want. Slides instead of stairs? A treehouse library? What rules would you have?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, think about what makes a school a great place to learn.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 11 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "The friends design a dream school for all of Lumora — a sky field, a reading nook, a music tree. Listen for their rules: 'You must be kind.' 'You can ask questions.' 'You should always try your best.'" },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what would your perfect school look like? Tell your partner.' },
+                    { type: 'expected_answers', text: 'It would be shaped like a castle! / Every classroom would have bean bags. / A garden to grow vegetables.' },
+                    { type: 'teacher_says', text: 'What fun or useful things would it have?' },
+                    { type: 'expected_answers', text: 'A pet corner with rabbits. / A trampoline hallway. / A science lab with cool experiments.' },
+                    { type: 'teacher_says', text: 'What would be allowed, and what would not be allowed?' },
+                    { type: 'expected_answers', text: 'We can eat snacks anytime. / We must be kind to everyone. / No homework — ever!' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these about your dream school: 'In my dream school, we can ___.' 'We must ___.' 'We should ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: "For 'can', think of something allowed or possible. For 'must', a strong rule." },
+                    { type: 'support_prompt', text: "Try: 'We can play games every afternoon. We must be helpful to all.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: can, must, should', lines: [
+                    { type: 'teacher_says', text: "Modal verbs are helping words that come before the main verb and never change form. CAN is ability or permission: 'We can paint on the walls!' MUST is a strong rule: 'Students must be kind.' SHOULD is good advice: 'We should have music every day.'" },
+                    { type: 'stage_direction', text: "Quick call-out: 'You are allowed to bring a water bottle.' 'It's a rule: be on time.' 'It's a good idea to say please and thank you.'" },
+                    { type: 'expected_answers', text: 'Can! / Must! / Should!' }
+                ]},
+                { step: 7, stage: 'Practice', title: "Let's Practice: choose the modal", lines: [
+                    { type: 'teacher_says', text: "Fill in can, must or should: 'You ___ raise your hand to speak.' 'We ___ bring healthy snacks.' 'Our school ___ have a playground with slides.' 'You ___ finish your homework before playing.'" },
+                    { type: 'expected_answers', text: 'Must. / Must or should. / Can or should. / Must.' },
+                    { type: 'stage_direction', text: "Accept more than one answer where it makes sense — 'must' is a strong rule, 'should' is a suggestion." },
+                    { type: 'support_prompt', text: 'Ask yourself: is it a rule, a good idea, or something you are allowed to do?' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Dream School Poster', lines: [
+                    { type: 'teacher_says', text: "Make a poster for your dream school: a name, at least 3 rules or ideas with can, must or should, and a picture of your favourite part. 'At Rainbow School, students can read in treehouses.'" },
+                    { type: 'roving_prompt', text: "Write one 'should' sentence — what is a good idea for your school?" },
+                    { type: 'support_prompt', text: "Name your school first — 'Sunshine School' or 'Star Academy'? Then write one 'can' sentence." }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'You must to go to class' — is that right, or should it be 'You must go to class'? Keep your poster safe for next session." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, school designers! Last session you made a Dream School Poster with can, must and should. Today you spend one whole day at your dream school — in writing.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Paragraph starter', lines: [
+                    { type: 'teacher_says', text: "Write 5 to 6 sentences about one day, from morning to afternoon. Use modal verbs at least twice. Starter: 'At my dream school, I can eat breakfast in the garden. We must arrive on time because...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a paragraph', lines: [
+                    { type: 'teacher_says', text: "'At my dream school, I can eat breakfast in the garden. We must arrive on time because assembly is so much fun. We can choose art, music or science. We should try something new every day. In the afternoon, we should play outside.'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to each modal verb.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your paragraph', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Use the rules and ideas from your poster. Begin!' },
+                    { type: 'roving_prompt', text: 'What happens in the middle of the day? Use should for a good idea.' },
+                    { type: 'support_prompt', text: "Start with 'We can play in a water park during break.' Then add one rule with must." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my paragraph', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Circle every can, must and should. Check there's no 'to' after them — 'must go', not 'must to go'." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Tour guide setup', lines: [
+                    { type: 'teacher_says', text: "Now you are a tour guide showing visitors your dream school. Point to your poster and use sentences like 'This is our creativity room. You can paint here.' 'We must wear comfy clothes.' 'Students should try something new every day.'" },
+                    { type: 'stage_direction', text: "Write 'One interesting thing I'd love in a school is:' on the board. Model a 1-minute tour with your own poster." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Give the tours', lines: [
+                    { type: 'teacher_says', text: "About 30-60 seconds each. Start with 'Welcome to my dream school!' Listeners — you will write one idea you love." },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5 giving tours at the same time.' },
+                    { type: 'roving_prompt', text: "Use a modal verb — 'You can...', 'We must...', 'Students should...'" },
+                    { type: 'support_prompt', text: 'You can read one sentence from your paragraph, or present together with a friend.' }
+                ]},
+                { step: 8, stage: 'Perform', title: "Ideas we'd love", lines: [
+                    { type: 'teacher_says', text: "Write one interesting thing you'd love in a school. Who wants to share?" },
+                    { type: 'expected_answers', text: "A slide instead of stairs! / A pet corner with rabbits. / A rule that you must wear your funniest socks on Fridays." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote about a day at your dream school and gave a tour using can, must and should. Say 'Thank you for the tour of your dream school!' to your neighbour. Your words make your dream real." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Modal Verb Sort',
             sortZones: [
@@ -1790,6 +2550,115 @@ const CHAPTERS = [
             ],
             modelNouns: ['apples', 'bananas', 'milk', 'rice', 'cheese', 'notebooks']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Tell countable nouns (apples, pens) from uncountable nouns (milk, rice) and use a/an, some, many and containers correctly',
+                    'Talk about shopping — what we buy, where we go and what we take with us',
+                    'Write a family shopping story and act out a shopkeeper-customer conversation'
+                ],
+                studentOutputs: {
+                    session1: 'Four shopping sentences + six words labelled C or U + a 6-item shopping bag list with 2 sentences',
+                    session2: 'A 5-6 sentence grocery story using countable and uncountable nouns + a shopkeeper-customer role play'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Blank paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use a different container for each uncountable noun — a bottle of, a bag of, a packet of, a carton of.' },
+                    { level: 'Struggling', action: "Write 3 sentences: one about who you went with, one countable thing ('two mangoes') and one uncountable thing ('a bottle of oil')." },
+                    { level: 'Very Shy', action: 'In the role play you can be the shopkeeper and answer with short phrases like "Here is a bag of rice."' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Countable vs uncountable table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Think about shopping', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Close your eyes and think about your last shopping trip. What did you buy? Could you count it — like three pencils? Or did it come in a bottle or box — like milk or cereal?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice the things being bought. Which ones can you count?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 12 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "It's Market Day in Lumora! Pip and Aanya need three moonberries, a bag of silver seeds and some honey. Listen for which things they count and which things they can't — like bottled starlight." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what did you buy on your last shopping trip? Tell your partner.' },
+                    { type: 'expected_answers', text: 'I bought a notebook. / I bought chips and juice. / We bought vegetables.' },
+                    { type: 'teacher_says', text: 'Name one thing you can count, and one thing that comes in a bag, bottle or box.' },
+                    { type: 'expected_answers', text: 'Bananas. / Books. / Crayons. / Water in a bottle. / Sugar in a bag. / Juice in a carton.' },
+                    { type: 'stage_direction', text: "Point out: we don't say 'two waters' — we say 'two bottles of water'." }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'I bought ___.' 'I like shopping for ___.' 'My favourite store is ___.' 'I always take ___ with me.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'What do you enjoy shopping for — toys, clothes, books, snacks?' },
+                    { type: 'support_prompt', text: "Try: 'I bought a pencil. I like shopping for snacks.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Countable vs Uncountable', lines: [
+                    { type: 'teacher_says', text: "Countable nouns can be counted: one apple, two apples. Use a/an, some, many. Uncountable nouns can't be counted one by one: milk, rice, sugar. Use some, much, a little — or a container: a glass of milk, a bag of rice." },
+                    { type: 'stage_direction', text: "Fast call-out: say apple, water, book, rice, pencil, sugar — students say 'countable' (with a/an) or 'uncountable'." },
+                    { type: 'expected_answers', text: 'Countable — an apple! / Uncountable! / Countable — a book! / Uncountable!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: C or U', lines: [
+                    { type: 'teacher_says', text: 'Write C or U next to each word: rice, books, juice, pencils, cheese, oranges. Then write 3 nouns of your own and label them.' },
+                    { type: 'expected_answers', text: 'Rice — U. Books — C. Juice — U. Pencils — C. Cheese — U. Oranges — C.' },
+                    { type: 'roving_prompt', text: "Can you say 'one rice'? No — so it's uncountable." },
+                    { type: 'support_prompt', text: 'Try putting "two" in front. "Two books" sounds right, so books are countable.' }
+                ]},
+                { step: 8, stage: 'Practice', title: "What's in your shopping bag?", lines: [
+                    { type: 'teacher_says', text: "Draw or list 6 items you bought at the supermarket — a mix of countable and uncountable. Then write 2 sentences: 'I bought some apples and a bottle of milk. There were also two bananas and some cheese.'" },
+                    { type: 'roving_prompt', text: "For uncountable things, use a container — 'a bag of', 'a box of', 'a packet of'." },
+                    { type: 'support_prompt', text: 'Pick two countable things — apples, pencils — and two uncountable things — milk, rice.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'I bought a rice' — is that right, or should it be 'a bag of rice'? Keep your shopping bag list safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, shoppers! Last session you learned countable nouns — things you can count — and uncountable nouns — things in bottles, bags and boxes. Today you turn a shopping trip into a story.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Story starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences about a shopping trip with your family. Say where you went and what you bought — both countable and uncountable. Starter: 'Last Saturday, I went shopping with my ___. We went to ___ and bought...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a story', lines: [
+                    { type: 'teacher_says', text: "'Last Saturday, I went shopping with my mother. We went to the supermarket. I picked up three apples and a bunch of bananas. Then we bought a bottle of milk, a packet of rice and some cheese. We also got two notebooks.'" },
+                    { type: 'stage_direction', text: 'Read slowly. Point to the countable nouns (three apples, two notebooks) and the uncountable ones (a bottle of milk, some cheese).' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your grocery story', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Real or imaginary — your choice. Use your shopping bag list for ideas. Begin!' },
+                    { type: 'roving_prompt', text: "Add one uncountable thing — 'We bought some sugar' or 'a bag of flour.'" },
+                    { type: 'support_prompt', text: "Write: 'I went with my dad. We bought two mangoes and a bottle of oil.' That's a great start." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my story', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle your countable nouns and underline your uncountable nouns. Do you have at least one of each?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Shop role play setup', lines: [
+                    { type: 'teacher_says', text: "In pairs, one of you is the shopkeeper, the other is the customer. Use phrases like 'Can I have some rice, please?' 'Do you have any bananas?' 'Yes, here is a packet of biscuits.'" },
+                    { type: 'stage_direction', text: "Write the phrases and 'One thing I liked about our shop conversation:' on the board. Model a short purchase with a volunteer, ending with please and thank you." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Shopkeeper & Customer', lines: [
+                    { type: 'teacher_says', text: 'Round one is 4 minutes, then switch roles for 4 more. Be creative with your items. Begin!' },
+                    { type: 'roving_prompt', text: "Customer, ask for something uncountable: 'Can I have some sugar?'" },
+                    { type: 'support_prompt', text: "Shopkeeper, you can just say 'Yes, here is ___' or 'Sorry, no ___ today.'" }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One thing I liked', lines: [
+                    { type: 'teacher_says', text: 'Write one thing you liked about your shop conversation. Who wants to share it?' },
+                    { type: 'expected_answers', text: "My partner asked 'Do you have any magic beans?' / We both remembered to say please and thank you." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a grocery story with countable and uncountable nouns and acted out a real shop conversation. Say 'Thank you for the shopping conversation!' to your partner." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Countable vs Uncountable Sort',
             sortZones: [
@@ -1905,6 +2774,118 @@ const CHAPTERS = [
             ],
             modelNouns: ['am drinking', 'am eating', 'am going', 'am sleeping', 'am washing', 'am feeling']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the present continuous tense (am / is / are + verb + -ing) for actions happening right now',
+                    'Talk about healthy habits for the body and mind',
+                    'Write a healthy habits diary and act out habits for classmates to guess in full sentences'
+                ],
+                studentOutputs: {
+                    session1: 'Four healthy habit sentences + five present continuous sentences + 3 sentences about what is happening around them right now',
+                    session2: 'A 5-6 sentence Healthy Habits Diary in the present continuous + a healthy habits mime game'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Open space for miming'],
+                differentiation: [
+                    { level: 'Advanced', action: "Add a sentence about something you are NOT doing — 'I am not eating too many sweets.'" },
+                    { level: 'Struggling', action: "Write 3 sentences that all start with 'This week, I am ___ing...'. Use the habits you talked about last session." },
+                    { level: 'Very Shy', action: 'In the mime game you can act just one simple habit, like drinking water or sleeping.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Present continuous table (am / is / are + -ing) ready to show on the board',
+                'Space cleared for the mime game',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Notice your body', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Today we talk about healthy habits. Close your eyes. What do you do every day to stay healthy? Now notice right now — are you sitting up straight? Are you breathing deeply?' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice the healthy things the characters are doing.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 13 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "It's Healthy Habits Day in Lumora! Listen to what each friend is doing right now: 'I am stretching.' 'I am warming up my wings.' 'I am running laps.' 'I am drinking water.'" },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what do you do to stay strong and active? Tell your partner.' },
+                    { type: 'expected_answers', text: 'I play football every evening. / I eat vegetables. / I walk to school.' },
+                    { type: 'teacher_says', text: 'What good habits do you practise?' },
+                    { type: 'expected_answers', text: 'I brush my teeth twice a day. / I wash my hands before eating. / I go to bed early.' },
+                    { type: 'teacher_says', text: 'What is something healthy you are doing RIGHT NOW?' },
+                    { type: 'expected_answers', text: 'I am sitting on my chair. / I am listening to you. / I am breathing.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'I brush my teeth ___.' 'I eat fruits and ___.' 'I am learning to ___.' 'I feel happy when I ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'What are you learning to do that is healthy? Swim? Cook? Ride a bicycle?' },
+                    { type: 'support_prompt', text: "Try: 'I brush my teeth every morning. I eat fruits and vegetables.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Present Continuous', lines: [
+                    { type: 'teacher_says', text: "The present continuous tells us what is happening right now: subject + am/is/are + verb + ing. I AM walking. She IS eating an apple. They ARE playing basketball." },
+                    { type: 'stage_direction', text: 'Fast call-out: say a subject and verb — I/read, She/jump, We/play, He/drink, They/write — students say the full sentence.' },
+                    { type: 'expected_answers', text: 'I am reading! / She is jumping! / We are playing! / He is drinking! / They are writing!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: add -ing', lines: [
+                    { type: 'teacher_says', text: "Write the full sentence: (read) I ___. (jump) She ___. (play) We ___. (drink) He ___. (write) They ___. You have 3 minutes." },
+                    { type: 'expected_answers', text: 'I am reading. / She is jumping. / We are playing. / He is drinking. / They are writing.' },
+                    { type: 'roving_prompt', text: "'Write' ends in e — what happens before you add -ing?" },
+                    { type: 'support_prompt', text: 'I goes with am. He and she go with is. We and they go with are.' }
+                ]},
+                { step: 8, stage: 'Practice', title: "What's happening around you?", lines: [
+                    { type: 'teacher_says', text: "Look around the classroom. Write 3 sentences about actions happening right now: 'The teacher is writing on the board.' 'The fan is spinning.' 'My friend is sitting next to me.'" },
+                    { type: 'roving_prompt', text: "Use different subjects — I, he, she, they. What are your classmates doing?" },
+                    { type: 'support_prompt', text: "Start with yourself: 'I am writing with a pencil.'" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'He are playing' — is that right, or should it be 'He is playing'? Keep your sentences safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, health champions! Last session you learned the present continuous — am, is, are plus -ing. Today you write a Healthy Habits Diary about what you are doing this week.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Diary starter', lines: [
+                    { type: 'teacher_says', text: "Write 5 to 6 sentences in the present continuous. Starter: 'This week, I am drinking more water. I am also eating fruits and...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a diary entry', lines: [
+                    { type: 'teacher_says', text: "'This week, I am drinking more water. I am also eating fruits and vegetables every day. I am going for a walk in the evening. I am sleeping eight hours each night. I am feeling stronger already!'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to each am + -ing verb.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your diary', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Write what you are really doing — or what you plan to do to be healthier. Begin!' },
+                    { type: 'roving_prompt', text: "Add a sentence about how you are feeling — 'I am feeling proud of myself.'" },
+                    { type: 'support_prompt', text: "Turn last session's habits into sentences: 'I am brushing my teeth twice a day.'" }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my diary', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Underline every present continuous verb. Check each one has am, is or are — not just 'I reading'." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Mime game setup', lines: [
+                    { type: 'teacher_says', text: "Now we act with our bodies, not our voices! Act out 3 healthy habits silently. Classmates guess in a full sentence: 'You are stretching!' 'You are brushing your teeth!'" },
+                    { type: 'stage_direction', text: "Write the guessing sentences and 'One healthy habit my friend showed was:' on the board. Model it: a volunteer mimes, you guess aloud." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Act It Out!', lines: [
+                    { type: 'teacher_says', text: "Actors — no words, just actions. Guessers — raise your hand and say 'You are ___ing!'" },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5 taking turns.' },
+                    { type: 'roving_prompt', text: "Use the full sentence: 'You are washing your hands!'" },
+                    { type: 'support_prompt', text: 'You can act just one simple habit — drinking water or reading a book.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One healthy habit', lines: [
+                    { type: 'teacher_says', text: 'Write one healthy habit a friend showed. Who wants to share it?' },
+                    { type: 'expected_answers', text: 'Someone showed stretching their arms. / My friend acted out eating a banana.' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a Healthy Habits Diary in the present continuous and acted out habits for others to guess. Say 'Thank you for acting out healthy habits!' to your neighbour. Keep drinking water and keep moving!" }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Present Continuous Sort',
             sortZones: [
@@ -2019,6 +3000,116 @@ const CHAPTERS = [
                 'At 6:00 p.m., we had cake, and in the evening, we watched a movie together.'
             ],
             modelNouns: ['at', 'in', 'on']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the prepositions of time at (exact times), on (days and dates) and in (months, years, parts of the day)',
+                    'Talk clearly about when things happen in a day, a week and a year',
+                    'Write about a special day using at, on and in, and talk with a partner about daily schedules'
+                ],
+                studentOutputs: {
+                    session1: 'Four "when" sentences + five at / on / in sentences + a My Week Planner with four rows',
+                    session2: 'A Special Day timeline or 5-6 sentence paragraph + a Time Talk conversation with a partner'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use at, on AND in at least twice each. Add a sentence about how you felt at the end of the day.' },
+                    { level: 'Struggling', action: 'Draw a timeline with 3 points instead of a paragraph — write "At ___, I ___" for each.' },
+                    { level: 'Very Shy', action: 'In the Time Talk you can ask the questions from the board and let your partner answer first.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'At / on / in table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Think about time', lines: [
+                    { type: 'teacher_says', text: 'Good morning, everyone! Today we talk about time. Close your eyes. When do you wake up? When is your birthday? What happens on the weekend? Hold those times in your mind.' },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, glance at a clock or watch, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, listen for WHEN things happen — a time, a day, a part of the day.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 14 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "It's the Day of Falling Stars — it happens only once in a hundred years! Listen for the time words: AT seven o'clock, IN the afternoon, ON Falling Star Day, AT sunset." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: when do you wake up? Tell your partner.' },
+                    { type: 'expected_answers', text: 'I wake up at 6:30. / At 7:00. / At 5:30 on school days.' },
+                    { type: 'teacher_says', text: 'When is your birthday — which month, which day?' },
+                    { type: 'expected_answers', text: 'My birthday is in May. / On June 15th. / In December.' },
+                    { type: 'teacher_says', text: 'What do you do on the weekend?' },
+                    { type: 'expected_answers', text: 'On Saturday, I play football. / I visit my grandparents on Sunday.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'I go to school at ___.' 'I play games on ___.' 'My birthday is in ___.' 'I study English on ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'What time do you go to school? Write the exact time after "at".' },
+                    { type: 'support_prompt', text: "Try: 'I go to school at 8 o'clock. My birthday is in August.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: at, on, in', lines: [
+                    { type: 'teacher_says', text: "AT is for exact times: at 7:00, at bedtime, at noon. ON is for days and dates: on Monday, on my birthday. IN is for longer times: in July, in 2025, in the morning." },
+                    { type: 'stage_direction', text: 'Fast call-out: say 8:00 a.m., Monday, July, bedtime, my birthday, the morning, 2025, noon — students call the preposition.' },
+                    { type: 'expected_answers', text: 'At! / On! / In! / At! / On! / In! / In! / At!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: choose the preposition', lines: [
+                    { type: 'teacher_says', text: "Fill in at, on or in: 'I wake up ___ 6:30 a.m.' 'We go to the zoo ___ Sunday.' 'My exam is ___ March.' 'I have a holiday ___ my birthday.' 'I sleep ___ night.'" },
+                    { type: 'expected_answers', text: 'At. / On. / In. / On. / At.' },
+                    { type: 'stage_direction', text: "Point out the special one: we say 'at night', not 'in night'." },
+                    { type: 'support_prompt', text: 'Is it an exact time, a day, or something longer like a month?' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'My Week Planner', lines: [
+                    { type: 'teacher_says', text: "Fill in the planner: ___ Monday, ___ the evening, ___ 7:30 a.m., ___ Saturday. Add the right preposition and what you do. 'On Monday, I go to school. At 7:30 a.m., I eat breakfast.'" },
+                    { type: 'roving_prompt', text: "Which preposition goes with 'the evening'?" },
+                    { type: 'support_prompt', text: "What do you do on Saturday? Write 'On Saturday, I ___.'" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'I play in Monday' — is that right, or should it be 'on Monday'? Keep your Week Planner safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, time keepers! Last session you learned at for exact times, on for days and dates, and in for months and parts of the day. Today you describe a special day.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Special Day starter', lines: [
+                    { type: 'teacher_says', text: "Pick a special day — a birthday, a trip, a festival. Draw a timeline or write 5-6 sentences. Starter: 'On my birthday, I woke up at 6:00 a.m. In the morning, I opened presents. At 2:00 p.m., we had cake...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a paragraph', lines: [
+                    { type: 'teacher_says', text: "'On my school trip, I woke up at 5:00 a.m. In the morning, we boarded the bus. At 9:00 a.m., we reached the science museum. In the afternoon, we watched a 3D show. At 1:00 p.m., we ate lunch together.'" },
+                    { type: 'stage_direction', text: 'Read slowly and point to each at, on and in.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write or draw your special day', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes — a paragraph or a timeline, your choice. Begin!' },
+                    { type: 'roving_prompt', text: "What happened in the afternoon or evening? Start with 'In the afternoon...'" },
+                    { type: 'support_prompt', text: "Draw a line and mark 3 times on it. Write 'At ___, I ___' next to each." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my work', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Circle every at, on and in. Check: 'on my birthday', not 'in my birthday'." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Time Talk setup', lines: [
+                    { type: 'teacher_says', text: "With a partner, ask about each other's routines and answer in full sentences with at, on and in: 'What do you do in the morning?' 'What happens on weekends?' 'What time do you have lunch at school?'" },
+                    { type: 'stage_direction', text: "Write the three questions and 'One new thing I learned about my friend's schedule:' on the board. Model it with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Pair conversations', lines: [
+                    { type: 'teacher_says', text: 'About 4 minutes each, then switch who asks first. You can make up your own questions too. Begin!' },
+                    { type: 'roving_prompt', text: "Try a time question: 'What time do you go to bed?' Answer with 'at'." },
+                    { type: 'support_prompt', text: "Answer with the start of the question: 'In the morning, I ___.'" }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One new thing', lines: [
+                    { type: 'teacher_says', text: "Write one new thing you learned about your friend's schedule. Who wants to share?" },
+                    { type: 'expected_answers', text: 'My friend goes to bed at 9:30. / On weekends, my friend helps their dad cook.' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you described a special day with at, on and in, and talked about your schedules. Say 'Thank you for the time talk!' to your partner." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'At / On / In Sort',
@@ -2142,6 +3233,117 @@ const CHAPTERS = [
             ],
             modelNouns: ['kind', 'thoughtful', 'delicious', 'huge', 'thrilled', 'exhausted']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Understand synonyms (words with the same meaning) and antonyms (words with the opposite meaning)',
+                    'Choose stronger, more precise words to make writing more exciting',
+                    'Rewrite plain sentences with stronger synonyms and use new words aloud in the Word Wizard Challenge'
+                ],
+                studentOutputs: {
+                    session1: 'Three word-power sentences + five synonym / antonym answers + a Word Ladder (3 synonyms and 3 antonyms for one word)',
+                    session2: 'Three rewritten "magical sentences" + one sentence of their own with the magic word underlined + Word Wizard Challenge turns'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Make a second word ladder. In your own sentence, use a synonym AND an antonym to show contrast.' },
+                    { level: 'Struggling', action: 'Rewrite just sentences 1 and 2, choosing synonyms from your word ladder.' },
+                    { level: 'Very Shy', action: 'In the Word Wizard game you can give one word without a sentence, or whisper your sentence to a partner.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Synonym / antonym table ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Words are magic', lines: [
+                    { type: 'teacher_says', text: "Good morning, word wizards! Close your eyes. Think of the word 'happy'. Now a word that means the same — 'joyful'. Now the opposite — 'sad'. One word can change a sentence completely." },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, gesture like a magician, then ask everyone to open their eyes.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, listen for interesting words. Which words would you like to borrow for your own writing?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 15 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Nima shows the friends the Book of Magic Words. Say a word, and it shows its twins — one that means the same and one that means the opposite. Happy shows joyful and sad. What will Brave show?" },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: "First question: what's a kinder word for 'shouting'? Tell your partner." },
+                    { type: 'expected_answers', text: 'Calling. / Speaking loudly. / Announcing.' },
+                    { type: 'teacher_says', text: "What's a brighter word than 'happy'?" },
+                    { type: 'expected_answers', text: 'Joyful! / Delighted! / Thrilled! / Overjoyed!' },
+                    { type: 'teacher_says', text: "What's the opposite of 'cold'? And a stronger word for that opposite?" },
+                    { type: 'expected_answers', text: 'Hot. / Warm. / Boiling is stronger than hot.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'Instead of big, I can say ___.' 'The opposite of fast is ___.' 'A better word for nice is ___.' You have 3 minutes." },
+                    { type: 'roving_prompt', text: 'Think of a bigger word than big — gigantic? massive?' },
+                    { type: 'support_prompt', text: "Try: 'Instead of big, I can say huge. The opposite of fast is slow.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Synonyms & Antonyms', lines: [
+                    { type: 'teacher_says', text: "A synonym means the same: happy — joyful, fast — quick, small — tiny. An antonym means the opposite: happy — sad, fast — slow, cold — hot. Synonyms stop us repeating words. Antonyms show contrast." },
+                    { type: 'stage_direction', text: 'Fast call-out: say big, small, good — students give a synonym. Then say happy, fast, hot, clean — students give an antonym.' },
+                    { type: 'expected_answers', text: 'Synonyms: huge, tiny, kind / Antonyms: sad, slow, cold, dirty' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: find the twin', lines: [
+                    { type: 'teacher_says', text: "Write the missing word: Angry — synonym. Easy — antonym. Bright — synonym. Clean — antonym. Funny — synonym. Then make two of your own: word, synonym, antonym." },
+                    { type: 'expected_answers', text: 'Furious. / Difficult. / Shiny. / Dirty. / Hilarious.' },
+                    { type: 'stage_direction', text: 'Accept any answer that really means the same, or really means the opposite.' },
+                    { type: 'support_prompt', text: 'Same meaning — synonym. Opposite — antonym. Which one is the question asking for?' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Word Ladder', lines: [
+                    { type: 'teacher_says', text: "Pick one simple word — happy, big, fast, cold, good. Write it at the top. Then climb the ladder: 3 synonyms and 3 antonyms. For happy: cheerful, glad, joyful... sad, upset, miserable." },
+                    { type: 'roving_prompt', text: 'Finished? Choose a second word and build another ladder.' },
+                    { type: 'support_prompt', text: "Try 'cold': chilly, freezing, cool — and hot, warm, boiling." }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! Is 'tiny' a synonym or an antonym of 'small'? Is 'huge' a synonym or an antonym of 'small'? Keep your word ladder safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, word wizards! Last session you learned synonyms and antonyms and built a word ladder. Today you become sentence magicians — turning boring sentences into magical ones.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Magical Sentences task', lines: [
+                    { type: 'teacher_says', text: "Rewrite these with stronger words: 'The boy was nice.' 'The cake was good.' 'I had a big lunch.' Then write one sentence of your own with a synonym, and underline the magic word." }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models the sentences', lines: [
+                    { type: 'teacher_says', text: "'The boy was kind. The cake was delicious. I had a huge lunch.' And my own: 'I was thrilled to see my friend' — I underline 'thrilled' because it's a stronger word for happy." },
+                    { type: 'stage_direction', text: 'Write each pair on the board — the plain word, then the stronger one.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your magical sentences', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Use your word ladder to find synonyms. Begin!' },
+                    { type: 'roving_prompt', text: 'Does your new sentence sound more exciting than the old one? Read both aloud.' },
+                    { type: 'support_prompt', text: "Do number 1 first: could the boy be 'thoughtful' or 'friendly'? Write that." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my sentences', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Check that every new word really means the same as the old one. Is your magic word underlined?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Word Wizard Challenge setup', lines: [
+                    { type: 'teacher_says', text: "Here's the game: a friend says a word, like 'cold'. You give a synonym — 'chilly' — or an antonym — 'hot'. Then use it in a sentence: 'I drank a chilly lemonade.' Then you say a new word for the next person." },
+                    { type: 'stage_direction', text: "Write the three rules and 'One new magic word I learned today is:' on the board. Model two turns with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Play the challenge', lines: [
+                    { type: 'teacher_says', text: "No wrong answers — just magic words! It's fine to take a few seconds to think. Let's begin!" },
+                    { type: 'stage_direction', text: 'One circle if 15 or fewer students; otherwise groups of 5-6 each playing their own game.' },
+                    { type: 'roving_prompt', text: "Don't forget the full sentence after your word." },
+                    { type: 'support_prompt', text: "Can't find a synonym? Try the opposite instead — that counts too." }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One new magic word', lines: [
+                    { type: 'teacher_says', text: 'Write one new magic word you learned from a friend today. Who wants to share it?' },
+                    { type: 'expected_answers', text: "'Enormous' for big. / 'Freezing' for cold. / 'Ancient' for old." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you rewrote sentences with stronger synonyms and played the Word Wizard Challenge. Say 'Thank you for being a word wizard!' to your neighbour. Every new word is a tool for your writing." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Synonym or Antonym?',
             sortZones: [
@@ -2256,6 +3458,116 @@ const CHAPTERS = [
             ],
             modelNouns: ['blue', 'shiny', 'round', 'smooth', 'cool', 'fresh']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use adjectives (describing words) for colour, size, shape, texture, sound and smell',
+                    'Observe closely and describe things using the senses',
+                    'Write a description of an object with at least 5 adjectives and play Describe & Guess'
+                ],
+                studentOutputs: {
+                    session1: 'Three personal description sentences + circled adjectives and an own sentence with 3 adjectives + sense words and 2 sentences describing a picture',
+                    session2: 'A 5-6 sentence object description with at least 5 adjectives + a Describe & Guess turn'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Optional: a picture to display (beach, forest, busy street)', 'Everyday objects near students (water bottle, pencil case)'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use an adjective for every sense — sight, touch, sound and smell. Try a stronger word than nice, good or big.' },
+                    { level: 'Struggling', action: "Use the frame: 'I have a ___. It is ___ and ___. It feels ___.' That gives you 3 adjectives already." },
+                    { level: 'Very Shy', action: 'In Describe & Guess you can read your description to your small group instead of the whole class.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Picture to describe ready on the board or screen (or a scene to imagine)',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Describe this in one word', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone! Today our brush is not paint — it's words. Look at this. Think of ONE word that describes it — its colour, size, feeling or sound. On my count: 3, 2, 1 — GO!" },
+                    { type: 'stage_direction', text: 'Hold up an object in the room (a water bottle, a plant) and let students call out describing words together.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, collect describing words — colours, sizes, how things feel.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 16 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "It's the Color Contest in Lumora! Listen to how each friend describes their treasure: a bold, fiery dragon; a tall, golden flower; a smooth, gray stone; silky, purple wings." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Sensory treasure hunt', lines: [
+                    { type: 'teacher_says', text: "Look: think of your favourite fruit. Don't say its name — describe it with two words and let your partner guess." },
+                    { type: 'expected_answers', text: "It is yellow, curved and sweet. (Banana!) / It is round, orange and juicy. (Orange!)" },
+                    { type: 'teacher_says', text: 'Feel: how does your pet or favourite toy feel when you touch it?' },
+                    { type: 'expected_answers', text: 'My toy is soft and cuddly. / My pet rabbit is fluffy and warm.' },
+                    { type: 'teacher_says', text: 'Hear and smell: imagine walking outside. What do you hear and smell?' },
+                    { type: 'expected_answers', text: 'I hear loud, noisy traffic. / I smell fresh, sweet flowers.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'My favourite fruit is ___. It is ___, ___ and ___.' 'I love my pet/toy because it feels ___ and looks ___.' 'When I walk outside, I see ___.'" },
+                    { type: 'roving_prompt', text: 'No pet? Describe a stuffed animal or a friend\'s pet.' },
+                    { type: 'support_prompt', text: "Try: 'My favourite fruit is mango. It is yellow, sweet and juicy.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Adjectives', lines: [
+                    { type: 'teacher_says', text: "An adjective describes a noun. It usually comes before the noun: a fluffy dog, a tall mountain, a sticky candy. You can use two or three together: 'a sticky, sweet candy'." },
+                    { type: 'stage_direction', text: "Adjective cloud: say a noun — teacher, classroom, rain — and students shout as many adjectives as they can in 5 seconds." },
+                    { type: 'expected_answers', text: 'Kind, helpful, funny! / Colourful, noisy, bright! / Cold, wet, gentle!' }
+                ]},
+                { step: 7, stage: 'Practice', title: "Let's Practice: circle the adjectives", lines: [
+                    { type: 'teacher_says', text: "Circle the adjectives: 'The small cat jumped onto the soft pillow.' 'I wore my warm red sweater.' 'We drank cold juice on a hot day.' Then write your own sentence with 3 adjectives." },
+                    { type: 'expected_answers', text: 'Small, soft. / Warm, red. / Cold, hot.' },
+                    { type: 'support_prompt', text: 'Ask "what kind?" about each noun. What kind of cat? Small. That is the adjective.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Describe this picture', lines: [
+                    { type: 'teacher_says', text: "Look at the picture — or imagine a beach. Write 4 describing words for what you see, hear, smell or feel, and what you like. Then use them in 2 sentences: 'The blue, sparkling ocean stretched under a warm, sunny sky.'" },
+                    { type: 'stage_direction', text: 'Show a picture on the board (busy market, quiet forest, sunny beach). With no picture, ask students to close their eyes and imagine a beach.' },
+                    { type: 'support_prompt', text: 'Start with what you see — colours and sizes. Then join two of those words in one sentence.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! In 'the tall mountain', which word is the adjective? Think: if you described yourself with three adjectives, what would they be? Keep your descriptions safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, describers! Last session you used adjectives for colour, sound, feeling and smell. Today you pick one object near you and describe it so well that others can guess it.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Description starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences with at least 5 adjectives. Starter: 'I have a ___. It is ___ and ___. It feels ___ and smells ___. I use it when I...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a description', lines: [
+                    { type: 'teacher_says', text: "'I have a water bottle. It is blue and shiny. It feels smooth and cool to touch. It smells fresh and clean. I use it when I am thirsty. It has a small cap and a handy strap.'" },
+                    { type: 'stage_direction', text: 'Hold up a water bottle as you read and point to each adjective.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your description', lines: [
+                    { type: 'teacher_says', text: 'Choose an object you can see and touch — your pencil case, shoe, lunch box. You have about 15 minutes. Begin!' },
+                    { type: 'roving_prompt', text: 'Does it make a sound? Clicky? Crinkly? Does it have a smell?' },
+                    { type: 'support_prompt', text: "Write 'It is ___, ___ and ___' — one word for colour, one for size, one for shape." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my description', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Underline every adjective and count them — do you have at least 5?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Describe & Guess setup', lines: [
+                    { type: 'teacher_says', text: "Read your description WITHOUT saying the object's name. Classmates guess from your adjectives. 'It is small, shiny and makes noise. I use it when I call someone...' — a phone!" },
+                    { type: 'stage_direction', text: "Write the rules and 'One cool description I heard today:' on the board. Model one round with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Play Describe & Guess', lines: [
+                    { type: 'teacher_says', text: 'Listeners, raise your hand to guess. If nobody guesses, the describer adds one more clue.' },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5 taking turns.' },
+                    { type: 'roving_prompt', text: "Don't say the name — just describe!" },
+                    { type: 'support_prompt', text: "Add one more clue: 'It is used for ___.'" }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One cool description', lines: [
+                    { type: 'teacher_says', text: 'Write one cool description you heard today. Who wants to share it?' },
+                    { type: 'expected_answers', text: "A pencil case that was 'rainbow, soft and zippy'. / A shoe that was 'bouncy, blue and squeaky'." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you described an object with at least 5 adjectives and played Describe & Guess. Say 'Thank you for describing your object!' to your neighbour. Adjectives turn the ordinary into the extraordinary." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Adjective Sort',
             sortZones: [
@@ -2369,6 +3681,118 @@ const CHAPTERS = [
                 'Why did everyone stop moving?'
             ],
             modelNouns: ['!', '"', '.', '?']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use punctuation marks correctly: full stop (.), exclamation mark (!), question mark (?), comma (,) and quotation marks (" ")',
+                    'Listen carefully to sounds and describe them with feeling',
+                    'Write a sound poem or story with dialogue and read it aloud with expression that matches the punctuation'
+                ],
+                studentOutputs: {
+                    session1: 'Three "I hear / It sounds / It makes me feel" sentences + five punctuated sentences + 5 Sound Detective sentences',
+                    session2: 'A 4-line sound poem or 5-6 sentence sound story with 3 sounds, ! ? . and one line of dialogue + an expressive reading'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Optional: short sound clips (rain, bells, traffic, laughter)'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add a fourth sound and a sentence with commas in a list. Give your poem or story a title.' },
+                    { level: 'Struggling', action: 'Write a 4-line poem using the example as a frame — just change the sounds and the words someone says.' },
+                    { level: 'Very Shy', action: 'Read your poem to one partner. You do not have to read to the whole class.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Punctuation table ready to show on the board',
+                'Optional sound clips ready to play',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Close your eyes and listen', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone. Today we use our ears. Close your eyes. Don't speak — just listen for 20 seconds. A fan? A bird? Someone's pencil?" },
+                    { type: 'stage_direction', text: 'Stay silent for 20 seconds. Then ask students to open their eyes and call out one sound each.' },
+                    { type: 'expected_answers', text: 'A fan. / Someone coughing. / A bird. / My own heartbeat.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, listen for the sounds. Which ones are calm, and which ones are exciting?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 17 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Nima takes the friends on a sound walk. The Clock Tree chime is exciting — it gets an exclamation mark! A sudden frog croak makes Pip ask, 'What was that?' — a question mark. Listen for how each sound matches a mark." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Sound journey', lines: [
+                    { type: 'teacher_says', text: 'Close your eyes again. What sounds do you hear in this classroom right now? Tell your partner one.' },
+                    { type: 'expected_answers', text: 'A pencil tapping. / The fan humming. / Someone whispering.' },
+                    { type: 'teacher_says', text: 'Imagine you are outside on a street or in a garden. What would you hear?' },
+                    { type: 'expected_answers', text: 'Honking cars. / Birds singing. / Children laughing. / Wind blowing.' },
+                    { type: 'teacher_says', text: 'Tell your partner one sound that makes you happy and one that feels scary.' },
+                    { type: 'expected_answers', text: 'Happy — my cat purring. Scary — loud thunder.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Describe a sound', lines: [
+                    { type: 'teacher_says', text: "Write about one sound, real or imagined: 'I hear ___.' 'It sounds ___.' 'It makes me feel ___.' For example: 'I hear rain tapping on the roof. It sounds soft and steady. It makes me feel cosy.'" },
+                    { type: 'support_prompt', text: 'Pick a sound you heard just now — the fan, a bird — and start with "I hear".' }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Punctuation Marks', lines: [
+                    { type: 'teacher_says', text: "Punctuation marks are traffic signs for reading. A full stop ends a telling sentence — calm voice. An exclamation mark shows excitement — 'That was so loud!' A question mark ends a question — your voice goes up. A comma is a short pause. Quotation marks show someone speaking." },
+                    { type: 'stage_direction', text: "Read each example with matching expression. Then say sentences without their end — 'Watch out', 'What time is it', 'I love the sound of rain' — and students call the mark." },
+                    { type: 'expected_answers', text: 'Exclamation mark! / Question mark! / Full stop!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: add the punctuation', lines: [
+                    { type: 'teacher_says', text: "Write these with the right mark: 'What time is it' 'I love that song' 'The bell rang' 'Can you hear that'. Then fix this one: 'did you hear that sound'." },
+                    { type: 'expected_answers', text: 'What time is it? / I love that song! / The bell rang. / Can you hear that? / Did you hear that sound?' },
+                    { type: 'stage_direction', text: "Accept a full stop or exclamation mark for 'I love that song' — talk about which feeling each one shows." },
+                    { type: 'support_prompt', text: 'Does it ask something? Question mark. Is it exciting? Exclamation mark. Calm? Full stop.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Sound Detective', lines: [
+                    { type: 'teacher_says', text: "Be a Sound Detective! Find 5 sounds — a bell ringing, a chair moving, someone laughing, a bird outside, music playing, or real sounds you hear now. Write one sentence for each. Use at least one full stop, one exclamation mark and one question mark." },
+                    { type: 'roving_prompt', text: "For the bell: 'The bell rang loudly!' or 'Did you hear the bell?' Which feels right?" },
+                    { type: 'support_prompt', text: 'Listen right now. What do you hear? Write "I hear ___." and add a full stop.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'Do you hear that.' — what's wrong with the mark at the end? Keep your Sound Detective sentences safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, sound detectives! Last session you learned full stops, exclamation marks, question marks, commas and quotation marks. Today you become a sound poet or a sound storyteller.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Choose a setting', lines: [
+                    { type: 'teacher_says', text: 'Pick a setting — a classroom, a garden, a street or a beach. Write a 4-line poem or a 5-6 sentence story. It must have 3 different sounds, ! ? and . marks, and one line of dialogue with quotation marks.' }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a sound poem', lines: [
+                    { type: 'teacher_says', text: "'I heard a whistle blow! \"Let's line up,\" said the teacher. Chairs scraped the floor. Then... everything went silent.' Three sounds, an exclamation mark, full stops, and someone speaking." },
+                    { type: 'stage_direction', text: 'Write the poem on the board and point to each punctuation mark.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your poem or story', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Begin!' },
+                    { type: 'roving_prompt', text: 'Who speaks in your writing? Put their words inside quotation marks.' },
+                    { type: 'support_prompt', text: "Start with 'At the beach, I heard...' and write one sound per line." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my punctuation', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle every punctuation mark. Do you have !, ?, . and quotation marks? Does every sentence start with a capital letter?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Read with feeling: setup', lines: [
+                    { type: 'teacher_says', text: 'Now let the punctuation guide your voice. Stop at full stops. Show surprise at exclamation marks. Make your voice go up at question marks. Use a different voice for dialogue.' },
+                    { type: 'stage_direction', text: "Write the four voice rules and 'One line I liked from someone's reading was:' on the board. Read the example poem aloud with full expression." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Practise, then share', lines: [
+                    { type: 'teacher_says', text: "First, read to 1-2 friends. Listeners, give one kind comment: 'I loved how you said the exclamation!' Then we'll hear a few brave volunteers." },
+                    { type: 'stage_direction', text: 'Give 4 minutes for pair practice, then invite 2-4 volunteers to read to the whole class. After each, ask: "What punctuation did you hear?"' },
+                    { type: 'roving_prompt', text: 'Slow down — let us feel the exclamation mark.' },
+                    { type: 'support_prompt', text: 'Read just to your partner — that counts.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One line I liked', lines: [
+                    { type: 'teacher_says', text: "Write one line you liked from someone's reading. Who wants to share?" },
+                    { type: 'expected_answers', text: "'The thunder crashed loudly!' / 'Bees buzzed, birds sang, and children shouted.'" },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share; class claps after each.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a sound poem or story with punctuation and dialogue, and read it with feeling. Say 'Thank you for your sound poem!' to your neighbour. Punctuation is the music of writing." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'Punctuation Sort',
@@ -2500,6 +3924,113 @@ const CHAPTERS = [
             ],
             modelNouns: ['One day', 'Then', 'Suddenly', 'In the end']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Know the four ingredients of a good story: character, setting, problem and solution',
+                    'Use sequence words (first, then, after that, suddenly, finally, at last) to show the order of events',
+                    'Plan and write a full story with a clear beginning, middle and end, then share it in a storytelling circle'
+                ],
+                studentOutputs: {
+                    session1: 'Three sentences about a favourite story + four ordered events with sequence words + a Beginning–Middle–End Story Puzzle',
+                    session2: 'A 6-8 sentence story with sequence words and describing words + a storytelling circle reflection'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add a line of dialogue and a feeling sentence at the end. Give your story a title.' },
+                    { level: 'Struggling', action: 'Write 5 sentences — expand each part of your Story Puzzle into one or two sentences.' },
+                    { level: 'Very Shy', action: 'In the storytelling circle you can read just the beginning and the ending of your story.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Sequence word table and story ingredients ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Your favourite story', lines: [
+                    { type: 'teacher_says', text: 'Good morning, story builders! Think about your favourite story — a book, a movie, a cartoon. What happened at the beginning? What went wrong in the middle? How did it end? In one word — what does every story need?' },
+                    { type: 'expected_answers', text: 'A character! / A problem! / An ending! / An adventure!' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice what happens first, what happens next, and how it ends.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 18 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "The friends find the Story Tree, but its scrolls are out of order! Aanya fixes them: 'First, you find the stone. Then, something surprising happens. Finally, the story ends.' Listen for those order words." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what is your favourite story? Tell your partner.' },
+                    { type: 'expected_answers', text: 'The Lion King! / Cinderella. / The Very Hungry Caterpillar.' },
+                    { type: 'teacher_says', text: 'Who is the main character? And what is one thing you liked about the story?' },
+                    { type: 'expected_answers', text: 'Simba. / I liked when Simba became king. / I liked the happy ending.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'The story recipe', lines: [
+                    { type: 'teacher_says', text: 'Every good story has four ingredients: a CHARACTER, a SETTING — where it happens, a PROBLEM — something goes wrong, and a SOLUTION — how it works out. The Lion King: Simba, the savanna, Scar takes over, Simba becomes king.' },
+                    { type: 'stage_direction', text: "Write the four ingredients on the board. Then students finish: 'My favourite story is ___. The main character is ___. One thing I liked was ___.'" },
+                    { type: 'support_prompt', text: 'Any story counts — one your grandmother told you is perfect.' }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Sequence Words', lines: [
+                    { type: 'teacher_says', text: 'Sequence words are road signs for a story. Beginning: first, one day, in the beginning. Middle: then, after that, suddenly. End: finally, at last, in the end.' },
+                    { type: 'stage_direction', text: "Start a story and pause for students to call the next sequence word: '___, I woke up. ___, I brushed my teeth. ___, I went to school.'" },
+                    { type: 'expected_answers', text: 'First! / Then! / Finally!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: put it in order', lines: [
+                    { type: 'teacher_says', text: "These are mixed up: 'I brushed my teeth. I woke up. I went to school. I ate breakfast.' Write them in the right order with a sequence word before each. Then write 3 events of your own." },
+                    { type: 'expected_answers', text: 'First, I woke up. Then, I brushed my teeth. After that, I ate breakfast. Finally, I went to school.' },
+                    { type: 'support_prompt', text: 'What do you do first when you wake up? Start there.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Story Puzzle', lines: [
+                    { type: 'teacher_says', text: "Pick an idea — a lost puppy, a trip to space, a mysterious gift, or your own — and plan it. Beginning: who and where? Middle: what goes wrong? End: how is it solved? Just a few words or 1-2 sentences for each." },
+                    { type: 'roving_prompt', text: 'Who is your main character? Give them a name.' },
+                    { type: 'support_prompt', text: "Try 'A mysterious gift' — who finds it, and where? What happens next?" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! Which word belongs at the END of a story — 'first', 'then' or 'finally'? Keep your Story Puzzle safe — next time it becomes a full story." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, story builders! Last session you learned character, setting, problem and solution, and planned a Story Puzzle. Today you turn that plan into a full story.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Story starter', lines: [
+                    { type: 'teacher_says', text: "Write 6 to 8 sentences. Use describing words, capital letters and punctuation, and a clear beginning, middle and end. Starter: 'One day, a small puppy walked into the park...' Change it to match your idea." }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a story', lines: [
+                    { type: 'teacher_says', text: "'One day, a small, fluffy puppy walked into the park. It looked lost and scared. A girl named Lily asked softly, \"Are you lost?\" Then, Lily looked for the owner everywhere. Finally, she found a phone number on the collar. The owner was so happy.'" },
+                    { type: 'stage_direction', text: 'Point to the sequence words (one day, then, finally) and the describing words (small, fluffy, scared).' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your story', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Follow your Story Puzzle — beginning first, then the problem, then the solution. Begin!' },
+                    { type: 'roving_prompt', text: 'How does your character feel in the middle? Scared? Worried? Add that word.' },
+                    { type: 'support_prompt', text: 'Turn each part of your puzzle into one sentence, and add one describing word to each.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my story', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle your sequence words — do you have at least two? Does every sentence start with a capital letter and end with a mark?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Storytelling circle setup', lines: [
+                    { type: 'teacher_says', text: "In small groups, each person reads their story aloud. While you listen, notice how they started, what the exciting part was, and how it ended." },
+                    { type: 'stage_direction', text: "Write on the board: 'Their story was about: ___' and 'I liked how they: ___'." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Share in the circle', lines: [
+                    { type: 'teacher_says', text: 'Groups of 3 or 4, about 2 minutes each. Read slowly and clearly. Clap softly after each reader. Begin!' },
+                    { type: 'roving_prompt', text: "Listeners, ask one question: 'What happened next?' or 'Why did the character feel that way?'" },
+                    { type: 'support_prompt', text: 'You can read just your beginning and your ending.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One thing I liked', lines: [
+                    { type: 'teacher_says', text: "Write what a friend's story was about and what you liked about how they told it. Who wants to share?" },
+                    { type: 'expected_answers', text: "Their story was about a trip to space. I liked 'the rocket zoomed into the dark, sparkling sky'." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a full story with a beginning, middle and end, and shared it in a storytelling circle. Say 'Thank you for your story!' to your group. You know the recipe now — keep building stories." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Sequence Word Sort',
             sortZones: [
@@ -2623,6 +4154,113 @@ const CHAPTERS = [
             ],
             modelNouns: ['kite', 'night', 'bright', 'delight']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Recognise and make rhyming words that share the same ending sound (cat, hat, mat)',
+                    'Notice repetition and alliteration in poems and write a two-line couplet',
+                    'Write a 4-line rhyming poem and perform it in a Poetry Jam with rhythm and expression'
+                ],
+                studentOutputs: {
+                    session1: 'Rhymes for four words + 3 rhyming pairs and a mini couplet + four completed rhyming sentences',
+                    session2: 'A 4-line rhyming poem about a pet, a dream, a silly moment or nature + a Poetry Jam performance'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Make every two lines rhyme and add one line with alliteration. Try writing a second poem.' },
+                    { level: 'Struggling', action: 'Write a 2-line couplet first, using a rhyming pair from the board, then add 2 more lines if you can.' },
+                    { level: 'Very Shy', action: 'In the Poetry Jam you can read in your small group, or clap the rhythm while a partner reads.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Rhyming pairs table and poem topics ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Rhyme that word!', lines: [
+                    { type: 'teacher_says', text: "Good morning, poets! Today we add music to our words. Rhyming words sound the same at the end — cat and hat, day and play. I say a word, you shout a rhyme. Dog! Moon! Book!" },
+                    { type: 'stage_direction', text: 'Clap a simple rhythm to set a playful mood before you start.' },
+                    { type: 'expected_answers', text: 'Frog, log! / June, spoon, soon! / Hook, look, cook!' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, listen for words that rhyme. Clap quietly when you hear a pair.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 19 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Every word spoken at the Rhyming River comes back as a rhyme! 'A cat sat on a mat.' 'A dragon so bright, flew into the light!' When Aanya says 'sun', the river answers fun, run, bun." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Rhyming pairs', lines: [
+                    { type: 'teacher_says', text: "Look at these pairs: cat — hat share '-at', day — play share '-ay', sun — run share '-un'. Now write a rhyme for each: cake, tree, light, ball." },
+                    { type: 'expected_answers', text: 'Bake, lake, snake. / Bee, see, free. / Night, bright, kite. / Tall, small, fall.' },
+                    { type: 'support_prompt', text: "Say the ending sound out loud — '-ake' — then try different first letters: b-ake, l-ake, m-ake." }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Repetition and alliteration', lines: [
+                    { type: 'teacher_says', text: "Poets also use repetition — saying a word again, like 'Rain, rain, go away' — and alliteration — words starting with the same sound, like 'Silly snakes slither silently'." },
+                    { type: 'stage_direction', text: "Read 'Tick tock, tick tock' and 'Big brown bear' — students call out repetition or alliteration." },
+                    { type: 'expected_answers', text: 'Repetition! / Alliteration!' }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Rhyme and Rhythm', lines: [
+                    { type: 'teacher_says', text: "Rhyme makes poems easy to remember, fun to read aloud and musical. A couplet is two lines whose last words rhyme: 'I saw a frog hop in the rain, It danced around the windowpane!'" },
+                    { type: 'stage_direction', text: 'Read the couplet again and clap the beat so students hear the rhythm.' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: pairs and a couplet', lines: [
+                    { type: 'teacher_says', text: "Write 3 rhyming pairs — like star and car, blue and shoe. Then write your own couplet: 2 lines where the last words rhyme. You have 5 minutes." },
+                    { type: 'roving_prompt', text: "Start your couplet with 'I saw...' or 'One day...'" },
+                    { type: 'support_prompt', text: "Try: 'The sun is bright. It gives us light.'" }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Complete the rhyme', lines: [
+                    { type: 'teacher_says', text: "Fill in a rhyming word: 'I saw a cat, it wore a ___.' 'I ate a pear, sitting on a ___.' 'The king wore gold, and a shiny ___.' 'The mouse ran fast, but came in ___.'" },
+                    { type: 'expected_answers', text: 'Hat. / Chair. / Crown... — accept any word that rhymes and makes sense. / Last.' },
+                    { type: 'support_prompt', text: 'Read the sentence aloud and listen to the last word. What sounds like it?' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! Do 'cake' and 'cup' rhyme? Why not? Keep your couplet safe — next time it can grow into a poem." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, poets! Last session you found rhyming pairs and wrote a couplet. Today you write a 4-line poem and perform it in a Poetry Jam.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Poem topics and starter', lines: [
+                    { type: 'teacher_says', text: "Write about a pet, a dream, a silly moment or something in nature. Lines 2 and 4 should rhyme — or every two lines. Starter: 'I had a dream I flew a kite, It took me far into the night...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a poem', lines: [
+                    { type: 'teacher_says', text: "'My little dog is soft and small, He loves to chase a bouncy ball. He wags his tail and runs with glee, The sweetest pup you'll ever see.' Small and ball rhyme. Glee and see rhyme." },
+                    { type: 'stage_direction', text: 'Read with rhythm, clapping the beat. Mention that poets often change a word to make a rhyme work — that is normal.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your poem', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Write your first line, look at its last word, then find a rhyme for your next line. Begin!' },
+                    { type: 'roving_prompt', text: 'Read your poem quietly and clap the rhythm. Does it sound musical?' },
+                    { type: 'support_prompt', text: "Try a silly moment: 'I slipped on a banana peel...' What rhymes with peel? Feel, meal, wheel." }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my rhymes', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Underline your rhyming words. Do they really sound the same at the end? Add a title if you have time.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Poetry Jam setup', lines: [
+                    { type: 'teacher_says', text: "It's a Poetry Jam — a concert with poems! Clap the rhythm as you read. Say the rhyming words a little louder. Use a voice that matches your poem — silly, excited or calm." },
+                    { type: 'stage_direction', text: "Write the three tips and 'One rhyme I loved from a classmate's poem:' on the board. Perform the dog poem with claps and emphasis." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Poetry Jam', lines: [
+                    { type: 'teacher_says', text: "Who wants to go first? After each poem, the class says 'Bravo!'" },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5 taking turns.' },
+                    { type: 'roving_prompt', text: 'Clap the beat as you read — it helps the rhythm.' },
+                    { type: 'support_prompt', text: 'Read to your small group, or let a partner clap while you read.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One rhyme I loved', lines: [
+                    { type: 'teacher_says', text: "Write one rhyme you loved from a classmate's poem. Who wants to share?" },
+                    { type: 'expected_answers', text: "I loved 'kite' and 'night'. / Someone rhymed 'cat' with 'bat' — it was funny." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a 4-line rhyming poem and performed it in a Poetry Jam. Say 'Thank you for your poem!' to your neighbour. Rhyme is the music of language — keep writing poems." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Rhyme Sort',
             sortZones: [
@@ -2742,6 +4380,115 @@ const CHAPTERS = [
                 'Everyone asked questions and listened carefully — it was an unforgettable day.'
             ],
             modelNouns: ['Who', 'What', 'How']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the question words who, what, where, when, why and how to ask for the right information',
+                    'Ask clear questions and record answers like a reporter',
+                    'Write a short news report with question words and act out a news show as reporter and guest'
+                ],
+                studentOutputs: {
+                    session1: 'Three reporter-prep sentences + one question for each question word + an interview chart with a classmate\'s answers',
+                    session2: 'A 5-6 sentence news report using at least 3 question words + a news show role play'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Interview chart drawn on the board'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add a headline and a quote from someone at the event. Use all six question words.' },
+                    { level: 'Struggling', action: "Write 4 sentences about one event and include just 2 questions — try 'Who is it?' and 'What happened?'" },
+                    { level: 'Very Shy', action: 'In the news show you can be the guest and answer in short sentences, or perform in your small group only.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Question word table and interview chart ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'If you were a reporter', lines: [
+                    { type: 'teacher_says', text: "Good morning, reporters! Imagine you could interview anyone in the world — a famous athlete, a scientist, your grandmother. Who would it be? Call it out!" },
+                    { type: 'stage_direction', text: 'Hold an imaginary microphone or notepad while you ask.' },
+                    { type: 'expected_answers', text: 'My mom! / A footballer! / My best friend!' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice how the reporter makes the news clear. What questions does the report answer?' },
+                    { type: 'stage_direction', text: 'Play the Chapter 20 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Aanya is a reporter for the Lumora Times! Listen to her questions: 'Who lives at the top of the Clock Tree?' 'Where do you sleep at night?' 'Why do you breathe fire, Flame?'" },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: who would you interview? Tell your partner.' },
+                    { type: 'expected_answers', text: 'My father. / My best friend. / A scientist. / My pet — if it could talk!' },
+                    { type: 'teacher_says', text: 'What would you want to ask them? And what is one big question you would ask the world?' },
+                    { type: 'expected_answers', text: 'How did you learn to cook? / Why is the sky blue? / How can we stop pollution?' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Reporter prep', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'I want to ask a question to ___.' 'I want to know ___.' 'If I were a reporter, I'd ask ___.' You have 3 minutes." },
+                    { type: 'support_prompt', text: "Try: 'I want to ask my grandmother. I want to know what school was like when she was young.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Question Words', lines: [
+                    { type: 'teacher_says', text: "Each question word asks for something different. WHO — a person. WHAT — a thing or idea. WHERE — a place. WHEN — a time. WHY — a reason. HOW — a way of doing something." },
+                    { type: 'stage_direction', text: "Fast call-out: read 'Where is the library?', 'Why did you laugh?', 'When does school end?', 'How do you make pancakes?' — students call the question word." },
+                    { type: 'expected_answers', text: 'Where! / Why! / When! / How!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: one question each', lines: [
+                    { type: 'teacher_says', text: 'Write one question for each word: who, what, where, when, why, how. Remember the question mark at the end. You have 4 minutes.' },
+                    { type: 'roving_prompt', text: "Why asks for a reason — 'Why do you like reading?'" },
+                    { type: 'support_prompt', text: "Start with 'What is your favourite ___?' Then try 'Where do you ___?'" }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Interview a classmate', lines: [
+                    { type: 'teacher_says', text: 'Pair up. Write 3-4 questions with different question words, ask your partner, and write their answers in the chart. Then switch.' },
+                    { type: 'stage_direction', text: "Model one row with a volunteer: 'Who is your favourite teacher?' — write the answer in the chart." },
+                    { type: 'roving_prompt', text: "Try a why or how question — not only what." },
+                    { type: 'support_prompt', text: 'Use the questions you already wrote — just ask them and copy the answer.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'Who is your favourite colour?' — which question word should it be? Keep your interview chart safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, reporters! Last session you learned who, what, where, when, why and how, and interviewed a classmate. Today you write a news report about something exciting at school.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'News report starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences about an exciting school event — a talent show, a new class pet, a surprise visitor, real or imaginary. Use at least 3 question words. Starter: 'Today something exciting happened at our school. A guest arrived, and everyone asked, \"Who is it?\"...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a report', lines: [
+                    { type: 'teacher_says', text: "'Today a famous author made a surprise visit. Everyone asked, \"Who is it?\" She read from her new book. Students asked, \"What inspired you to write?\" Then she asked us, \"How many of you want to be writers?\" Almost every hand went up.'" },
+                    { type: 'stage_direction', text: 'Point to the three question words: Who, What, How.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your news report', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Begin!' },
+                    { type: 'roving_prompt', text: 'Add a question someone asked, inside quotation marks.' },
+                    { type: 'support_prompt', text: 'Imagine a new class pet. What is its name? Where did it come from? Who looks after it?' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my report', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle your question words — do you have at least 3? Does every question end with a question mark? Add a headline if you have time.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'News show setup', lines: [
+                    { type: 'teacher_says', text: "Now act out a mini news show. The reporter asks questions; the guest answers. 'What brings you to our class today?' 'I came to share my talent!' 'How did you prepare?'" },
+                    { type: 'stage_direction', text: "Write the example dialogue and 'One fun question I heard was:' on the board. Model a short interview with a volunteer." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Prepare and perform', lines: [
+                    { type: 'teacher_says', text: 'Pairs or groups of 3. Take 2 minutes to prepare, then perform — 1-2 minutes per interview. Switch so everyone is the reporter once.' },
+                    { type: 'stage_direction', text: 'Invite 3-4 pairs to perform for the class, or let all groups perform at the same time.' },
+                    { type: 'roving_prompt', text: "Reporter, use question words — ask 'Why?' and 'How?'" },
+                    { type: 'support_prompt', text: 'You can be the guest — the reporter asks, and you answer.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One fun question', lines: [
+                    { type: 'teacher_says', text: 'Write one fun question you heard during the news show. Who wants to share?' },
+                    { type: 'expected_answers', text: "'Why did you choose to become a musician?' / 'How do you stay calm before a big performance?'" },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a news report with question words and acted in a news show. Say 'Great job on the news show!' to your partner. Questions are how we learn — keep asking them." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'Question Word Sort',
@@ -2865,6 +4612,113 @@ const CHAPTERS = [
             ],
             modelNouns: ['because', 'so']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Understand cause (why something happens) and effect (what happens as a result)',
+                    'Use because, so, since and therefore to connect causes and effects',
+                    'Write a step-by-step how-to explainer and explain a simple idea aloud in the Explain It Challenge'
+                ],
+                studentOutputs: {
+                    session1: 'Three "because" sentences + three joined sentences with because or so + matched cause-effect pairs and 2 of their own',
+                    session2: 'A 5-6 sentence how-to explainer with cause-effect words + a 1-2 minute Explain It talk'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Use because, so AND therefore in your explainer. Add a sentence at the start and a conclusion at the end.' },
+                    { level: 'Struggling', action: "Write 3 steps, each with 'because': 'First, I ___ because ___.'" },
+                    { level: 'Very Shy', action: 'In the Explain It Challenge you can read two sentences from your explainer instead of speaking freely.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Cause-effect word table (because / so / since / therefore) ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Why did that happen?', lines: [
+                    { type: 'teacher_says', text: "Good morning, explainers! Why do we drink water? Because we are thirsty. Thirst is the cause; drinking water is the effect. What happened to you this week — and why? Call out a quick example." },
+                    { type: 'expected_answers', text: 'I was late because I woke up late. / I wore a jacket because it was cold.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice how the character explains a tricky idea and makes it easy to understand.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 21 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Nima shows Aanya the Why Tree, covered in question marks! 'Why did the pond overflow?' It rained all night, SO the pond filled up. Listen for the reasons and the results." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: why do plants grow? Tell your partner.' },
+                    { type: 'expected_answers', text: 'Because they need sunlight. / Because we water them. / Because they get food from the soil.' },
+                    { type: 'teacher_says', text: 'Why do we wear raincoats?' },
+                    { type: 'expected_answers', text: "Because it's raining. / Because we don't want to get wet." }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these with your own reasons: 'I wore a jacket because ___.' 'I missed the bus because ___.' 'I was happy because ___.'" },
+                    { type: 'support_prompt', text: "Try: 'I was happy because I saw my friend.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Cause-Effect Words', lines: [
+                    { type: 'teacher_says', text: "BECAUSE and SINCE give the reason: 'I stayed inside because it was raining.' 'Since I was tired, I took a nap.' SO and THEREFORE show the result: 'It rained, so we used umbrellas.' 'She studied hard; therefore, she succeeded.'" },
+                    { type: 'stage_direction', text: "Say the first half and students finish: 'I went to bed early because...' 'It was sunny, so...' 'I forgot my lunch, so...'" },
+                    { type: 'expected_answers', text: '...I was tired. / ...we went to the park. / ...I was hungry.' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: join with because or so', lines: [
+                    { type: 'teacher_says', text: "Join each pair: 'I was late. I missed the bus.' 'It was very cold. We stayed indoors.' 'I studied hard. I passed the test.' Then write one of your own." },
+                    { type: 'expected_answers', text: 'I missed the bus, so I was late. / It was very cold, so we stayed indoors. / I passed the test because I studied hard.' },
+                    { type: 'stage_direction', text: "Accept both directions — 'because' before the reason, or 'so' before the result. Check the reason really comes first in time." },
+                    { type: 'support_prompt', text: 'Which happened first? That is the cause. Put "because" in front of it.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'What happened next? Match it', lines: [
+                    { type: 'teacher_says', text: "Match each cause to its effect and write a full sentence: 'I forgot my lunch', 'It started raining', 'I didn't sleep well' — with 'We played inside', 'I felt sleepy', 'My friend shared his snack'. Then write 2 pairs of your own." },
+                    { type: 'expected_answers', text: "I forgot my lunch, so my friend shared his snack. / It started raining, so we played inside. / I didn't sleep well, so I felt sleepy." },
+                    { type: 'support_prompt', text: 'Read a cause aloud, then ask: what would happen next?' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'Because it was cold, so I wore a jacket' — what's wrong? We only need one joining word. Keep your cause-effect pairs safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, explainers! Last session you connected causes and effects with because, so, since and therefore. Today you teach someone how to do something — and explain why each step matters.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Explainer starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences about something you do well — tying your shoes, riding a bike, getting ready for school, caring for a pet. Starter: 'I can make a sandwich. First, I get the bread. I use cheese because I love the taste...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models an explainer', lines: [
+                    { type: 'teacher_says', text: "'I know how to tie my shoes. First, I cross the laces and make a loop. I pull it tight because I want it to hold. Then I make a second loop. I pull both loops together, so the knot is strong. Therefore, my shoes stay tied all day.'" },
+                    { type: 'stage_direction', text: 'Point to because, so and therefore as you read.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your explainer', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Pick something you do often — you already know the steps. Begin!' },
+                    { type: 'roving_prompt', text: "Why do you do that step? Add 'because...'" },
+                    { type: 'support_prompt', text: "Try brushing teeth: 'First, I put toothpaste on my brush because it cleans my teeth.'" }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my explainer', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Circle your cause-effect words — did you use at least two different ones? Add a last line: 'That's how I ___.'" }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Explain It Challenge setup', lines: [
+                    { type: 'teacher_says', text: "Now explain something simple out loud, without writing — how to stay healthy, why we brush our teeth, how to care for a plant. Use because, so, since or therefore." },
+                    { type: 'stage_direction', text: "Write the topics and 'One cause-effect sentence I liked was:' on the board. Give a 30-second talk: 'We brush our teeth because it removes germs. So our teeth stay healthy. Therefore, we brush twice a day.'" }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Explain It!', lines: [
+                    { type: 'teacher_says', text: 'Groups of 3-4, about 1-2 minutes each. Listeners — listen for a cause-effect sentence you like. Begin!' },
+                    { type: 'roving_prompt', text: "Try 'so' for a result: 'We need sleep, so we feel energetic.'" },
+                    { type: 'support_prompt', text: 'You can read two sentences from your explainer.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One sentence I liked', lines: [
+                    { type: 'teacher_says', text: 'Write one cause-effect sentence you liked from someone\'s talk. Who wants to share?' },
+                    { type: 'expected_answers', text: "'We need to exercise because it makes our heart strong.' / 'Plants need sunlight, so they grow tall.'" },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a how-to explainer and explained an idea aloud using cause and effect. Say 'Thank you for explaining!' to your group. Keep asking why — and keep explaining because." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Cause or Effect?',
             sortZones: [
@@ -2987,6 +4841,114 @@ const CHAPTERS = [
             ],
             modelNouns: ['was', 'studied', 'became', 'went', 'admire']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Use the past simple tense (was/were, lived, helped, studied, won, taught) to tell a life story',
+                    'Talk about people who inspire us and the qualities we admire in them',
+                    'Write a short biography of an inspiring person and share it in Inspire the Class'
+                ],
+                studentOutputs: {
+                    session1: 'Three sentences about a person they admire + five past tense sentences and 2 of their own + a Biography Card',
+                    session2: 'A 5-6 sentence biography in the past tense + an Inspire the Class share (who, what they did, why chosen)'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Biography Card questions written on the board'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add how your hero changed you — "Because of her, I want to be a doctor." Circle every past tense verb.' },
+                    { level: 'Struggling', action: 'Turn each answer on your Biography Card into one sentence — that gives you 4 sentences.' },
+                    { level: 'Very Shy', action: 'You can share your hero in your small group, or say just who they are and one thing they did.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Past tense verb table and Biography Card ready to show on the board',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Someone you look up to', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone! Today we talk about people who make us think, 'I want to be like them.' It could be a parent, a teacher, an athlete, a scientist, a hero from history. Who inspires you? Call out a name." },
+                    { type: 'expected_answers', text: 'My mother! / Kalpana Chawla! / My grandfather! / Marie Curie!' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice who inspires the character and what that person did.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 22 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Nima tells Aanya about Toli, a brave firefly from long ago. Listen to her life story: Toli WAS born near the Whispering Willow, she LIT her lantern in a storm, she HELPED rebuild the market." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First: who is a person you admire? Tell your partner.' },
+                    { type: 'expected_answers', text: 'My father. / APJ Abdul Kalam. / My science teacher. / Rani Lakshmibai.' },
+                    { type: 'teacher_says', text: 'Why are they inspiring? And what is one amazing thing they did?' },
+                    { type: 'expected_answers', text: 'My mother works hard every day. / Rani Lakshmibai fought bravely for her kingdom.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Complete the sentences', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'A person I admire is ___.' 'He/She is inspiring because ___.' 'One amazing thing they did was ___.'" },
+                    { type: 'support_prompt', text: "Try: 'A person I admire is my grandmother. She always helps others.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Past Tense in Biographies', lines: [
+                    { type: 'teacher_says', text: "A biography is a life story, so we use the past tense. Is becomes was. Live becomes lived. Help becomes helped. Study becomes studied — y changes to i. Some change completely: win becomes won, teach becomes taught." },
+                    { type: 'stage_direction', text: 'Fast call-out: say is, live, help, study, win, teach, write, start — students call the past tense.' },
+                    { type: 'expected_answers', text: 'Was! / Lived! / Helped! / Studied! / Won! / Taught! / Wrote! / Started!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: past tense blanks', lines: [
+                    { type: 'teacher_says', text: "Fill in the past tense: 'He ___ (be) a great leader.' 'She ___ (write) many poems.' 'They ___ (build) schools.' 'He ___ (teach) in a village.' 'She ___ (start) a company.' Then write 2 sentences about someone you admire." },
+                    { type: 'expected_answers', text: 'Was. / Wrote. / Built. / Taught. / Started.' },
+                    { type: 'support_prompt', text: 'Look at the verb table on the board and find each verb.' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Biography Card', lines: [
+                    { type: 'teacher_says', text: "Make a Biography Card for an inspiring person — real or imaginary. Answer in past tense: What is their name? When and where were they born? What did they do or create? Why are they special to you?" },
+                    { type: 'stage_direction', text: "Model one card: 'Dr. APJ Abdul Kalam was born in 1931 in Rameswaram. He was a scientist and became President of India. He inspired me to dream big.'" },
+                    { type: 'roving_prompt', text: "Where were they born? Use 'was born in...'" },
+                    { type: 'support_prompt', text: 'Choose someone you know well, like a family member — you already know their story.' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! 'She is born in India' — for a biography, should it be 'She was born in India'? Keep your Biography Card safe." },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, biographers! Last session you made a Biography Card about someone who inspires you. Today you turn it into a short biography.' },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Biography starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences in the past tense. Model: 'Kalpana Chawla was a brave astronaut. She was born in India and studied science...' Replace her with your own hero." }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a biography', lines: [
+                    { type: 'teacher_says', text: "'My mother is my hero. She was born in a small village. She studied very hard and became a teacher. She helped many students learn to read. I admire her because she never gave up.'" },
+                    { type: 'stage_direction', text: 'Point to each past tense verb: was born, studied, became, helped.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your biography', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Your Biography Card already has the answers — turn each one into a sentence. Begin!' },
+                    { type: 'roving_prompt', text: "End with why they matter to you: 'I admire them because...'" },
+                    { type: 'support_prompt', text: "Start with 'My hero is ___. He/She was born in ___.'" }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my biography', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Circle every past tense verb. Did you use was or were correctly?' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Inspire the Class setup', lines: [
+                    { type: 'teacher_says', text: 'Share your hero with the class: who they are, what they did, and why you chose them. Read your paragraph or tell it in your own words — be proud of your hero.' },
+                    { type: 'stage_direction', text: "Write the three points and 'One person I learned about today was: ___ They inspired me because: ___' on the board. Share your own hero in about a minute." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Inspire the Class!', lines: [
+                    { type: 'teacher_says', text: "Who would like to share first? We'll clap for every hero." },
+                    { type: 'stage_direction', text: 'Whole class if 15 or fewer students; otherwise groups of 4-5 taking turns.' },
+                    { type: 'roving_prompt', text: "Tell us what they did — use the past tense." },
+                    { type: 'support_prompt', text: 'Say just who your hero is and one thing they did.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One person I learned about', lines: [
+                    { type: 'teacher_says', text: "Write one person you learned about today and why they inspired you. Who wants to share?" },
+                    { type: 'expected_answers', text: "Kalpana Chawla — she was brave and went to space. / My friend's grandfather — he built a school in his village." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a biography in the past tense and shared your hero with the class. Say 'Thank you for sharing your hero!' to your neighbour. You can be a hero to someone too." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Past Tense Biography Sort',
             sortZones: [
@@ -3107,6 +5069,114 @@ const CHAPTERS = [
             ],
             modelNouns: ['said that', 'was', 'were']
         },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Change direct speech to reported speech: remove quotation marks, add "said that", and change am/is → was, are → were',
+                    'Change pronouns when reporting (I → he/she, we → they)',
+                    'Write a short news report with at least 3 reported speech sentences and report a partner\'s words in a role play'
+                ],
+                studentOutputs: {
+                    session1: 'Three direct-to-reported sentences + one of their own + two Eyewitness Game sentences',
+                    session2: 'A 5-6 sentence news report with at least 3 reported speech sentences + a Reporter Role Play'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Optional: a picture of a busy scene (park, lunch, party)'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Report what four different people said, and add a headline to your news report.' },
+                    { level: 'Struggling', action: "Use the pattern for every sentence: '___ said that ___ was ___.' Start with just 3 sentences." },
+                    { level: 'Very Shy', action: 'In the role play you can be the guest and say short sentences — your partner does the reporting.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'Direct vs reported speech table ready to show on the board',
+                'Optional picture of a busy scene ready',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Did you hear that?', lines: [
+                    { type: 'teacher_says', text: "Good morning, reporters! When your friend tells you something and you tell someone else, you don't use their exact words with quotation marks — you change them a little. That's called reported speech." },
+                    { type: 'stage_direction', text: "Whisper a short sentence to one student (for example, 'I am excited'), then tell the class: 'I told them that I was excited.'" }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice what the character saw and the details they used to describe it.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 23 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Sela finds a hidden path, and Aanya keeps turning everything into reported speech! When Sela says 'I am so happy right now!', Aanya says, 'Sela said that she was so happy.'" },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Direct or reported?', lines: [
+                    { type: 'teacher_says', text: "Look: Direct — Meera said, \"I love chocolate.\" Reported — Meera said that she loved chocolate. What changed? The quotation marks are gone, 'I' became 'she', and 'love' became 'loved'." },
+                    { type: 'stage_direction', text: 'Write both sentences on the board and circle each change.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Try one together', lines: [
+                    { type: 'teacher_says', text: "Report this: My friend said, \"I found a coin.\" 'Found' is already past tense, so it stays. Only 'I' changes." },
+                    { type: 'expected_answers', text: 'My friend said that she found a coin. / My friend said that he found a coin.' },
+                    { type: 'support_prompt', text: 'Who is speaking? Replace "I" with he or she.' }
+                ]},
+                { step: 6, stage: 'Practice', title: 'Grammar Spotlight: Reported Speech', lines: [
+                    { type: 'teacher_says', text: "In reported speech the verb moves one step back in time. AM becomes WAS: 'I am tired' → She said that she was tired. ARE becomes WERE: 'We are ready' → They said that they were ready. IS becomes WAS: 'It is raining' → He said that it was raining." },
+                    { type: 'stage_direction', text: "Fast call-out: say 'I am happy.' 'We are playing.' 'She is reading.' — students call out the new verb." },
+                    { type: 'expected_answers', text: 'Was! / Were! / Was!' }
+                ]},
+                { step: 7, stage: 'Practice', title: 'Try It Yourself: report it', lines: [
+                    { type: 'teacher_says', text: "Change these: '\"I am hungry,\" said Raj.' '\"We are painting,\" said the children.' '\"She is late,\" said the teacher.' Then write a direct sentence of your own and report it." },
+                    { type: 'expected_answers', text: 'Raj said that he was hungry. / The children said that they were painting. / The teacher said that she was late.' },
+                    { type: 'roving_prompt', text: "Did you take away the quotation marks? Did 'am' become 'was'?" },
+                    { type: 'support_prompt', text: "Use the pattern: '___ said that ___ was ___.'" }
+                ]},
+                { step: 8, stage: 'Practice', title: 'Eyewitness Game', lines: [
+                    { type: 'teacher_says', text: "Be an eyewitness! Look at the picture — or imagine a birthday party or children in a park. What might people be saying? Write two reported sentences. Example: Riya said, \"This is fun!\" → Riya said that it was fun." },
+                    { type: 'stage_direction', text: 'Show a picture of a busy scene, or ask students to imagine a classroom or a party.' },
+                    { type: 'support_prompt', text: "Imagine someone says 'I am happy.' Report it: 'He said that he was happy.'" }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Quick check and close', lines: [
+                    { type: 'teacher_says', text: "Quick check! If a friend said, 'I am very happy today,' how would you report it? Keep your sentences safe." },
+                    { type: 'expected_answers', text: 'She said that she was very happy today.' },
+                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
+                    { type: 'teacher_says', text: "Welcome back, reporters! Last session you learned that reported speech has no quotation marks, and that am and is become was, are becomes were. Today you write a news report about something exciting." },
+                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'News report starter', lines: [
+                    { type: 'teacher_says', text: "Write 5-6 sentences about an exciting event — a sports win, a funny moment, a mystery at school. Include at least 3 reported speech sentences. Starter: 'Today something strange happened at recess. A student said that...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a report', lines: [
+                    { type: 'teacher_says', text: "'Today something strange happened at recess. A student said that she saw a mysterious box near the swings. Another student said that it was making a strange noise. The principal said that it was a new science project. The students said that they were relieved.'" },
+                    { type: 'stage_direction', text: "Underline each 'said that' and circle was / were." }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your news report', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Circle each reported speech sentence as you write it. Begin!' },
+                    { type: 'roving_prompt', text: "Remember — no quotation marks. Write 'said that' instead." },
+                    { type: 'support_prompt', text: "Imagine a lost pet: 'A girl said that her dog was missing. A boy said that he saw it near the garden.'" }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my report', lines: [
+                    { type: 'teacher_says', text: 'Pencils down. Do you have at least 3 reported speech sentences? Did you change am/is/are to was/were? Add a headline if you have time.' }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Reporter Role Play setup', lines: [
+                    { type: 'teacher_says', text: "In pairs, one person is the reporter and one is the guest. The guest says something. The reporter tells us what they said in reported speech. Guest: 'I lost my lunchbox!' Reporter: 'She said that she lost her lunchbox.'" },
+                    { type: 'stage_direction', text: "Write the example and 'One funny or interesting quote I reported was:' on the board. Model it with a volunteer, then swap roles." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Interview and report', lines: [
+                    { type: 'teacher_says', text: 'About 2 minutes each. The guest says 3-4 things; the reporter reports each one. Then switch. Begin!' },
+                    { type: 'roving_prompt', text: "Guest, say something surprising: 'I have a secret.' Reporter, report it." },
+                    { type: 'support_prompt', text: "Reporter, start every sentence with 'He said that...' or 'She said that...'" }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One quote I reported', lines: [
+                    { type: 'teacher_says', text: 'Write one funny or interesting quote you reported. Who wants to share?' },
+                    { type: 'expected_answers', text: "He said that he ate ten cookies. / She said that she wanted to become an astronaut." },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers to share with the whole class; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Close', lines: [
+                    { type: 'teacher_says', text: "Today you wrote a news report with reported speech and reported your partner's words. Say 'Great job reporting!' to your partner. Remember: am and is become was, are becomes were." }
+                ]}
+            ]
+        },
         practice: {
             sortTitle: 'Direct vs Reported Speech Sort',
             sortZones: [
@@ -3226,6 +5296,113 @@ const CHAPTERS = [
                 'My advice to you is: keep reading every day and don\'t be afraid to make mistakes.'
             ],
             modelNouns: ['learned', 'proud', 'difficult', 'advice']
+        },
+        prep: {
+            lessonPlan: {
+                objectives: [
+                    'Review the year\'s skills: nouns and adjectives, tenses, articles, prepositions, conjunctions, synonyms, cause and effect, reported speech and question words',
+                    'Reflect on personal progress and celebrate what each student has learned',
+                    'Write a letter to their future self and share a favourite piece of work with "Two Stars and a Wish" feedback'
+                ],
+                studentOutputs: {
+                    session1: 'Three reflection sentences + five review sentences + a Language Portfolio Page',
+                    session2: 'A letter to their future self (proud of, difficult, want to improve, advice) + a shared piece of work with Two Stars and a Wish'
+                },
+                materials: ['Whiteboard or chart paper', 'Markers', 'Timer', 'Notebook or paper', 'Pencils', 'Students\' earlier poems, stories and paragraphs to share'],
+                differentiation: [
+                    { level: 'Advanced', action: 'Add a P.S. to your letter about a favourite memory, and give detailed, kind feedback in Two Stars and a Wish.' },
+                    { level: 'Struggling', action: 'Write one sentence for each of the four parts: proud, difficult, want to improve, advice.' },
+                    { level: 'Very Shy', action: 'Share a short piece, like a couplet or one sentence from a story, in your small group.' }
+                ]
+            },
+            beforeClassChecklist: [
+                'Materials ready (paper, pencils)',
+                'All-skills review table ready to show on the board',
+                'Students reminded to bring earlier work to share',
+                'Timer ready',
+                'Projector tested'
+            ],
+            session1Script: [
+                { step: 1, stage: 'Explore', title: 'Look how far you have come', lines: [
+                    { type: 'teacher_says', text: "Good morning, everyone! This is our final chapter. Close your eyes. Remember the magic door? Remember drawing your magical world? Think about everything since then — nouns, adjectives, conjunctions, reported speech. Today we celebrate you." },
+                    { type: 'stage_direction', text: 'Pause for 10 seconds, then ask everyone to open their eyes. Keep the tone warm and proud.' }
+                ]},
+                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
+                    { type: 'teacher_says', text: 'As you watch, notice what the character remembers from the year, and how they have changed.' },
+                    { type: 'stage_direction', text: 'Play the Chapter 24 video. Pause if a question comes up.' }
+                ]},
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
+                    { type: 'teacher_says', text: "Lumora throws a celebration for Aanya! Her friends remember the Rhyming River, her first weather poem, the market. Then they give her 'Two Stars and a Wish'. Listen for what she is proud of." },
+                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                ]},
+                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                    { type: 'teacher_says', text: 'First question: what was your favourite chapter this year? Tell your partner.' },
+                    { type: 'expected_answers', text: 'The Magic Door! / Animal Planet! / Rhyme Time! / Time Travellers!' },
+                    { type: 'teacher_says', text: 'Which activity made you feel proud? And what did you enjoy writing most?' },
+                    { type: 'expected_answers', text: 'When I wrote my own story. / When I acted in the news show. / The time machine story.' }
+                ]},
+                { step: 5, stage: 'Explore', title: 'Personal reflection', lines: [
+                    { type: 'teacher_says', text: "Finish these: 'My favourite chapter was ___.' 'One thing I can do now that I couldn't before: ___.' 'A fun memory from English class: ___.'" },
+                    { type: 'support_prompt', text: "Try: 'One thing I can do now is write a paragraph.'" }
+                ]},
+                { step: 6, stage: 'Practice', title: 'All-in-one skills review', lines: [
+                    { type: 'teacher_says', text: "Look at your English toolbox: adjectives — 'the fluffy cat'; prepositions — 'on the table'; conjunctions — 'but it's raining'; articles — 'an elephant'; synonyms — happy, joyful; cause and effect — 'so I went to sleep'; reported speech — 'He said that he was happy'; question words — who, what, where, when, why, how." },
+                    { type: 'stage_direction', text: 'Fast call-out: say a skill — adjective, preposition, conjunction, article, question word — and students give an example.' },
+                    { type: 'expected_answers', text: 'Fluffy! / Under! / Because! / An! / Why!' }
+                ]},
+                { step: 7, stage: 'Practice', title: "Let's Practice: review quiz", lines: [
+                    { type: 'teacher_says', text: "Choose the right word: 'Yesterday, she ___ (is/was) playing in the garden.' 'I saw ___ owl in the tree.' 'I was sleepy, ___ (but/so) I took a nap.' 'My sister said that she ___ (is/was) hungry.' 'The opposite of loud is ___.'" },
+                    { type: 'expected_answers', text: 'Was. / An. / So. / Was. / Quiet or soft.' },
+                    { type: 'support_prompt', text: 'Each question is a skill you already learned. Which chapter was it from?' }
+                ]},
+                { step: 8, stage: 'Practice', title: 'My Language Portfolio Page', lines: [
+                    { type: 'teacher_says', text: "Fill in your portfolio page: one poem I wrote was about ___; a grammar topic I enjoyed; my best paragraph was about ___; a speaking activity I liked; my proudest writing moment." },
+                    { type: 'stage_direction', text: "Share your own example first: 'One poem I wrote was about a rainy day. A grammar topic I enjoyed was reported speech.'" },
+                    { type: 'support_prompt', text: 'Think back to the Poetry Jam, the News Show, the Talk Show — which one did you enjoy?' }
+                ]},
+                { step: 9, stage: 'Practice', title: 'Close with pride', lines: [
+                    { type: 'teacher_says', text: "Think: what is one word that describes your English journey this year? Keep your portfolio page safe — next session is our final celebration." },
+                    { type: 'stage_direction', text: 'Show of hands for the review quiz — tap how many got it: Most / Some / Few.' }
+                ]}
+            ],
+            session2Script: [
+                { step: 1, stage: 'Create', title: 'The final session', lines: [
+                    { type: 'teacher_says', text: 'Welcome back, everyone. This is our final session together. We have completed 23 chapters — from the Magic Door to I Saw It. Today we close the journey with a celebration.' },
+                    { type: 'stage_direction', text: 'Pause and look around the room. Keep the tone warm and proud.' }
+                ]},
+                { step: 2, stage: 'Create', title: 'Letter to Future Me', lines: [
+                    { type: 'teacher_says', text: "Write a letter to the person you will be next year. Include what you're proud of, what you found difficult, what you want to get better at, and some advice. Start: 'Dear Future Me, I want to tell you about the things I've learned in English this year...'" }
+                ]},
+                { step: 3, stage: 'Create', title: 'Teacher models a letter', lines: [
+                    { type: 'teacher_says', text: "'Dear Future Me, I learned how to write a story with a beginning, middle and end. I am proud of my time machine story. I found reported speech difficult, but I practised. Next year, I want to write longer stories. My advice: keep reading, and never be afraid to make mistakes.'" },
+                    { type: 'stage_direction', text: 'Point out each of the four parts as you read.' }
+                ]},
+                { step: 4, stage: 'Create', title: 'Write your letter', lines: [
+                    { type: 'teacher_says', text: 'You have about 15 minutes. Use your Language Portfolio Page to remember. Begin!' },
+                    { type: 'roving_prompt', text: 'What was difficult this year? How did you get better at it?' },
+                    { type: 'support_prompt', text: 'Copy your "proudest writing moment" from your portfolio page into your letter.' }
+                ]},
+                { step: 5, stage: 'Create', title: 'Check my letter', lines: [
+                    { type: 'teacher_says', text: "Pencils down. Check that your letter has all four parts. Add a closing line — 'I believe in you' — and keep this letter to read next year." }
+                ]},
+                { step: 6, stage: 'Perform', title: 'Celebration & Showcase setup', lines: [
+                    { type: 'teacher_says', text: "Choose one piece to share — a paragraph, a poem, a story or a fun memory. Your group gives you 'Two Stars and a Wish': two things they liked, and one kind idea for next time." },
+                    { type: 'stage_direction', text: "Write the Two Stars and a Wish format and 'One thing I feel proud of in English this year:' on the board. Model it: a volunteer reads a short poem, you give two stars and a wish." }
+                ]},
+                { step: 7, stage: 'Perform', title: 'Share and celebrate', lines: [
+                    { type: 'teacher_says', text: 'Groups of 3-4. Share with confidence — this is your moment. After each share: star, star, wish. Begin!' },
+                    { type: 'roving_prompt', text: 'Make your wish kind and helpful — one small idea for next time.' },
+                    { type: 'support_prompt', text: 'You can share just a few lines — a couplet or one sentence from a story.' }
+                ]},
+                { step: 8, stage: 'Perform', title: 'One thing I feel proud of', lines: [
+                    { type: 'teacher_says', text: 'Write one thing you feel proud of in English this year. Who wants to share?' },
+                    { type: 'expected_answers', text: 'I can write a story by myself now. / I learned reported speech — it was hard but I did it. / I spoke in front of the class.' },
+                    { type: 'stage_direction', text: 'Invite as many volunteers as time allows; class claps after each share.' }
+                ]},
+                { step: 9, stage: 'Perform', title: 'Final close', lines: [
+                    { type: 'teacher_says', text: "Turn to your group and say 'Thank you for being part of my English journey!' Close your eyes one last time — remember the magic door, your dream school, your poems. Now open them. You are ready for anything. This is not goodbye — it's see you later." }
+                ]}
+            ]
         },
         practice: {
             sortTitle: 'All-Skills Review Sort',
