@@ -214,6 +214,11 @@ function navigateTo(viewId) {
     });
 
     if (viewId === 'home') renderHomeHeroStats();
+    if (viewId !== 'explore-stage') {
+        stopStorybookNarration();
+        pauseChapterVideo();
+        if (drawTimerRunning) { pauseDrawTimer(); renderDrawTimer(); }
+    }
     renderNotificationCenter();
     updateScriptFab(viewId);
 
@@ -852,11 +857,19 @@ async function ensureRemoteChannel() {
             onMessage: msg => {
                 // A projector that opens (or reloads) mid-step asks what to show.
                 if (msg.type === 'projector-ready') broadcastCurrentState();
+                if (msg.type === 'narration-state') onProjectorNarrationState(msg);
             },
             onDevices: roles => {
                 const wasConnected = projectorConnected;
                 projectorConnected = roles.includes('projector');
+                if (projectorConnected !== wasConnected) {
+                    // Reading moves to (or back from) the projector: stop
+                    // whatever was playing so the voice never comes from here.
+                    localNarration.stop();
+                    projectorNarrationState = 'idle';
+                }
                 updateProjectorStatusUI();
+                updateNarrationControls();
                 if (projectorConnected && !wasConnected) broadcastCurrentState();
             }
         });
@@ -935,6 +948,7 @@ function broadcastCurrentExploreState() {
         broadcastToProjector({ type: 'wrapup' });
     } else if (drawSection.classList.contains('revealed')) {
         broadcastToProjector({ type: 'draw' });
+        if (drawTimerRunning || drawTimerSeconds < DRAW_TIMER_TOTAL) broadcastDrawTimer();
     } else if (thinkTalkSection.classList.contains('revealed')) {
         const highlighted = document.querySelector('.think-card.highlighted');
         broadcastToProjector({ type: 'thinktalk', cardIndex: highlighted ? parseInt(highlighted.dataset.index, 10) : 0 });
@@ -1032,7 +1046,8 @@ function loadYoutubeVideo(videoId) {
         return;
     }
     if (ytPlayer) {
-        ytPlayer.loadVideoById(videoId);
+        // cue, not load: the video waits for Play instead of starting on its own.
+        ytPlayer.cueVideoById(videoId);
         applyRemoteMuteState();
         return;
     }
@@ -1198,6 +1213,9 @@ function renderExploreStage(chapter) {
         </div>`).join('');
 
     renderExploreActivity(chapter);
+    pauseDrawTimer();
+    drawTimerSeconds = DRAW_TIMER_TOTAL;
+    renderDrawTimer();
     renderLumoraWall();
     broadcastToProjector({ type: 'settle' });
 }
@@ -1216,7 +1234,21 @@ function renderExploreActivity(chapter) {
         .map(l => `<li>${l.type === 'support_prompt' ? 'Stuck student? ' : ''}"${escapeReportText(l.text)}"</li>`).join('');
 }
 
+// The chapter video only plays during the video step: moving on to the
+// storybook (or leaving the lesson) stops it, so neither this device nor the
+// projector carries on playing it in the background.
+function pauseChapterVideo() {
+    const video = document.getElementById('chapterVideo');
+    if (video && !video.paused) video.pause();
+    // Playing, or still buffering (it would start a moment later).
+    if (ytPlayer && typeof ytPlayer.getPlayerState === 'function'
+        && [YT.PlayerState.PLAYING, YT.PlayerState.BUFFERING].includes(ytPlayer.getPlayerState())) {
+        ytPlayer.pauseVideo();
+    }
+}
+
 function onChapterVideoEnded() {
+    pauseChapterVideo();
     const storybookSection = document.getElementById('storybookSection');
     if (storybookPages.length) {
         storybookSection.classList.add('revealed');
@@ -1227,22 +1259,27 @@ function onChapterVideoEnded() {
     }
 }
 
-// ================= Storybook read-aloud (Web Speech API) =================
-// Real browser text-to-speech with word-by-word highlighting via
-// SpeechSynthesisUtterance's 'boundary' event — no backend, no API key,
-// works offline once the browser's voices are loaded. Voice quality and
-// how finely boundaries are reported both vary by browser/OS; where a
-// browser doesn't report per-word boundaries the worst case is just no
-// word highlighting, never a broken or fake-looking state.
-const STORYBOOK_NARRATION_SURFACES = {
-    teacher: { text: 'storybookPageText', caption: 'storybookCaption', btn: 'storybookReadAloudBtn' }
-};
-let storybookSpeakingSurface = null;
+// ================= Storybook read-aloud =================
+// The reading itself lives in narration.js (shared with the projector).
+// With a projector connected, these buttons make the PROJECTOR read through
+// the classroom speakers, and nothing plays on this device; the projector
+// reports back whether it is reading, paused or finished. Without a
+// projector, this device reads the page itself.
+const localNarration = HMNarration.createReader({
+    container: () => narrationContainer(),
+    onChange: () => updateNarrationControls()
+});
+let projectorNarrationState = 'idle';
 
-// Builds "<span class="storybook-caption-char">Name</span><p
-// class="storybook-caption-text"><span class="sb-word" data-start=.. ..>" —
-// one word-span per real word, tracked by character offset into the plain
-// text so the 'boundary' event's charIndex can highlight the right one.
+function narrationContainer() {
+    return document.getElementById(document.getElementById('storybookCard').classList.contains('illustrated')
+        ? 'storybookCaption' : 'storybookPageText');
+}
+
+function narrationState() {
+    return projectorConnected ? projectorNarrationState : localNarration.state;
+}
+
 function renderStorybookCaption(containerEl, text, characterName) {
     containerEl.innerHTML = '';
     if (characterName) {
@@ -1253,68 +1290,64 @@ function renderStorybookCaption(containerEl, text, characterName) {
     }
     const p = document.createElement('p');
     p.className = 'storybook-caption-text';
-    let charPos = 0;
-    text.split(/(\s+)/).forEach(chunk => {
-        if (/^\s+$/.test(chunk)) {
-            p.appendChild(document.createTextNode(chunk));
-        } else if (chunk.length) {
-            const span = document.createElement('span');
-            span.className = 'sb-word';
-            span.textContent = chunk;
-            span.dataset.start = charPos;
-            span.dataset.end = charPos + chunk.length;
-            p.appendChild(span);
-        }
-        charPos += chunk.length;
-    });
+    HMNarration.renderWords(p, text);
     containerEl.appendChild(p);
 }
 
-function stopStorybookNarration() {
-    if (window.speechSynthesis && window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+function updateNarrationControls() {
+    const play = document.getElementById('storybookPlayBtn');
+    const pause = document.getElementById('storybookPauseBtn');
+    const stop = document.getElementById('storybookStopBtn');
+    if (!play) return;
+    const state = narrationState();
+    const where = projectorConnected ? ' on the projector' : '';
+    const paused = state === 'paused';
+    play.hidden = state === 'playing';
+    play.innerHTML = paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+    play.title = paused ? `Resume${where}` : `Read this page aloud${where}`;
+    play.setAttribute('aria-label', play.title);
+    pause.hidden = state !== 'playing';
+    pause.title = `Pause${where}`;
+    pause.setAttribute('aria-label', pause.title);
+    stop.hidden = state === 'idle';
 }
 
-function resetStorybookReadAloudButton(surface) {
-    const ids = STORYBOOK_NARRATION_SURFACES[surface];
-    const btn = document.getElementById(ids.btn);
-    if (!btn) return;
-    btn.classList.remove('speaking');
-    btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-    document.querySelectorAll(`#${ids.caption} .sb-word`).forEach(w => w.classList.remove('speaking'));
-}
-
-function toggleStorybookNarration(surface) {
-    const ids = STORYBOOK_NARRATION_SURFACES[surface];
-    if (!('speechSynthesis' in window)) {
+// Speaker button: reads from the top; after Pause it resumes.
+function storybookNarrationPlay() {
+    if (projectorConnected) {
+        broadcastToProjector({ type: 'narration', action: 'play', pageIndex: storybookIndex });
+        return;
+    }
+    if (!HMNarration.supported) {
         showNotification('Read-aloud needs a browser with text-to-speech support.');
         return;
     }
-    if (window.speechSynthesis.speaking) {
-        stopStorybookNarration();
-        return; // utter.onend below resets the button/highlight
+    localNarration.play();
+}
+
+function storybookNarrationPause() {
+    if (projectorConnected) broadcastToProjector({ type: 'narration', action: 'pause' });
+    else localNarration.pause();
+}
+
+// Stop: ends reading and goes back to the start of the page.
+function storybookNarrationStop() {
+    if (projectorConnected) broadcastToProjector({ type: 'narration', action: 'stop' });
+    else localNarration.stop();
+}
+
+function stopStorybookNarration() {
+    localNarration.stop();
+    if (projectorConnected && projectorNarrationState !== 'idle') broadcastToProjector({ type: 'narration', action: 'stop' });
+}
+
+// Messages from the projector about its reading.
+function onProjectorNarrationState(msg) {
+    projectorNarrationState = msg.state || 'idle';
+    updateNarrationControls();
+    if (msg.error === 'not-allowed') {
+        showNotification('The projector could not play sound. Press "Start projector" on the projector screen, then try again.');
     }
-
-    const text = document.getElementById(ids.text).textContent;
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 0.92;
-    storybookSpeakingSurface = surface;
-
-    const btn = document.getElementById(ids.btn);
-    btn.classList.add('speaking');
-    btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-
-    utter.onboundary = (e) => {
-        if (e.name && e.name !== 'word') return; // sentence/other boundaries — ignore, keep last word lit
-        const words = document.querySelectorAll(`#${ids.caption} .sb-word`);
-        words.forEach(w => w.classList.remove('speaking'));
-        const match = Array.from(words).find(w => e.charIndex >= Number(w.dataset.start) && e.charIndex < Number(w.dataset.end));
-        if (match) match.classList.add('speaking');
-    };
-
-    utter.onend = () => { resetStorybookReadAloudButton(surface); storybookSpeakingSurface = null; };
-    utter.onerror = () => { resetStorybookReadAloudButton(surface); storybookSpeakingSurface = null; };
-
-    window.speechSynthesis.speak(utter);
 }
 
 function renderStorybookPage() {
@@ -1336,15 +1369,15 @@ function renderStorybookPage() {
         charFrame.classList.add('empty');
     }
 
-    document.getElementById('storybookPageText').textContent = page.text;
+    HMNarration.renderWords(document.getElementById('storybookPageText'), page.text);
 
     card.classList.toggle('illustrated', !!page.image);
     if (page.image) {
         document.getElementById('storybookIllustrationImg').src = page.image;
         const charName = page.character && STORYBOOK_CHARACTERS[page.character] ? STORYBOOK_CHARACTERS[page.character].name : '';
         renderStorybookCaption(document.getElementById('storybookCaption'), page.text, charName);
-        resetStorybookReadAloudButton('teacher');
     }
+    updateNarrationControls();
 
     document.getElementById('storybookPageCounter').textContent = `Page ${storybookIndex + 1} of ${storybookPages.length}`;
     document.getElementById('storybookPrevBtn').disabled = storybookIndex === 0;
@@ -1368,6 +1401,7 @@ function storybookGo(direction) {
 }
 
 function revealThinkTalk() {
+    pauseChapterVideo();
     const thinkTalkSection = document.getElementById('thinkTalkSection');
     thinkTalkSection.classList.add('revealed');
     thinkTalkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1390,9 +1424,64 @@ function revealDraw() {
     broadcastToProjector({ type: 'draw' });
 }
 
-function startDrawTimer() {
-    broadcastToProjector({ type: 'timer-start', seconds: 420 });
-    showNotification('7-minute draw timer started on the projector.');
+// ---------- Activity timer (7 minutes) ----------
+// This device keeps the time and sends the remaining seconds to the
+// projector every second (same approach as the Perform pair timer), so
+// Pause and Reset take effect on the projector straight away.
+const DRAW_TIMER_TOTAL = 420;
+let drawTimerSeconds = DRAW_TIMER_TOTAL;
+let drawTimerInterval = null;
+let drawTimerRunning = false;
+
+function formatTimerSeconds(seconds) {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function broadcastDrawTimer() {
+    broadcastToProjector({ type: 'draw-timer', seconds: drawTimerSeconds, totalSeconds: DRAW_TIMER_TOTAL, running: drawTimerRunning });
+}
+
+function renderDrawTimer() {
+    const display = document.getElementById('drawTimerDisplay');
+    const btn = document.getElementById('drawTimerBtn');
+    if (!display) return;
+    display.textContent = drawTimerSeconds <= 0 ? "Time's up!" : formatTimerSeconds(drawTimerSeconds);
+    const started = drawTimerRunning || drawTimerSeconds < DRAW_TIMER_TOTAL;
+    if (drawTimerRunning) btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+    else if (drawTimerSeconds <= 0) btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Start again';
+    else if (started) btn.innerHTML = '<i class="fa-solid fa-play"></i> Resume';
+    else btn.innerHTML = '<i class="fa-solid fa-play"></i> Start 7-min timer';
+    document.getElementById('drawTimerResetBtn').hidden = !started || drawTimerSeconds <= 0;
+}
+
+function pauseDrawTimer() {
+    clearInterval(drawTimerInterval);
+    drawTimerInterval = null;
+    drawTimerRunning = false;
+}
+
+function toggleDrawTimer() {
+    if (drawTimerRunning) {
+        pauseDrawTimer();
+    } else {
+        if (drawTimerSeconds <= 0) drawTimerSeconds = DRAW_TIMER_TOTAL;
+        drawTimerRunning = true;
+        drawTimerInterval = setInterval(() => {
+            drawTimerSeconds = Math.max(0, drawTimerSeconds - 1);
+            if (drawTimerSeconds <= 0) pauseDrawTimer();
+            renderDrawTimer();
+            broadcastDrawTimer();
+        }, 1000);
+    }
+    renderDrawTimer();
+    broadcastDrawTimer();
+}
+
+function resetDrawTimer() {
+    pauseDrawTimer();
+    drawTimerSeconds = DRAW_TIMER_TOTAL;
+    renderDrawTimer();
+    broadcastDrawTimer();
 }
 
 function revealWrapUp() {

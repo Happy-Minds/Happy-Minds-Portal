@@ -23,6 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
     <script src="config.js"></script>
     <script src="cloud.js"></script>
+    <script src="narration.js"></script>
     <script src="chapters-data.js"></script>
 </head>
 <body>
@@ -727,6 +728,23 @@
                     </div>
 
                     <div class="storybook-card" id="storybookCard">
+                        <!-- Read aloud: 🔊 starts; while reading, Pause and Stop
+                             appear. Stop goes back to the start of the page. -->
+                        <div class="storybook-narration" role="group" aria-label="Read this page aloud">
+                            <button type="button" class="storybook-read-aloud-btn" id="storybookPlayBtn"
+                                    onclick="storybookNarrationPlay()" title="Read this page aloud" aria-label="Read this page aloud">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <button type="button" class="storybook-read-aloud-btn" id="storybookPauseBtn"
+                                    onclick="storybookNarrationPause()" title="Pause" aria-label="Pause reading" hidden>
+                                <i class="fa-solid fa-pause"></i>
+                            </button>
+                            <button type="button" class="storybook-read-aloud-btn" id="storybookStopBtn"
+                                    onclick="storybookNarrationStop()" title="Stop and go back to the start" aria-label="Stop reading and go back to the start" hidden>
+                                <i class="fa-solid fa-stop"></i>
+                            </button>
+                        </div>
+
                         <!-- The illustration is projector-only in Remote Mode — the
                              teacher only needs the words to read along or prompt from.
                              (Only applies to the plain layout below — a page with its
@@ -740,10 +758,6 @@
                              that has its own illustration (chapters-data.js page.image) -->
                         <div class="storybook-illustrated" id="storybookIllustrated">
                             <img class="storybook-illustration" id="storybookIllustrationImg" src="" alt="">
-                            <button type="button" class="storybook-read-aloud-btn" id="storybookReadAloudBtn"
-                                    onclick="toggleStorybookNarration('teacher')" title="Read this page aloud" aria-label="Read this page aloud">
-                                <i class="fa-solid fa-volume-high"></i>
-                            </button>
                             <div class="storybook-caption" id="storybookCaption"></div>
                         </div>
                     </div>
@@ -812,9 +826,19 @@
                     <!-- Filled per chapter from its script (chapter.prep.activityStep) -->
                     <p class="draw-instruction" id="drawInstruction"></p>
 
-                    <button class="btn-glass" onclick="startDrawTimer()">
-                        <i class="fa-solid fa-stopwatch"></i> Start 7-min timer on projector
-                    </button>
+                    <!-- 7-minute activity timer. This device keeps the time and the
+                         projector shows the same countdown, so Pause stops both. -->
+                    <div class="draw-timer">
+                        <div class="pair-timer-display" id="drawTimerDisplay" role="timer" aria-live="off">7:00</div>
+                        <div class="btn-row-center">
+                            <button type="button" class="btn-primary-glowing compact" id="drawTimerBtn" onclick="toggleDrawTimer()">
+                                <i class="fa-solid fa-play"></i> Start 7-min timer
+                            </button>
+                            <button type="button" class="btn-glass compact" id="drawTimerResetBtn" onclick="resetDrawTimer()" hidden>
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="roving-prompts-card" id="drawRovingCard">
                         <div class="roving-prompts-title"><i class="fa-solid fa-person-walking"></i> Roving prompts while students work</div>

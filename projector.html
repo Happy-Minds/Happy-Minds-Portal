@@ -34,6 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
     <script src="config.js"></script>
     <script src="cloud.js"></script>
+    <script src="narration.js"></script>
 </head>
 <body>
     <div class="projector-stage" id="projectorStage">
@@ -113,8 +114,8 @@
         <!-- 5. Draw your world -->
         <div class="proj-screen proj-draw" id="proj-draw">
             <div class="proj-card">
-                <h1><i class="fa-solid fa-palette"></i> Draw Your World</h1>
-                <p class="proj-draw-sub">Add at least 6–7 things to your map.</p>
+                <h1><i class="fa-solid fa-palette"></i> <span id="proj-draw-title">Class activity</span></h1>
+                <p class="proj-draw-sub">Work on paper, in your notebook.</p>
                 <div class="proj-draw-timer" id="proj-draw-timer" style="display:none;">
                     <svg viewBox="0 0 120 120" class="proj-timer-ring">
                         <circle cx="60" cy="60" r="54" class="proj-timer-track"></circle>

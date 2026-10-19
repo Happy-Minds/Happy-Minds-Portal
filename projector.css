@@ -214,6 +214,10 @@ html, body {
 
 video.proj-video-el { object-fit: contain; }
 
+/* The projector's video can't be clicked or hovered (no YouTube pause overlay
+   or title bar popping up): the teacher's device is the only control. */
+.proj-video-el, .proj-video-el iframe { pointer-events: none; }
+
 /* ---------- 3. Storybook ---------- */
 /* The exact .storybook-card treatment (warm cream/gold), just bigger. */
 .proj-storybook-card {
@@ -778,3 +782,20 @@ video.proj-video-el { object-fit: contain; }
     .proj-spotlight-icon.active { animation: none; }
     .proj-screen { transition: opacity 0.2s linear; transform: none; }
 }
+
+/* ---------- Read-aloud highlight (see narration.js) ---------- */
+/* The sentence being read is softly tinted; the word being spoken is lit. */
+.sb-word {
+    border-radius: 6px;
+    padding: 0 3px;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.sb-word.reading { background: rgba(252, 211, 77, 0.28); }
+.sb-word.speaking { background: #FCD34D; color: #78350F; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-word { transition: none; }
+}
+
+/* Activity timer paused by the teacher: dim the ring so the class can see it. */
+.proj-draw-timer.paused { opacity: 0.55; }

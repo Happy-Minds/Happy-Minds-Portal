@@ -9,6 +9,17 @@
 
 let projectorLink = null;
 
+// Read-aloud happens HERE, through the classroom speakers, when the teacher
+// taps the speaker button on their device (see narration.js). The state is
+// sent back so the teacher's buttons show Pause / Resume / Stop correctly.
+const projectorNarration = HMNarration.createReader({
+    container: () => document.getElementById(
+        document.getElementById('proj-storybook-card').classList.contains('illustrated') ? 'proj-storybook-caption' : 'proj-storybook-text'),
+    onChange: (state, info) => {
+        if (projectorLink) projectorLink.send({ type: 'narration-state', state, error: info.error });
+    }
+});
+
 const params = new URLSearchParams(location.search);
 let chapter = getChapterById(parseInt(params.get('chapter'), 10) || 1);
 
@@ -82,6 +93,9 @@ let ytApiReady = false;
 let pendingYoutubeId = null;
 
 function showProjScreen(id) {
+    if (id !== 'proj-storybook') projectorNarration.stop();
+    // The video only ever plays on the video screen — moving on stops it.
+    if (id !== 'proj-video') pauseProjVideo();
     document.querySelectorAll('.proj-screen').forEach(el => el.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     if (id !== 'proj-settle' && breatheInterval) { clearInterval(breatheInterval); breatheInterval = null; }
@@ -112,10 +126,12 @@ function onYouTubeIframeAPIReady() {
 
 function loadProjYoutube(videoId) {
     if (!ytApiReady) { pendingYoutubeId = videoId; return; }
-    if (ytPlayer) { ytPlayer.loadVideoById(videoId); return; }
+    // cue, not load: wait for the teacher's Play instead of starting alone.
+    if (ytPlayer) { ytPlayer.cueVideoById(videoId); return; }
     ytPlayer = new YT.Player('projYoutubePlayer', {
         videoId,
-        playerVars: { rel: 0, controls: 0 }
+        // No controls of its own: the teacher's device drives it.
+        playerVars: { rel: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1 }
     });
 }
 
@@ -136,8 +152,17 @@ function renderVideoLoad(payload) {
     }
 }
 
+function pauseProjVideo() {
+    const video = document.getElementById('projVideo');
+    if (video && !video.paused) video.pause();
+    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+}
+
 function handleVideoCmd(msg) {
     const action = msg.action;
+    // Late play/seek commands (the teacher's copy buffering after the class
+    // has moved on) must never start the video behind another screen.
+    if (action !== 'pause' && !document.getElementById('proj-video').classList.contains('active')) return;
     const video = document.getElementById('projVideo');
     const videoActive = video && video.style.display !== 'none';
     const ytActive = ytPlayer && typeof ytPlayer.playVideo === 'function';
@@ -158,11 +183,26 @@ function handleVideoCmd(msg) {
 }
 
 // ---------- 3. Storybook ----------
+let shownStorybookPage = null;
+
+function handleNarrationCommand(msg) {
+    if (msg.action === 'play') {
+        const onStorybook = document.getElementById('proj-storybook').classList.contains('active');
+        if (!onStorybook || shownStorybookPage !== msg.pageIndex) renderStorybookPage(msg.pageIndex);
+        projectorNarration.play();
+    } else if (msg.action === 'pause') {
+        projectorNarration.pause();
+    } else if (msg.action === 'stop') {
+        projectorNarration.stop();
+    }
+}
 function renderStorybookPage(pageIndex) {
     showProjScreen('proj-storybook');
+    projectorNarration.stop();
     const pages = chapter.storybook || [];
     const page = pages[pageIndex];
     if (!page) return;
+    shownStorybookPage = pageIndex;
 
     const card = document.getElementById('proj-storybook-card');
     const charFrame = document.getElementById('proj-storybook-char');
@@ -177,16 +217,14 @@ function renderStorybookPage(pageIndex) {
         charFrame.classList.add('empty');
     }
 
-    document.getElementById('proj-storybook-text').textContent = page.text;
+    HMNarration.renderWords(document.getElementById('proj-storybook-text'), page.text);
 
-    // Same real per-page illustration as the teacher/student screens (only
-    // Chapter 1 has these today — see chapters-data.js's page.image). No
-    // read-aloud here: narration plays from whichever device tapped it, not
-    // duplicated onto the projector's own speakers.
+    // Same per-page illustration as the teacher screen (chapters-data.js
+    // page.image), with the text as a caption over it.
     if (card) card.classList.toggle('illustrated', !!page.image);
     if (page.image) {
         document.getElementById('proj-storybook-illustration-img').src = page.image;
-        document.getElementById('proj-storybook-caption').textContent = page.text;
+        HMNarration.renderWords(document.getElementById('proj-storybook-caption'), page.text);
     }
 
     document.getElementById('proj-storybook-dots').innerHTML = pages.map((_, i) =>
@@ -203,32 +241,25 @@ function renderThinkTalk(cardIndex) {
 // ---------- 5. Draw ----------
 function renderDraw() {
     showProjScreen('proj-draw');
+    // This chapter's activity name (its title only, never the script text).
+    const step = chapter.prep && chapter.prep.session1Script.find(s => s.step === chapter.prep.activityStep);
+    document.getElementById('proj-draw-title').textContent = step ? step.title : 'Class activity';
+    document.getElementById('proj-draw-timer').style.display = 'none';
 }
 
-function renderTimerStart(seconds) {
+// The teacher's device keeps the time and sends it every second; the
+// projector only shows it, so Pause and Reset on the teacher's side apply here.
+function renderDrawTimer(seconds, totalSeconds, running) {
+    if (!document.getElementById('proj-draw').classList.contains('active')) renderDraw();
     const ring = document.getElementById('proj-draw-timer');
     const fill = document.getElementById('proj-timer-fill');
     const label = document.getElementById('proj-timer-label');
     const circumference = 339.3;
-    const total = seconds;
     ring.style.display = 'block';
-
-    if (timerInterval) clearInterval(timerInterval);
-    const tick = () => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        label.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
-        fill.style.strokeDashoffset = circumference * (1 - seconds / total);
-        fill.style.stroke = seconds <= 30 ? '#F59E0B' : 'var(--accent-green)';
-        if (seconds <= 0) {
-            clearInterval(timerInterval);
-            label.textContent = "Time's up!";
-            return;
-        }
-        seconds--;
-    };
-    tick();
-    timerInterval = setInterval(tick, 1000);
+    ring.classList.toggle('paused', !running && seconds > 0 && seconds < totalSeconds);
+    label.textContent = seconds <= 0 ? "Time's up!" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    fill.style.strokeDashoffset = circumference * (1 - seconds / totalSeconds);
+    fill.style.stroke = seconds <= 30 ? '#F59E0B' : 'var(--accent-green)';
 }
 
 // ---------- 6. Wrap up ----------
@@ -597,7 +628,7 @@ function handleProjectorMessage(msg) {
         case 'storybook': renderStorybookPage(msg.pageIndex); break;
         case 'thinktalk': renderThinkTalk(msg.cardIndex); break;
         case 'draw': renderDraw(); break;
-        case 'timer-start': renderTimerStart(msg.seconds); break;
+        case 'draw-timer': renderDrawTimer(msg.seconds, msg.totalSeconds, msg.running); break;
         case 'wrapup': renderWrapup(); break;
         case 'create-ritual': renderCreateRitual(msg.wallWords); break;
         case 'create-starter': renderCreateStarter(); break;
@@ -621,6 +652,7 @@ function handleProjectorMessage(msg) {
         case 'perform-pair': renderPerformPair(msg.seconds, msg.totalSeconds); break;
         case 'perform-spotlight': renderPerformSpotlight(msg.name); break;
         case 'perform-close': renderPerformClose(); break;
+        case 'narration': handleNarrationCommand(msg); break;
     }
 }
 

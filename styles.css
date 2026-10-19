@@ -1565,6 +1565,9 @@ body.remote-mode .explorer-spotlight { display: none; }
     object-fit: cover;
 }
 
+/* No character on this page: hide the empty <img> so only the icon shows. */
+.storybook-char-frame.empty img { display: none; }
+
 .storybook-char-frame.empty::after {
     content: '\f52d';
     font-family: 'Font Awesome 6 Free';
@@ -1672,23 +1675,37 @@ body.remote-mode .explorer-spotlight { display: none; }
     margin: 0;
 }
 
-/* One <span> per word, so read-aloud can highlight exactly the word being
-   spoken right now — see toggleStorybookNarration() in app.js. */
+/* One <span> per word, so read-aloud can highlight the sentence being read
+   and the exact word being spoken — see storybookNarrationPlay() in app.js. */
 .sb-word {
     border-radius: 4px;
     padding: 1px 2px;
     transition: background 0.12s ease, color 0.12s ease;
 }
 
+.sb-word.reading { background: rgba(252, 211, 77, 0.28); }
+
 .sb-word.speaking {
     background: #FCD34D;
     color: #78350F;
 }
 
-.storybook-read-aloud-btn {
+/* Read-aloud controls: top-right of the storybook card, on every page. */
+.storybook-card { position: relative; }
+.storybook-card:not(.illustrated) { padding-top: 64px; }
+
+.storybook-narration {
     position: absolute;
     top: 14px;
     right: 14px;
+    z-index: 2;
+    display: flex;
+    gap: 8px;
+}
+
+.storybook-read-aloud-btn[hidden] { display: none; }
+
+.storybook-read-aloud-btn {
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -1706,10 +1723,12 @@ body.remote-mode .explorer-spotlight { display: none; }
 
 .storybook-read-aloud-btn:hover { transform: scale(1.06); }
 
-.storybook-read-aloud-btn.speaking {
+#storybookPauseBtn {
     background: #FCD34D;
     color: #78350F;
 }
+
+.storybook-read-aloud-btn:focus-visible { outline: 3px solid var(--primary-blue); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
     .storybook-read-aloud-btn, .sb-word { transition: none; }
@@ -4175,7 +4194,8 @@ body.remote-mode .explorer-spotlight { display: none; }
     .storybook-illustration { aspect-ratio: 4 / 3; }
     .storybook-caption-text { font-size: 13.5px; line-height: 1.45; }
     .storybook-caption { padding: 12px 14px 10px; }
-    .storybook-read-aloud-btn { width: 36px; height: 36px; font-size: 14px; top: 10px; right: 10px; }
+    .storybook-read-aloud-btn { width: 36px; height: 36px; font-size: 14px; }
+    .storybook-narration { top: 10px; right: 10px; gap: 6px; }
 
     /* Back/dots/Next in one row doesn't fit a narrow phone at full size —
        dots move above the buttons, which then split the row evenly. */
@@ -4546,3 +4566,8 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
     .script-fab { transition: none; }
     .script-fab:hover { transform: none; }
 }
+
+/* Activity timer on the Explore activity card (Start / Pause / Resume / Reset). */
+.draw-timer { margin: 4px 0 18px; text-align: center; }
+.draw-timer .btn-row-center { flex-wrap: wrap; }
+#drawTimerResetBtn[hidden] { display: none; }
