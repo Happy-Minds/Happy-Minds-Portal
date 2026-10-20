@@ -16,6 +16,13 @@
 //       multipart: image, chapter (JSON string)
 //       → 200 { text, feedback, attemptsUsed }
 //
+//   action "cleanup"  (anyone — run hourly by pg_cron, see schema.sql)
+//       JSON: { action }
+//       Deletes story photos older than 7 days and clears their
+//       photo_path. It can only ever do what the 7-day rule says, so it
+//       needs no sign-in.
+//       → 200 { deleted }
+//
 // Errors: { error: code } with not_signed_in 401, not_allowed 403,
 // bad_request 400, unsupported_image 415, image_too_large 413,
 // unreadable 422, limit_reached 409, busy 503, reader_failed 502,
@@ -32,6 +39,8 @@ const MAX_STORY_CHARS = 5000;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const STUDENT_CHANCES_PER_CHAPTER = 2;
 const STAFF_ROLES = ['teacher', 'trainer', 'admin'];
+const PHOTO_BUCKET = 'story-photos';
+const PHOTO_KEEP_DAYS = 7;
 
 const TRANSCRIBE_RULES = `- Keep their spelling, grammar and punctuation exactly as written. Do not correct anything.
 - Leave out words that are crossed out.
@@ -291,9 +300,44 @@ async function submitStory(form: FormData, userId: string, studentId: string) {
     return reply(200, { text, feedback, attemptsUsed: attempt });
 }
 
+// ---- action: cleanup -----------------------------------------------------
+async function deleteOldPhotos() {
+    const admin = serviceClient();
+    const cutoff = new Date(Date.now() - PHOTO_KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const { data: old, error } = await admin
+        .from('story_submissions')
+        .select('id, photo_path')
+        .not('photo_path', 'is', null)
+        .lt('created_at', cutoff)
+        .limit(500);
+    if (error) throw error;
+    if (!old.length) return reply(200, { deleted: 0 });
+
+    const { error: removeError } = await admin.storage.from(PHOTO_BUCKET).remove(old.map(row => row.photo_path));
+    if (removeError) throw removeError;
+    const { error: updateError } = await admin
+        .from('story_submissions')
+        .update({ photo_path: null })
+        .in('id', old.map(row => row.id));
+    if (updateError) throw updateError;
+    return reply(200, { deleted: old.length });
+}
+
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
     if (req.method !== 'POST') return fail(405, 'bad_request');
+
+    if ((req.headers.get('content-type') ?? '').includes('application/json')) {
+        const peek = await req.clone().json().catch(() => ({}));
+        if (peek.action === 'cleanup') {
+            try {
+                return await deleteOldPhotos();
+            } catch (err) {
+                console.error('Photo cleanup failed', err);
+                return fail(500, 'not_configured');
+            }
+        }
+    }
 
     // Who is asking? Read their profile with their own session, so Row
     // Level Security applies exactly as it does in the portal.

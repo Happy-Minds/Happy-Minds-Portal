@@ -248,6 +248,56 @@ create policy "Staff save stories they scanned in class"
     );
 
 -- --------------------------------------------------------------------------
+-- Story photos. When a teacher saves a story they scanned in class, the photo
+-- goes to the private "story-photos" bucket (path in photo_path) for the
+-- class report PDF. Only staff can upload or view them — never students or
+-- parents. Photos are deleted 7 days after they were taken (see the hourly
+-- job below); the story text and feedback are kept.
+-- --------------------------------------------------------------------------
+alter table public.story_submissions add column if not exists photo_path text;
+alter table public.story_submissions drop constraint if exists story_photo_teacher_only;
+alter table public.story_submissions add constraint story_photo_teacher_only
+    check (photo_path is null or source = 'teacher');
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('story-photos', 'story-photos', false, 2097152, array['image/jpeg'])
+on conflict (id) do update
+    set public = false, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Staff upload story photos" on storage.objects;
+create policy "Staff upload story photos"
+    on storage.objects for insert to authenticated
+    with check (bucket_id = 'story-photos' and (select private.is_staff()));
+
+drop policy if exists "Staff view story photos" on storage.objects;
+create policy "Staff view story photos"
+    on storage.objects for select to authenticated
+    using (bucket_id = 'story-photos' and (select private.is_staff()));
+
+-- Only to undo an upload whose story then failed to save.
+drop policy if exists "Staff remove their own story photo uploads" on storage.objects;
+create policy "Staff remove their own story photo uploads"
+    on storage.objects for delete to authenticated
+    using (bucket_id = 'story-photos' and owner_id = (select auth.uid())::text and (select private.is_staff()));
+
+-- Every hour, ask the stories Edge Function to delete photos older than 7
+-- days. (A new Supabase project: change the address to that project's.)
+create extension if not exists pg_cron;
+create extension if not exists pg_net with schema extensions;
+
+select cron.schedule(
+    'delete-old-story-photos',
+    '15 * * * *',
+    $$
+    select net.http_post(
+        url := 'https://odjrafygmednsooyiicd.supabase.co/functions/v1/stories',
+        headers := '{"Content-Type": "application/json"}'::jsonb,
+        body := '{"action": "cleanup"}'::jsonb
+    );
+    $$
+);
+
+-- --------------------------------------------------------------------------
 -- Data API access. New tables are not exposed automatically in this project,
 -- so grant exactly what the portal needs. Signed-out visitors get nothing.
 -- --------------------------------------------------------------------------
@@ -255,8 +305,10 @@ revoke all on public.students, public.profiles, public.app_documents, public.sto
 grant select on public.students, public.profiles to authenticated;
 grant select, insert, update on public.app_documents to authenticated;
 grant select, insert on public.story_submissions to authenticated;
--- The stories Edge Function counts and records student submissions.
+-- The stories Edge Function counts and records student submissions, and
+-- clears photo_path when it deletes a photo after 7 days.
 grant select, insert on public.story_submissions to service_role;
+grant update (photo_path) on public.story_submissions to service_role;
 grant select on public.profiles to service_role;
 
 revoke all on schema private from public, anon;

@@ -1423,6 +1423,10 @@
                                 </label>
                                 <select id="storyStudentSelect" class="custom-select story-student-select" onchange="updateStorySaveButton()"></select>
                                 <div class="story-saved-list" id="storySavedList" aria-live="polite"></div>
+                                <button class="btn-glass compact" id="classReportBtn" hidden
+                                        onclick="openClassReport(appState.currentChapterId, classDayKey(new Date().toISOString()))">
+                                    <i class="fa-solid fa-file-pdf blue"></i> Class Report (PDF)
+                                </button>
                             </div>
 
                             <div class="sentence-starter-bar">
@@ -1803,7 +1807,7 @@
                 <div class="roadmap-header" style="margin-top:16px;">
                     <div class="roadmap-title-area">
                         <h2>Reports</h2>
-                        <p>Teacher portal usage, and each student's progress report.</p>
+                        <p>Teacher portal usage, class story reports, and each student's progress report.</p>
                     </div>
                 </div>
 
@@ -1814,6 +1818,12 @@
                         <span class="admin-list-title">Ms. Anita — prep readiness &amp; in-class time</span>
                         <i class="fa-solid fa-chevron-right"></i>
                     </div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-file-pdf"></i> Class Story Reports</h3>
+                    <p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">Stories teachers scanned in each class, with photos, text and feedback. Photos are kept for 7 days.</p>
+                    <div class="admin-chapter-list" id="classReportsList"></div>
                 </div>
 
                 <div class="admin-section-card">

@@ -2246,7 +2246,9 @@ function analyzeWritingContent() {
     const text = document.getElementById('storyTextArea').value.trim();
     const sentences = text ? text.split(/[.!?]+/).filter(s => s.trim().length > 0) : [];
     document.getElementById('sentenceCount').textContent = sentences.length;
-    // Feedback on screen always belongs to the text in the box.
+    // Feedback on screen always belongs to the text in the box, and an
+    // emptied box no longer belongs to the photo that was scanned into it.
+    if (!text) storyPhoto = null;
     clearStoryFeedback();
 }
 
@@ -2258,28 +2260,44 @@ function analyzeWritingContent() {
 // separate from the 2 chances each student has in the student portal.
 let storyFeedback = null;  // { praise, tip, question } for the text in the box
 let storyRequestId = 0;    // bumped whenever the text changes, so a late answer for old text is ignored
+let storyPhoto = null;     // JPEG Blob of the page scanned into the box, or null if typed
 
 function renderStoryStudents(chapter) {
     const select = document.getElementById('storyStudentSelect');
     select.replaceChildren(new Option('Choose a student…', ''),
         ...HappyMindsConfig.STUDENTS.map(s => new Option(s.name, s.id)));
+    storyPhoto = null;
     clearStoryFeedback();
     refreshSavedStories(chapter.id);
 }
 
+// Today's saved stories for this chapter, i.e. this class.
 async function refreshSavedStories(chapterId) {
     const list = document.getElementById('storySavedList');
+    const reportBtn = document.getElementById('classReportBtn');
     try {
-        const stories = await HMCloud.listStories({ chapterId, source: 'teacher' });
+        const today = classDayKey(new Date().toISOString());
+        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher' }))
+            .filter(s => classDayKey(s.created_at) === today);
         if (chapterId !== appState.currentChapterId) return;
-        const names = [...new Set(stories.map(s => s.student_id))]
-            .map(id => HappyMindsConfig.STUDENTS.find(st => st.id === id)?.name || id);
+        const names = [...new Set(stories.map(s => s.student_id))].map(studentName);
         list.innerHTML = names.length
             ? names.map(name => `<span class="story-saved-chip"><i class="fa-solid fa-check"></i> ${escapeReportText(name)}</span>`).join('')
-            : '<span class="story-saved-empty">No stories saved for this chapter yet</span>';
+            : '<span class="story-saved-empty">No stories saved in this class yet</span>';
+        reportBtn.hidden = !stories.length;
     } catch (err) {
         list.innerHTML = '';
+        reportBtn.hidden = true;
     }
+}
+
+function studentName(studentId) {
+    return HappyMindsConfig.STUDENTS.find(s => s.id === studentId)?.name || studentId;
+}
+
+// A class is one chapter taught on one day (in the teacher's time zone).
+function classDayKey(iso) {
+    return new Date(iso).toLocaleDateString('en-CA');
 }
 
 function clearStoryFeedback() {
@@ -2354,10 +2372,11 @@ async function saveStudentStory() {
     btn.disabled = true;
     document.getElementById('storySaveLabel').textContent = 'Saving…';
     try {
-        await HMCloud.saveStory(student.id, chapterId, text, storyFeedback);
+        await HMCloud.saveStory(student.id, chapterId, text, storyFeedback, storyPhoto);
         showNotification(`Saved ${student.name}'s story and feedback.`);
         textArea.value = '';
         select.value = '';
+        storyPhoto = null;
         analyzeWritingContent();
         refreshSavedStories(chapterId);
     } catch (err) {
@@ -2369,6 +2388,159 @@ async function saveStudentStory() {
 function finishCreateStage() {
     markStageDone(appState.currentChapterId, 'create');
     startChapterStage('perform');
+}
+
+// ================= Class Story Report (PDF) =================
+// One class = one chapter on one day. The report has every story a teacher
+// saved in that class: the student, the photo of their page, the story as
+// written, and the feedback. It opens as a clean page and the browser's
+// print dialog saves it as a PDF (works on phones too). Photos are deleted
+// 7 days after a class, so later reports keep the text and say so.
+const STORY_PHOTO_KEEP_DAYS = 7;
+
+async function openClassReport(chapterId, dayKey) {
+    // Open the tab now, while this is still the teacher's click — browsers
+    // block pop-ups opened after waiting for the network.
+    const w = window.open('', '_blank');
+    if (!w) {
+        showNotification('Allow pop-ups for this site to download the class report.');
+        return;
+    }
+    w.document.write('<!DOCTYPE html><html><head><title>Preparing class report…</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">Preparing the class report…</body></html>');
+    w.document.close();
+
+    try {
+        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher' }))
+            .filter(s => classDayKey(s.created_at) === dayKey)
+            .reverse(); // in the order they were scanned
+        const photoUrls = await HMCloud.storyPhotoUrls(stories.map(s => s.photo_path).filter(Boolean));
+        w.document.open();
+        w.document.write(buildClassReportHtml(getChapterById(chapterId), dayKey, stories, photoUrls));
+        w.document.close();
+        // Wait for the photos (but not forever on slow Wi-Fi) so they're in the PDF.
+        const photosLoaded = Promise.all([...w.document.images].map(img => img.complete
+            ? null
+            : new Promise(resolve => { img.onload = img.onerror = resolve; })));
+        await Promise.race([photosLoaded, new Promise(resolve => setTimeout(resolve, 15000))]);
+        w.focus();
+        w.print();
+    } catch (err) {
+        console.warn('Class report failed', err);
+        w.document.open();
+        w.document.write('<!DOCTYPE html><html><head><title>Class report</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">Couldn\'t load the class report. Check the internet connection, close this tab and try again.</body></html>');
+        w.document.close();
+    }
+}
+
+function buildClassReportHtml(chapter, dayKey, stories, photoUrls) {
+    const day = new Date(`${dayKey}T12:00:00`);
+    const longDate = day.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const photosGoneAfter = new Date(day.getTime() + STORY_PHOTO_KEEP_DAYS * 24 * 60 * 60 * 1000);
+    const photosGone = Date.now() > photosGoneAfter.getTime();
+    const teachers = [...new Set(stories.map(s => HappyMindsConfig.ACCOUNTS.find(a => a.id === s.created_by)?.name).filter(Boolean))];
+    const chapterLabel = `Chapter ${chapter.id}: ${chapter.title}`;
+
+    const photoHtml = story => {
+        const url = story.photo_path && photoUrls[story.photo_path];
+        if (url) return `<img src="${escapeReportText(url)}" alt="Photo of ${escapeReportText(studentName(story.student_id))}'s handwritten story">`;
+        const why = photosGone
+            ? `Photo deleted ${STORY_PHOTO_KEEP_DAYS} days after the class. The story text is kept.`
+            : (story.photo_path ? 'Photo could not be loaded.' : 'No photo — this story was typed in.');
+        return `<div class="no-photo">${why}</div>`;
+    };
+
+    const storyHtml = story => {
+        const f = story.feedback || {};
+        const time = new Date(story.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        return `
+            <section class="story">
+                <h2>${escapeReportText(studentName(story.student_id))}<span>${time}</span></h2>
+                <div class="story-grid">
+                    <div class="photo">${photoHtml(story)}</div>
+                    <div>
+                        <h3>Story as written</h3>
+                        <p class="story-text">${escapeReportText(story.story_text)}</p>
+                        <h3>Feedback</h3>
+                        <dl>
+                            <dt>What went well</dt><dd>${escapeReportText(f.praise)}</dd>
+                            <dt>Try this next time</dt><dd>${escapeReportText(f.tip)}</dd>
+                            <dt>Think about</dt><dd>${escapeReportText(f.question)}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </section>`;
+    };
+
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+        <title>Class Story Report - Chapter ${chapter.id} - ${dayKey}</title>
+        <style>
+            @page { size: A4; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #1F2937; margin: 0 auto; max-width: 820px; padding: 28px; }
+            header { border-bottom: 2px solid #0EA5E9; padding-bottom: 12px; margin-bottom: 4px; }
+            .brand { font-size: 12px; font-weight: bold; color: #0EA5E9; text-transform: uppercase; letter-spacing: 1px; }
+            h1 { font-size: 22px; margin: 4px 0 6px; }
+            .meta { font-size: 13px; color: #4B5563; margin: 0; }
+            .note { font-size: 11px; color: #6B7280; margin: 6px 0 0; }
+            .story { break-inside: avoid; page-break-inside: avoid; border-bottom: 1px solid #E5E7EB; padding: 16px 0; }
+            h2 { font-size: 17px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+            h2 span { font-size: 12px; font-weight: normal; color: #6B7280; }
+            .story-grid { display: grid; grid-template-columns: 42% 1fr; gap: 18px; align-items: start; }
+            .photo img { width: 100%; max-height: 115mm; object-fit: contain; border: 1px solid #E5E7EB; border-radius: 6px; display: block; }
+            .no-photo { border: 1px dashed #CBD5E1; border-radius: 6px; padding: 18px 12px; font-size: 12px; color: #6B7280; text-align: center; }
+            h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin: 0 0 4px; }
+            h3 + * { margin-top: 0; }
+            .story-text { white-space: pre-wrap; font-size: 13px; line-height: 1.55; margin: 0 0 12px; }
+            dl { margin: 0; }
+            dt { font-size: 12px; font-weight: bold; color: #0369A1; margin-top: 6px; }
+            dd { margin: 1px 0 0; font-size: 13px; line-height: 1.5; }
+            .empty { padding: 32px 0; color: #6B7280; }
+            @media (max-width: 600px) { body { padding: 16px; } .story-grid { grid-template-columns: 1fr; } }
+            @media print { body { padding: 0; max-width: none; } }
+        </style></head><body>
+        <header>
+            <div class="brand">Happy Minds · Class Story Report</div>
+            <h1>${escapeReportText(chapterLabel)}</h1>
+            <p class="meta">${escapeReportText(longDate)}${teachers.length ? ` · ${escapeReportText(teachers.join(', '))}` : ''} · ${stories.length} ${stories.length === 1 ? 'story' : 'stories'}</p>
+            <p class="note">Stories appear exactly as the students wrote them. Feedback is written by AI and was read by the teacher in class. Photos are kept for ${STORY_PHOTO_KEEP_DAYS} days.</p>
+        </header>
+        ${stories.length ? stories.map(storyHtml).join('') : '<p class="empty">No stories were saved in this class.</p>'}
+        </body></html>`;
+}
+
+// Reports page: every class with saved stories, newest first.
+async function renderClassReportsList() {
+    const list = document.getElementById('classReportsList');
+    list.innerHTML = '<p class="prep-readiness-explain">Loading class stories…</p>';
+    let stories;
+    try {
+        stories = await HMCloud.listStories({ source: 'teacher' });
+    } catch (err) {
+        list.innerHTML = '<p class="prep-readiness-explain">Couldn\'t load class stories. Check the internet connection and open Reports again.</p>';
+        return;
+    }
+    const classes = new Map();
+    stories.forEach(s => {
+        const key = `${classDayKey(s.created_at)}|${s.chapter_id}`;
+        if (!classes.has(key)) classes.set(key, { dayKey: classDayKey(s.created_at), chapterId: s.chapter_id, count: 0 });
+        classes.get(key).count++;
+    });
+    if (!classes.size) {
+        list.innerHTML = '<p class="prep-readiness-explain">No class stories yet. Teachers save them on the Create step with Scan Student\'s Writing.</p>';
+        return;
+    }
+    list.innerHTML = [...classes.values()].map(c => {
+        const chapter = getChapterById(c.chapterId);
+        const date = new Date(`${c.dayKey}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        return `
+            <div class="admin-list-row">
+                <span class="admin-list-num">Ch${String(c.chapterId).padStart(2, '0')}</span>
+                <span class="admin-list-title">${escapeReportText(chapter ? chapter.title : '')} <span class="class-report-meta">${date} · ${c.count} ${c.count === 1 ? 'story' : 'stories'}</span></span>
+                <button class="btn-glass compact" onclick="openClassReport(${c.chapterId}, '${c.dayKey}')">
+                    <i class="fa-solid fa-file-pdf"></i> PDF
+                </button>
+            </div>`;
+    }).join('');
 }
 
 // ================= Handwriting Scan (OCR) — shared by Create & Perform =================
@@ -2502,10 +2674,14 @@ async function extractOcrText() {
         <span class="ocr-accuracy-note">This can take a few seconds.</span>`;
 
     try {
-        const text = await requestOcrText(ocrCapturedImageSrc);
+        const photo = await HMCloud.preparePhoto(ocrCapturedImageSrc);
+        const text = await requestOcrText(ocrCapturedImageSrc, photo);
         const textarea = document.getElementById(ocrScanTargetId);
         textarea.value = text;
-        if (ocrScanTargetId === 'storyTextArea') analyzeWritingContent();
+        if (ocrScanTargetId === 'storyTextArea') {
+            analyzeWritingContent();
+            storyPhoto = photo; // saved with the story, for the class report
+        }
 
         closeOcrScanModal();
         showNotification("Text extracted — handwriting recognition isn't perfect, so please check it over.");
@@ -2526,9 +2702,9 @@ function showOcrFailure() {
     document.getElementById('ocrActionsIdle').style.display = 'flex';
 }
 
-async function requestOcrText(imageSrc) {
+async function requestOcrText(imageSrc, photo) {
     try {
-        return await HMCloud.readStoryPhoto(imageSrc);
+        return await HMCloud.readStoryPhoto(photo);
     } catch (err) {
         // The reader looked at the page and found no readable writing: that
         // is the answer — the in-browser reader would only guess.
@@ -3724,6 +3900,7 @@ function openReportsHome() {
             <i class="fa-solid fa-chevron-right"></i>
         </div>`).join('');
     navigateTo('reports-home');
+    renderClassReportsList();
 }
 
 function openStudentReport(studentId) {

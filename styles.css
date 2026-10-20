@@ -2734,6 +2734,13 @@ body.remote-mode .explorer-spotlight { display: none; }
     font-weight: 800;
 }
 
+.class-report-meta {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
 .story-saved-empty {
     font-size: 12px;
     font-weight: 700;

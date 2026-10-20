@@ -42,7 +42,7 @@ const HMCloud = (() => {
     const emailFor = username => `${username.trim().toLowerCase()}@${HappyMindsConfig.AUTH_EMAIL_DOMAIN}`;
 
     function toAccount(row) {
-        return { username: row.username, role: row.role, name: row.name, avatar: row.avatar, studentId: row.student_id };
+        return { id: row.id, username: row.username, role: row.role, name: row.name, avatar: row.avatar, studentId: row.student_id };
     }
 
     function notify(status) {
@@ -138,6 +138,7 @@ const HMCloud = (() => {
     // at ~1600px on the long side, and a small JPEG uploads faster on school
     // Wi-Fi and costs less to read.
     const PHOTO_MAX_SIDE = 1568;
+    const PHOTO_BUCKET = 'story-photos';
 
     function shrinkPhoto(imageSrc) {
         return new Promise((resolve, reject) => {
@@ -242,11 +243,17 @@ const HMCloud = (() => {
         // Each throws a StoryError whose .code says what went wrong:
         // unreadable, limit_reached, busy, offline, or failed.
 
-        // Teacher: photo (data URL) → the story as the student wrote it.
-        async readStoryPhoto(imageSrc) {
+        // Photo (data URL) → a small JPEG Blob, the version that is read,
+        // and kept for the class report.
+        preparePhoto(imageSrc) {
+            return shrinkPhoto(imageSrc);
+        },
+
+        // Teacher: prepared photo → the story as the student wrote it.
+        async readStoryPhoto(photo) {
             const form = new FormData();
             form.append('action', 'read');
-            form.append('image', await shrinkPhoto(imageSrc), 'story.jpg');
+            form.append('image', photo, 'story.jpg');
             return (await callStories(form)).text;
         },
 
@@ -266,22 +273,50 @@ const HMCloud = (() => {
             return await callStories(form);
         },
 
-        // Teacher: save a story scanned in class to that student's record.
-        async saveStory(studentId, chapterId, text, feedback) {
+        // Teacher: save a story scanned in class to that student's record,
+        // with its photo (a prepared JPEG Blob, or null if it was typed).
+        // Photos are private to staff and deleted after 7 days.
+        async saveStory(studentId, chapterId, text, feedback, photo) {
+            const failure = error => {
+                console.warn('Happy Minds: could not save story', error);
+                return new StoryError(/failed to fetch|network/i.test(error?.message || '') ? 'offline' : 'failed');
+            };
+
+            let photoPath = null;
+            if (photo) {
+                const day = new Date().toISOString().slice(0, 10);
+                photoPath = `chapter-${chapterId}/${day}/${crypto.randomUUID()}.jpg`;
+                const { error } = await client.storage.from(PHOTO_BUCKET)
+                    .upload(photoPath, photo, { contentType: 'image/jpeg' });
+                if (error) throw failure(error);
+            }
+
             const { error } = await client.from('story_submissions').insert({
-                student_id: studentId, chapter_id: chapterId, source: 'teacher', story_text: text, feedback
+                student_id: studentId, chapter_id: chapterId, source: 'teacher', story_text: text, feedback, photo_path: photoPath
             });
             if (error) {
-                console.warn('Happy Minds: could not save story', error);
-                throw new StoryError(/failed to fetch|network/i.test(error.message || '') ? 'offline' : 'failed');
+                if (photoPath) await client.storage.from(PHOTO_BUCKET).remove([photoPath]);
+                throw failure(error);
             }
+        },
+
+        // Staff: short-lived links to story photos, { path: url }. Paths whose
+        // photo is gone are left out.
+        async storyPhotoUrls(paths) {
+            if (!paths.length) return {};
+            const { data, error } = await client.storage.from(PHOTO_BUCKET).createSignedUrls(paths, 60 * 60);
+            if (error) {
+                console.warn('Happy Minds: could not open story photos', error);
+                return {};
+            }
+            return Object.fromEntries(data.filter(item => item.signedUrl).map(item => [item.path, item.signedUrl]));
         },
 
         // Stories this account may see (Row Level Security decides), newest
         // first. Filter by { chapterId, source } if given.
         async listStories({ chapterId, source } = {}) {
             let query = client.from('story_submissions')
-                .select('id, student_id, chapter_id, source, attempt, story_text, feedback, created_at')
+                .select('id, student_id, chapter_id, source, attempt, story_text, feedback, photo_path, created_by, created_at')
                 .order('created_at', { ascending: false });
             if (chapterId) query = query.eq('chapter_id', chapterId);
             if (source) query = query.eq('source', source);
