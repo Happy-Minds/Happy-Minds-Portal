@@ -1404,14 +1404,14 @@ const CHAPTERS = [
         vocab: { meaning: 'a word that describes how an action happens', word: 'Adverb' },
         starter: 'My favourite festival is...',
         storybook: [
-            { character: null, text: 'Once a year, Lumora glowed brighter than ever for the Festival of Fireflies, and this time, Aanya arrived just in time to join.' },
-            { character: null, text: '"You made it!" Sela said, hugging her tightly. "Everyone arrived early today. Even Flame." "Of course," Flame said proudly. "I never miss the festival."' },
-            { character: 'pip', text: 'Lanterns swayed gently above the meadow, and music drifted through the trees. Pip zipped around excitedly, weaving between dancers. "Come on!" Pip chirped. "The dancing already started!"' },
-            { character: 'aanya', text: 'Aanya laughed and joined the circle, where everyone danced happily beneath the glowing lights. Flame spun slowly at first, then faster, his tail sweeping patterns in the grass.' },
-            { character: null, text: 'When the music paused, tables filled with food appeared beneath the trees. Sela ate quickly, eager to taste every dish before the next dance began. "Slow down," Flame teased, chuckling. "I can\'t help it," Sela said, grinning. "The berry cakes are my favorite!"' },
-            { character: null, text: 'Nearby, a small group of forest creatures spoke politely to an elder, asking permission to light the first lantern. The elder nodded, and one by one, hundreds of tiny lanterns rose gently into the sky, glowing softly like floating stars.' },
-            { character: 'flame', text: '"It\'s beautiful," Aanya whispered. "Every year, it gets more magical," Flame said. "Because every year, we celebrate together."' },
-            { character: 'aanya', text: 'Pip landed on Aanya\'s shoulder. "What is your favorite festival back home?" Aanya thought for a moment. "We celebrate a Festival of Lights too. My family lights lamps, shares sweets, and laughs loudly late into the night." "That sounds a lot like tonight," Sela said warmly.' }
+            { character: null, image: 'assets/StoryBook/Chapter7-storybook/page1.jpg', text: 'Once a year, Lumora glowed brighter than ever for the Festival of Fireflies, and this time, Aanya arrived just in time to join.' },
+            { character: null, image: 'assets/StoryBook/Chapter7-storybook/page2.jpg', text: '"You made it!" Sela said, hugging her tightly. "Everyone arrived early today. Even Flame." "Of course," Flame said proudly. "I never miss the festival."' },
+            { character: 'pip', image: 'assets/StoryBook/Chapter7-storybook/page3.jpg', text: 'Lanterns swayed gently above the meadow, and music drifted through the trees. Pip zipped around excitedly, weaving between dancers. "Come on!" Pip chirped. "The dancing already started!"' },
+            { character: 'aanya', image: 'assets/StoryBook/Chapter7-storybook/page4.jpg', text: 'Aanya laughed and joined the circle, where everyone danced happily beneath the glowing lights. Flame spun slowly at first, then faster, his tail sweeping patterns in the grass.' },
+            { character: null, image: 'assets/StoryBook/Chapter7-storybook/page5.jpg', text: 'When the music paused, tables filled with food appeared beneath the trees. Sela ate quickly, eager to taste every dish before the next dance began. "Slow down," Flame teased, chuckling. "I can\'t help it," Sela said, grinning. "The berry cakes are my favorite!"' },
+            { character: null, image: 'assets/StoryBook/Chapter7-storybook/page6.jpg', text: 'Nearby, a small group of forest creatures spoke politely to an elder, asking permission to light the first lantern. The elder nodded, and one by one, hundreds of tiny lanterns rose gently into the sky, glowing softly like floating stars.' },
+            { character: 'flame', image: 'assets/StoryBook/Chapter7-storybook/page7.jpg', text: '"It\'s beautiful," Aanya whispered. "Every year, it gets more magical," Flame said. "Because every year, we celebrate together."' },
+            { character: 'aanya', image: 'assets/StoryBook/Chapter7-storybook/page8.jpg', text: 'Pip landed on Aanya\'s shoulder. "What is your favorite festival back home?" Aanya thought for a moment. "We celebrate a Festival of Lights too. My family lights lamps, shares sweets, and laughs loudly late into the night." "That sounds a lot like tonight," Sela said warmly.' }
         ],
         create: {
             challenge: 'Draw your favourite celebration moment, then describe it using adverbs.',
