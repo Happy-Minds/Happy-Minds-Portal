@@ -265,6 +265,21 @@ function renderStorybookPage(pageIndex) {
 
     document.getElementById('proj-storybook-dots').innerHTML = pages.map((_, i) =>
         `<span class="dot ${i === pageIndex ? 'active' : ''}"></span>`).join('');
+
+    preloadStorybookImages(pages, pageIndex);
+}
+
+// Downloads the next and previous pages' pictures in the background, so the
+// projector shows the new picture as soon as the teacher turns the page.
+const preloadedStorybookImages = new Map();
+function preloadStorybookImages(pages, index) {
+    [index + 1, index - 1, index + 2].forEach(i => {
+        const src = pages[i] && pages[i].image;
+        if (!src || preloadedStorybookImages.has(src)) return;
+        const img = new Image();
+        img.src = src;
+        preloadedStorybookImages.set(src, img);
+    });
 }
 
 // ---------- 4. Think & Talk ----------

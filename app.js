@@ -1446,6 +1446,22 @@ function renderStorybookPage() {
 
     document.getElementById('storybookDots').innerHTML = storybookPages.map((_, i) =>
         `<span class="storybook-dot ${i === storybookIndex ? 'active' : ''}"></span>`).join('');
+
+    preloadStorybookImages(storybookPages, storybookIndex);
+}
+
+// Downloads the next and previous pages' pictures in the background, so on
+// slow school Wi-Fi the picture is ready when the teacher taps Next instead
+// of the old page's picture staying on screen while the new one loads.
+const preloadedStorybookImages = new Map();
+function preloadStorybookImages(pages, index) {
+    [index + 1, index - 1, index + 2].forEach(i => {
+        const src = pages[i] && pages[i].image;
+        if (!src || preloadedStorybookImages.has(src)) return;
+        const img = new Image();
+        img.src = src;
+        preloadedStorybookImages.set(src, img);
+    });
 }
 
 function storybookGo(direction) {
