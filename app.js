@@ -1087,6 +1087,13 @@ function loadYoutubeVideo(videoId) {
                     updateRemoteVideoBtn(false);
                     stopRemoteProgressPoll();
                 } else if (event.data === YT.PlayerState.PLAYING) {
+                    // YouTube can start a moment after a pause was asked for
+                    // (pause is ignored while buffering): keep it stopped and
+                    // tell the projector nothing.
+                    if (Date.now() - videoPauseRequestedAt < 4000 || appState.currentView !== 'explore-stage') {
+                        ytPlayer.pauseVideo();
+                        return;
+                    }
                     broadcastToProjector({ type: 'video-cmd', action: 'play' });
                     updateRemoteVideoBtn(true);
                     startRemoteProgressPoll();
@@ -1109,14 +1116,17 @@ let remoteProgressInterval = null;
 
 function remoteVideoToggle() {
     const chapter = getCurrentChapter();
+    videoPauseRequestedAt = 0;
     if (chapter.videoYoutubeId && ytPlayer) {
         const state = ytPlayer.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
-        else ytPlayer.playVideo();
+        if (state === YT.PlayerState.PLAYING) { ytPlayer.pauseVideo(); return; }
+        ytPlayer.playVideo();
     } else {
         const video = document.getElementById('chapterVideo');
-        if (video.paused) video.play(); else video.pause();
+        if (!video.paused) { video.pause(); return; }
+        video.play();
     }
+    broadcastToProjector({ type: 'video-cmd', action: 'play', video: chapterVideoSource() });
 }
 
 function remoteVideoSeek(deltaSeconds) {
@@ -1128,11 +1138,12 @@ function remoteVideoSeek(deltaSeconds) {
         const video = document.getElementById('chapterVideo');
         video.currentTime = Math.max(0, video.currentTime + deltaSeconds);
     }
-    broadcastToProjector({ type: 'video-cmd', action: 'seek', delta: deltaSeconds });
+    broadcastToProjector({ type: 'video-cmd', action: 'seek', delta: deltaSeconds, video: chapterVideoSource() });
 }
 
 function remoteVideoReplay() {
     const chapter = getCurrentChapter();
+    videoPauseRequestedAt = 0;
     if (chapter.videoYoutubeId && ytPlayer) {
         ytPlayer.seekTo(0, true);
         ytPlayer.playVideo();
@@ -1141,7 +1152,7 @@ function remoteVideoReplay() {
         video.currentTime = 0;
         video.play();
     }
-    broadcastToProjector({ type: 'video-cmd', action: 'replay' });
+    broadcastToProjector({ type: 'video-cmd', action: 'replay', video: chapterVideoSource() });
 }
 
 function updateRemoteVideoBtn(isPlaying) {
@@ -1259,10 +1270,33 @@ function renderExploreActivity(chapter) {
         .map(l => `<li>${l.type === 'support_prompt' ? 'Stuck student? ' : ''}"${escapeReportText(l.text)}"</li>`).join('');
 }
 
+// Playing the video (again) brings the projector back to the video screen,
+// e.g. the teacher replays it after the class has reached the storybook.
+// The projector keeps its place if the same video is already loaded.
+// Messages can arrive out of order, so a teacher's play / seek / replay
+// carries the video itself: the projector switches to it and acts in one go.
+function chapterVideoSource() {
+    const chapter = getCurrentChapter();
+    return chapter.videoYoutubeId
+        ? { youtubeId: chapter.videoYoutubeId }
+        : { src: `${HappyMindsConfig.VIDEO_BASE_URL}/${chapter.video}` };
+}
+
+function onTeacherVideoPlay() {
+    videoPauseRequestedAt = 0;
+    broadcastToProjector({ type: 'video-cmd', action: 'play', video: chapterVideoSource() });
+    updateRemoteVideoBtn(true);
+}
+
 // The chapter video only plays during the video step: moving on to the
 // storybook (or leaving the lesson) stops it, so neither this device nor the
 // projector carries on playing it in the background.
+// When the class moved on (ms). A start within a few seconds of that is
+// YouTube's delayed start, not the teacher replaying, so it is undone.
+let videoPauseRequestedAt = 0;
+
 function pauseChapterVideo() {
+    videoPauseRequestedAt = Date.now();
     const video = document.getElementById('chapterVideo');
     if (video && !video.paused) video.pause();
     // Playing, or still buffering (it would start a moment later).
@@ -1415,6 +1449,7 @@ function renderStorybookPage() {
 }
 
 function storybookGo(direction) {
+    pauseChapterVideo();
     if (direction === 1 && storybookIndex === storybookPages.length - 1) {
         stopStorybookNarration();
         revealThinkTalk();
@@ -1434,6 +1469,7 @@ function revealThinkTalk() {
 }
 
 function settleFinished() {
+    videoPauseRequestedAt = 0;
     document.getElementById('settleSection').style.display = 'none';
     document.getElementById('videoPlayerCard').style.display = 'block';
     const chapter = getCurrentChapter();
@@ -1443,6 +1479,7 @@ function settleFinished() {
 }
 
 function revealDraw() {
+    pauseChapterVideo();
     const drawSection = document.getElementById('drawSection');
     drawSection.classList.add('revealed');
     drawSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1510,6 +1547,7 @@ function resetDrawTimer() {
 }
 
 function revealWrapUp() {
+    pauseChapterVideo();
     const wrapupSection = document.getElementById('wrapupSection');
     wrapupSection.classList.add('revealed');
     wrapupSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1529,6 +1567,7 @@ function simulateVideoWatched() {
 }
 
 function highlightCard(cardEl) {
+    pauseChapterVideo();
     document.querySelectorAll('.think-card').forEach(c => c.classList.remove('highlighted'));
     cardEl.classList.add('highlighted');
     broadcastToProjector({ type: 'thinktalk', cardIndex: parseInt(cardEl.dataset.index, 10) });

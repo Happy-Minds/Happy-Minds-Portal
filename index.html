@@ -669,7 +669,7 @@
                 <div class="video-player-card" id="videoPlayerCard">
                     <video id="chapterVideo" class="chapter-video" controls poster="assets/roadmap_bg.png"
                            onended="onChapterVideoEnded()" onerror="onChapterVideoError()"
-                           onplay="broadcastToProjector({type:'video-cmd', action:'play'}); updateRemoteVideoBtn(true)"
+                           onplay="onTeacherVideoPlay()"
                            onpause="broadcastToProjector({type:'video-cmd', action:'pause'}); updateRemoteVideoBtn(false)"
                            ontimeupdate="updateRemoteVideoProgress()"></video>
                     <div id="chapterYoutubePlayer" class="chapter-video"></div>

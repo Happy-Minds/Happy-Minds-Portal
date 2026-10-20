@@ -105,6 +105,8 @@ function showProjScreen(id) {
 // ---------- 1. Settle & breathe ----------
 function renderSettle() {
     showProjScreen('proj-settle');
+    // A lesson starting fresh: its video starts from the beginning again.
+    loadedVideoKey = null;
     const label = document.getElementById('proj-breathe-text');
     let breatheIn = true;
     label.textContent = 'Breathe in...';
@@ -131,14 +133,45 @@ function loadProjYoutube(videoId) {
     ytPlayer = new YT.Player('projYoutubePlayer', {
         videoId,
         // No controls of its own: the teacher's device drives it.
-        playerVars: { rel: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1 }
+        playerVars: { rel: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, playsinline: 1 },
+        events: {
+            // YouTube can start after a pause was asked for (pauses are ignored
+            // while loading): never let it play behind another screen.
+            onStateChange: e => {
+                if (e.data !== YT.PlayerState.PLAYING) return;
+                if (!document.getElementById('proj-video').classList.contains('active')) {
+                    ytPlayer.pauseVideo();
+                    return;
+                }
+                // A replay asked while the video was still loading can resume
+                // at the old position: make sure it really starts from 0:00.
+                if (replayPending) {
+                    replayPending = false;
+                    if (ytPlayer.getCurrentTime() > 2) ytPlayer.seekTo(0, true);
+                }
+            }
+        }
     });
 }
+
+let loadedVideoKey = null;
+let replayPending = false;
+
+// Same rule for a plain video file.
+document.getElementById('projVideo').addEventListener('play', e => {
+    if (!document.getElementById('proj-video').classList.contains('active')) e.target.pause();
+});
 
 function renderVideoLoad(payload) {
     showProjScreen('proj-video');
     const video = document.getElementById('projVideo');
     const ytContainer = document.getElementById('projYoutubePlayer');
+
+    // Same video already loaded (the teacher came back to it): just show it,
+    // keeping its place, so Play continues instead of starting over.
+    const key = payload.youtubeId || payload.src;
+    if (key && key === loadedVideoKey && (payload.youtubeId ? ytPlayer : video.src)) return;
+    loadedVideoKey = key;
 
     if (payload.youtubeId) {
         video.style.display = 'none';
@@ -160,6 +193,9 @@ function pauseProjVideo() {
 
 function handleVideoCmd(msg) {
     const action = msg.action;
+    // The teacher pressed play / seek / replay: switch to the video first
+    // (in one step, so it works even if messages arrive out of order).
+    if (msg.video) renderVideoLoad(msg.video);
     // Late play/seek commands (the teacher's copy buffering after the class
     // has moved on) must never start the video behind another screen.
     if (action !== 'pause' && !document.getElementById('proj-video').classList.contains('active')) return;
@@ -177,7 +213,7 @@ function handleVideoCmd(msg) {
         if (ytActive) ytPlayer.seekTo(Math.max(0, ytPlayer.getCurrentTime() + msg.delta), true);
         if (videoActive) video.currentTime = Math.max(0, video.currentTime + msg.delta);
     } else if (action === 'replay') {
-        if (ytActive) { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); }
+        if (ytActive) { replayPending = true; ytPlayer.seekTo(0, true); ytPlayer.playVideo(); }
         if (videoActive) { video.currentTime = 0; video.play().catch(() => {}); }
     }
 }
@@ -693,8 +729,9 @@ async function startProjector() {
 }
 
 // Stops projector mode: leaves the teacher's channel (so their device leaves
-// remote mode), stops reading and video, exits full screen. `reason`:
-//   'here'       — Stop projector pressed on this screen
+// remote mode), stops reading and video, exits full screen. Only the
+// teacher's device can do this (the projector screen has no controls).
+// `reason`:
 //   'teacher'    — the teacher chose Stop projector on their device
 //   'signed-out' — the teacher logged out; this screen signs out too, so a
 //                  classroom laptop is never left signed in to their account
@@ -707,7 +744,6 @@ async function stopProjector(reason) {
     projectorStarted = false;
     teacherOnline = false;
     document.getElementById('proj-connection').hidden = true;
-    document.getElementById('proj-stop-btn').hidden = true;
     if (wakeLock) { try { await wakeLock.release(); } catch (err) { /* already released */ } wakeLock = null; }
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch (err) { /* not in full screen */ } }
 
@@ -715,9 +751,7 @@ async function stopProjector(reason) {
     if (signedOut) await HMCloud.signOut();
     document.getElementById('proj-stopped-detail').textContent = signedOut
         ? 'The teacher signed out, so this screen has signed out too.'
-        : reason === 'teacher'
-            ? "Stopped from the teacher's device."
-            : 'Projector mode is off. The teacher\'s device is no longer connected to this screen.';
+        : "Stopped from the teacher's device.";
     document.getElementById('proj-restart-btn').hidden = signedOut;
     document.getElementById('proj-signin-again').hidden = !signedOut;
     showWaiting('stopped');
@@ -728,15 +762,6 @@ function restartProjector() {
     connectProjector();
 }
 
-// The Stop button appears for 3 seconds whenever the mouse moves.
-let stopBtnTimer = null;
-document.addEventListener('mousemove', () => {
-    if (!projectorLink) return;
-    const btn = document.getElementById('proj-stop-btn');
-    btn.hidden = false;
-    clearTimeout(stopBtnTimer);
-    stopBtnTimer = setTimeout(() => { if (!btn.matches(':hover')) btn.hidden = true; }, 3000);
-});
 
 async function connectProjector() {
     const account = await HMCloud.restoreSession();
