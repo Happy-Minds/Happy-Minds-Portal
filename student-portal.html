@@ -368,7 +368,7 @@
                 </div>
                 <div>
                     <h1 class="sp-page-title">Create Studio 🎨</h1>
-                    <p class="sp-page-sub">Show your ideas! Upload your creations here.</p>
+                    <p class="sp-page-sub">Send a photo of your story and get kind tips to make it even better.</p>
                 </div>
             </div>
 
@@ -407,39 +407,38 @@
                 </div>
             </div>
 
-            <!-- Upload Form -->
+            <!-- Send a story: photo → text + kind feedback (2 chances per chapter) -->
             <div class="sp-studio-form" id="spStudioForm">
-                <h3 class="sp-section-heading">📝 Your Submission</h3>
+                <h3 class="sp-section-heading">📝 Send Your Story</h3>
+                <p class="sp-studio-intro">Write your story on paper, then take a clear photo of the whole page. Your story helper will read it and send you kind tips.</p>
 
                 <div class="sp-studio-field-row">
-                    <label class="sp-field-label">Title of your creation</label>
-                    <input type="text" class="sp-text-input" id="spSubTitle" placeholder="e.g. My Magical World by Arjun">
-                </div>
-
-                <div class="sp-studio-field-row">
-                    <label class="sp-field-label">Short description (what did you write about?)</label>
-                    <textarea class="sp-textarea" id="spSubDesc" rows="3" placeholder="Tell us about your creation in 1-2 sentences..."></textarea>
-                </div>
-
-                <div class="sp-studio-field-row">
-                    <label class="sp-field-label">Upload your work (photo or file)</label>
-                    <div class="sp-upload-area" id="spUploadArea" onclick="spTriggerUpload()">
-                        <div class="sp-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                        <div class="sp-upload-text">Tap to upload a photo of your work</div>
-                        <div class="sp-upload-hint">JPG, PNG, PDF — max 10 MB</div>
-                        <input type="file" id="spFileInput" accept="image/*,.pdf" style="display:none" onchange="spHandleFile(event)">
-                        <div class="sp-upload-preview" id="spUploadPreview" style="display:none"></div>
+                    <div class="sp-upload-area" id="spUploadArea" role="button" tabindex="0"
+                         aria-label="Take or choose a photo of your story"
+                         onclick="spTriggerUpload()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); spTriggerUpload(); }">
+                        <div id="spUploadPrompt">
+                            <div class="sp-upload-icon"><i class="fa-solid fa-camera"></i></div>
+                            <div class="sp-upload-text">Tap to take or choose a photo</div>
+                            <div class="sp-upload-hint">The whole page, in good light</div>
+                        </div>
+                        <img class="sp-upload-photo" id="spUploadPhoto" alt="Photo of your story" hidden>
+                        <input type="file" id="spFileInput" accept="image/*" hidden onchange="spHandleFile(event)">
                     </div>
                 </div>
 
                 <button class="sp-btn-primary full sp-submit-btn" id="spSubmitBtn" onclick="spSubmitCreation()">
-                    <i class="fa-solid fa-rocket"></i> Submit My Creation! 🚀
+                    <i class="fa-solid fa-paper-plane"></i> Send My Story
                 </button>
+                <p class="sp-studio-note" id="spStudioNote">This uses 1 of your 2 chances for this chapter. If the photo can't be read, it won't use a chance.</p>
+                <p class="sp-studio-error" id="spStudioError" role="alert" hidden></p>
             </div>
+
+            <!-- The story that just came back -->
+            <div class="sp-story-result" id="spStoryResult" hidden aria-live="polite"></div>
 
             <!-- Submission History -->
             <div class="sp-studio-history">
-                <h3 class="sp-section-heading">🎨 My Creations</h3>
+                <h3 class="sp-section-heading">🎨 My Stories</h3>
                 <div id="spSubmissionHistory">
                     <!-- Rendered dynamically -->
                 </div>

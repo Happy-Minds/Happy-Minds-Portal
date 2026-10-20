@@ -18,18 +18,10 @@ const HappyMindsConfig = {
     // in offline demo mode (scan always succeeds instantly, nothing is sent).
     SCAN_UPLOAD_ENDPOINT: null,
 
-    // --- Rittu: AI writing-feedback backend ---------------------------------
-    // Exact address Rittu gives you for the "Check My Story" button. Expected
-    // response shape: { "hint": "<one short hint or question>" }.
-    // Leave null to run in offline demo mode using the placeholder hints
-    // already written into each chapter's create.hints list.
-    AI_FEEDBACK_ENDPOINT: null,
-
-    // Handwriting OCR: the teacher scans a student's notebook page (in Create
-    // or Perform) and this address should return the recognised text.
-    // Expected response shape: { "text": "<recognised story text>" }.
-    // Leave null to run in offline demo mode with a placeholder sample.
-    OCR_ENDPOINT: null,
+    // Student stories: reads photos of handwritten stories and gives kind
+    // feedback with Claude Haiku. It is the `stories` Supabase Edge Function
+    // (supabase/functions/stories); cloud.js calls it.
+    STORIES_ENDPOINT: 'https://odjrafygmednsooyiicd.supabase.co/functions/v1/stories',
 
     // --- Supabase: sign-in + saved data ---------------------------------------
     // Project address and publishable key. The publishable key is meant to be

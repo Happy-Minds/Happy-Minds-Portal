@@ -205,12 +205,59 @@ create policy "Staff send on their own projector channel"
     );
 
 -- --------------------------------------------------------------------------
+-- Student stories. Each row is one handwritten story read by the `stories`
+-- Edge Function, with the kind feedback Claude gave on it.
+--   source 'teacher' — a teacher scanned it in class and saved it; any number.
+--   source 'student' — the student submitted it from the student portal;
+--                      at most 2 per chapter (attempt 1 or 2). Only the Edge
+--                      Function writes these, so the limit can't be skipped.
+-- --------------------------------------------------------------------------
+create table if not exists public.story_submissions (
+    id         uuid primary key default gen_random_uuid(),
+    student_id text not null references public.students (id) on delete cascade,
+    chapter_id integer not null check (chapter_id between 1 and 24),
+    source     text not null check (source in ('teacher', 'student')),
+    attempt    smallint check (attempt between 1 and 2),
+    story_text text not null check (char_length(story_text) between 1 and 5000),
+    feedback   jsonb not null,
+    created_by uuid default auth.uid() references auth.users (id) on delete set null,
+    created_at timestamptz not null default now(),
+    constraint story_student_attempts check ((source = 'student') = (attempt is not null))
+);
+
+create unique index if not exists story_submissions_one_per_attempt
+    on public.story_submissions (student_id, chapter_id, attempt) where source = 'student';
+create index if not exists story_submissions_by_student
+    on public.story_submissions (student_id, chapter_id);
+
+alter table public.story_submissions enable row level security;
+
+drop policy if exists "Staff see all stories, students and parents see their own" on public.story_submissions;
+create policy "Staff see all stories, students and parents see their own"
+    on public.story_submissions for select to authenticated
+    using ((select private.is_staff()) or student_id = (select private.my_student_id()));
+
+drop policy if exists "Staff save stories they scanned in class" on public.story_submissions;
+create policy "Staff save stories they scanned in class"
+    on public.story_submissions for insert to authenticated
+    with check (
+        (select private.is_staff())
+        and source = 'teacher'
+        and attempt is null
+        and created_by = (select auth.uid())
+    );
+
+-- --------------------------------------------------------------------------
 -- Data API access. New tables are not exposed automatically in this project,
 -- so grant exactly what the portal needs. Signed-out visitors get nothing.
 -- --------------------------------------------------------------------------
-revoke all on public.students, public.profiles, public.app_documents from anon, authenticated;
+revoke all on public.students, public.profiles, public.app_documents, public.story_submissions from anon, authenticated;
 grant select on public.students, public.profiles to authenticated;
 grant select, insert, update on public.app_documents to authenticated;
+grant select, insert on public.story_submissions to authenticated;
+-- The stories Edge Function counts and records student submissions.
+grant select, insert on public.story_submissions to service_role;
+grant select on public.profiles to service_role;
 
 revoke all on schema private from public, anon;
 grant usage on schema private to authenticated;

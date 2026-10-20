@@ -126,6 +126,68 @@ const HMCloud = (() => {
     });
     window.addEventListener('online', () => { if (unsaved.size) writeUnsaved(); });
 
+    // ---- Student stories --------------------------------------------------
+    class StoryError extends Error {
+        constructor(code) {
+            super(`Story request failed: ${code}`);
+            this.code = code;
+        }
+    }
+
+    // Phone photos are often 4000px+ and several MB. Handwriting reads fine
+    // at ~1600px on the long side, and a small JPEG uploads faster on school
+    // Wi-Fi and costs less to read.
+    const PHOTO_MAX_SIDE = 1568;
+
+    function shrinkPhoto(imageSrc) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fff'; // transparent PNGs would otherwise turn black
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(blob => blob ? resolve(blob) : reject(new StoryError('failed')), 'image/jpeg', 0.85);
+            };
+            img.onerror = () => reject(new StoryError('unreadable'));
+            img.src = imageSrc;
+        });
+    }
+
+    // What the feedback needs to know about the chapter (from chapters-data.js).
+    function storyChapter(chapter) {
+        return {
+            id: chapter.id,
+            title: chapter.title,
+            task: chapter.create?.challenge || '',
+            target: chapter.create?.target || '',
+            grammarFocus: chapter.reflection?.grammarFocus || ''
+        };
+    }
+
+    async function callStories(body, contentType) {
+        const { data } = await client.auth.getSession();
+        const headers = { apikey: HappyMindsConfig.SUPABASE_PUBLISHABLE_KEY };
+        if (data.session) headers.Authorization = `Bearer ${data.session.access_token}`;
+        if (contentType) headers['Content-Type'] = contentType;
+
+        let res;
+        try {
+            res = await fetch(HappyMindsConfig.STORIES_ENDPOINT, { method: 'POST', headers, body });
+        } catch (err) {
+            throw new StoryError('offline');
+        }
+        const result = await res.json().catch(() => ({}));
+        if (res.ok) return result;
+        console.warn('Happy Minds: stories request failed', res.status, result.error);
+        const known = ['unreadable', 'limit_reached', 'busy'];
+        throw new StoryError(known.includes(result.error) ? result.error : 'failed');
+    }
+
     return {
         // Signed-in account from an earlier visit, or null.
         async restoreSession() {
@@ -174,6 +236,61 @@ const HMCloud = (() => {
             docs.set(key, clone(data));
             unsaved.add(key);
             if (!saveTimer && !failing) saveTimer = setTimeout(writeUnsaved, SAVE_DELAY_MS);
+        },
+
+        // ---- Student stories (the `stories` Edge Function) ----------------
+        // Each throws a StoryError whose .code says what went wrong:
+        // unreadable, limit_reached, busy, offline, or failed.
+
+        // Teacher: photo (data URL) → the story as the student wrote it.
+        async readStoryPhoto(imageSrc) {
+            const form = new FormData();
+            form.append('action', 'read');
+            form.append('image', await shrinkPhoto(imageSrc), 'story.jpg');
+            return (await callStories(form)).text;
+        },
+
+        // Teacher: story text → { praise, tip, question }.
+        async storyFeedback(chapter, text) {
+            const body = JSON.stringify({ action: 'feedback', chapter: storyChapter(chapter), text });
+            return (await callStories(body, 'application/json')).feedback;
+        },
+
+        // Student: photo → { text, feedback, attemptsUsed }, saved on the
+        // server. At most 2 per chapter; an unreadable photo doesn't count.
+        async submitStoryPhoto(chapter, imageSrc) {
+            const form = new FormData();
+            form.append('action', 'submit');
+            form.append('chapter', JSON.stringify(storyChapter(chapter)));
+            form.append('image', await shrinkPhoto(imageSrc), 'story.jpg');
+            return await callStories(form);
+        },
+
+        // Teacher: save a story scanned in class to that student's record.
+        async saveStory(studentId, chapterId, text, feedback) {
+            const { error } = await client.from('story_submissions').insert({
+                student_id: studentId, chapter_id: chapterId, source: 'teacher', story_text: text, feedback
+            });
+            if (error) {
+                console.warn('Happy Minds: could not save story', error);
+                throw new StoryError(/failed to fetch|network/i.test(error.message || '') ? 'offline' : 'failed');
+            }
+        },
+
+        // Stories this account may see (Row Level Security decides), newest
+        // first. Filter by { chapterId, source } if given.
+        async listStories({ chapterId, source } = {}) {
+            let query = client.from('story_submissions')
+                .select('id, student_id, chapter_id, source, attempt, story_text, feedback, created_at')
+                .order('created_at', { ascending: false });
+            if (chapterId) query = query.eq('chapter_id', chapterId);
+            if (source) query = query.eq('source', source);
+            const { data, error } = await query;
+            if (error) {
+                console.warn('Happy Minds: could not load stories', error);
+                throw new StoryError('failed');
+            }
+            return data;
         },
 
         // Admin only (enforced by the database). Throws an Error whose

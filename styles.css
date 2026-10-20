@@ -2660,12 +2660,27 @@ body.remote-mode .explorer-spotlight { display: none; }
     margin-top: 2px;
 }
 
-.ai-feedback-text {
+.ai-feedback-body { min-width: 0; }
+
+.ai-feedback-list {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ai-feedback-list dt {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--primary-blue);
+}
+
+.ai-feedback-list dd {
     font-size: 14px;
-    font-weight: 700;
-    font-style: italic;
+    font-weight: 600;
+    line-height: 1.5;
     color: #1E3A8A;
-    margin-bottom: 4px;
 }
 
 .ai-feedback-source {
@@ -2674,6 +2689,69 @@ body.remote-mode .explorer-spotlight { display: none; }
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: #60A5FA;
+}
+
+/* Whose story is in the box — for the few students the teacher scans */
+.story-student-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    border-bottom: 1.5px solid #E2E8F0;
+}
+
+.story-student-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.story-student-label i { color: var(--primary-blue); }
+
+.story-student-select { min-width: 180px; }
+
+.story-saved-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.story-saved-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: #ECFDF5;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.story-saved-empty {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.btn-glass[hidden] { display: none; }
+
+.btn-glass:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    border-color: #E2E8F0;
+    color: var(--text-dark);
+}
+
+@media (max-width: 560px) {
+    .story-student-select { flex: 1 1 100%; min-width: 0; }
+    .story-saved-list { margin-left: 0; width: 100%; }
 }
 
 .editor-footer {

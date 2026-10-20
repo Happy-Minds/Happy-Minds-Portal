@@ -1416,6 +1416,15 @@
                         </div>
 
                         <div class="writing-editor-card">
+                            <!-- Stories the teacher scans for a few students and saves to their record -->
+                            <div class="story-student-bar">
+                                <label for="storyStudentSelect" class="story-student-label">
+                                    <i class="fa-solid fa-user-pen"></i> Whose story?
+                                </label>
+                                <select id="storyStudentSelect" class="custom-select story-student-select" onchange="updateStorySaveButton()"></select>
+                                <div class="story-saved-list" id="storySavedList" aria-live="polite"></div>
+                            </div>
+
                             <div class="sentence-starter-bar">
                                 <span class="starter-label">Sentence Starter:</span>
                                 <div id="starterBar" class="starter-bar-buttons"></div>
@@ -1426,11 +1435,11 @@
 
                             <textarea id="storyTextArea" placeholder="For testing: type here, or scan the student's handwritten notebook page above..." oninput="analyzeWritingContent()"></textarea>
 
-                            <div class="ai-feedback-panel" id="aiFeedbackPanel">
+                            <div class="ai-feedback-panel" id="aiFeedbackPanel" aria-live="polite">
                                 <i class="fa-solid fa-robot"></i>
-                                <div>
-                                    <p class="ai-feedback-text"></p>
-                                    <span class="ai-feedback-source"></span>
+                                <div class="ai-feedback-body">
+                                    <dl class="ai-feedback-list" id="aiFeedbackList"></dl>
+                                    <span class="ai-feedback-source">AI feedback — read it before sharing with the student</span>
                                 </div>
                             </div>
 
@@ -1439,6 +1448,12 @@
                                     <span id="sentenceCount">0</span> / <span id="sentenceTargetNum">6</span> sentences
                                 </div>
                                 <div class="editor-actions">
+                                    <button class="btn-glass compact" id="storyFeedbackBtn" onclick="requestStoryFeedback()">
+                                        <i class="fa-solid fa-comment-dots blue"></i> Get Feedback
+                                    </button>
+                                    <button class="btn-glass compact" id="storySaveBtn" onclick="saveStudentStory()" hidden>
+                                        <i class="fa-solid fa-floppy-disk"></i> <span id="storySaveLabel">Save</span>
+                                    </button>
                                     <button class="btn-primary-glowing" onclick="revealCreateStep('createCheckSection')">
                                         <i class="fa-solid fa-check"></i> We're Done Writing
                                     </button>
@@ -1968,7 +1983,7 @@
             <div class="ocr-scan-area" id="ocrScanArea">
                 <i class="fa-solid fa-camera camera-large-icon"></i>
                 <p>Position the handwritten page in frame</p>
-                <span class="ocr-accuracy-note">Works best on clear, printed handwriting — always check the result.</span>
+                <span class="ocr-accuracy-note">Clear, well-lit photos work best — always check the result.</span>
             </div>
             <video id="ocrVideo" class="ocr-video" autoplay playsinline style="display:none;"></video>
             <img id="ocrPreviewImg" class="ocr-preview-img" style="display:none;" alt="Scanned page preview">

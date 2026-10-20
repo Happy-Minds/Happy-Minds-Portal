@@ -45,9 +45,19 @@ The teacher's phone controls the classroom projector.
 
 The devices talk over a private Supabase Realtime channel (`projector:<teacher's user id>`) that only that signed-in teacher can join.
 
+### Student stories (handwriting reader + feedback)
+
+The `stories` Edge Function (`supabase/functions/stories/index.ts`) reads photos of handwritten stories and gives kind feedback with Claude Haiku. Stories and feedback are saved in the `story_submissions` table.
+
+- **Teacher, Create step:** pick a student, scan their story, check the text, **Get Feedback**, then **Save** it to that student. Teachers choose how many students to scan.
+- **Student portal, Create Studio:** the student sends a photo and gets their story back with feedback. Each student has 2 chances per chapter. The function enforces the limit, and a photo that can't be read doesn't use a chance. Teacher scans don't count toward it.
+
+Students see their own stories, parents see their child's, and staff see all. The Claude API key is stored only as the Supabase secret `ANTHROPIC_API_KEY`, never in the portal code.
+
 ### Setting up a new Supabase project
 
 1. In the SQL Editor, run `supabase/schema.sql`.
 2. Then run `supabase/seed-accounts.sql`.
 3. Under **Authentication → Sign In / Providers**, turn off **Allow new users to sign up**.
 4. Put the project URL and publishable key in `config.js`.
+5. Under **Edge Functions**, deploy `supabase/functions/stories/index.ts` as `stories` with **Verify JWT** off (the function checks the signed-in account itself), and add the secret `ANTHROPIC_API_KEY`. Update `STORIES_ENDPOINT` in `config.js` to the new project's address.

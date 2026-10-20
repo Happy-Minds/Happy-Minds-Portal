@@ -312,9 +312,9 @@ function renderHome() {
     if (openFixIt) {
         recs.push({ icon: '🛠', type: 'Fix It Zone', title: `Chapter ${currentChap.id} help boxes`, desc: `${openFixIt} box${openFixIt === 1 ? '' : 'es'} to explore`, nav: 'fixit' });
     }
-    const createsLeft = 2 - spState.creations.filter(c => c.chapterId === currentChap.id).length;
+    const createsLeft = STORY_CHANCES - storyChancesUsed(currentChap.id);
     if (createsLeft > 0) {
-        recs.push({ icon: '🎨', type: 'Create Studio', title: currentChap.create?.challenge || `Chapter ${currentChap.id} creation`, desc: `${createsLeft} submission${createsLeft === 1 ? '' : 's'} left`, nav: 'studio' });
+        recs.push({ icon: '🎨', type: 'Create Studio', title: currentChap.create?.challenge || `Chapter ${currentChap.id} story`, desc: `${createsLeft} story chance${createsLeft === 1 ? '' : 's'} left`, nav: 'studio' });
     }
     document.getElementById('spRecommendations').innerHTML = recs.length
         ? recs.map(r => `
@@ -505,6 +505,32 @@ function spRenderFixItActivities() {
     `;
 }
 
+// ---- Create Studio: send a story photo, get it back with kind feedback ----
+// The student has 2 chances per chapter. The count lives in Supabase
+// (story_submissions) and is enforced by the `stories` Edge Function, so it
+// can't be skipped from this page. Stories the teacher scanned in class show
+// here too, but don't use the student's chances.
+const STORY_CHANCES = 2;
+let spStories = null;          // this student's stories, newest first; null until loaded
+let spStoriesLoadFailed = false;
+let spPhotoSrc = null;         // the chosen photo, as a data URL
+let spSending = false;
+let spResultChapter = null;    // chapter of the story shown in the result card
+
+function storyChancesUsed(chapterId) {
+    if (!spStories) return spState.creations.filter(c => c.chapterId === chapterId).length;
+    return spStories.filter(s => s.source === 'student' && s.chapter_id === chapterId).length;
+}
+
+async function loadStories() {
+    try {
+        spStories = await HMCloud.listStories();
+        spStoriesLoadFailed = false;
+    } catch (err) {
+        spStoriesLoadFailed = true;
+    }
+}
+
 function renderStudio() {
     const sel = document.getElementById('spStudioChapterSel');
     const unlocked = getUnlockedChapters(getClassProgress());
@@ -512,25 +538,58 @@ function renderStudio() {
     sel.value = String(getCurrentClassChapter(getClassProgress()).id);
     spStudioChapterChanged();
     renderSubmissions();
+    loadStories().then(() => {
+        spStudioChapterChanged();
+        renderSubmissions();
+    });
+}
+
+function storyFeedbackHtml(feedback) {
+    return `
+        <dl class="sp-feedback">
+            <dt>🌟 What went well</dt><dd>${escapeText(feedback.praise)}</dd>
+            <dt>💡 Try this next time</dt><dd>${escapeText(feedback.tip)}</dd>
+            <dt>🤔 Think about</dt><dd>${escapeText(feedback.question)}</dd>
+        </dl>`;
+}
+
+function storyBodyHtml(story) {
+    return `
+        <h4 class="sp-story-label">Your story</h4>
+        <p class="sp-story-text">${escapeText(story.story_text)}</p>
+        <h4 class="sp-story-label">Tips from your story helper</h4>
+        ${storyFeedbackHtml(story.feedback)}`;
 }
 
 function renderSubmissions() {
     const hist = document.getElementById('spSubmissionHistory');
-    if (!spState.creations.length) {
-        hist.innerHTML = `<div class="sp-empty-state-small"><div class="sp-empty-char">🎨</div><p>No creations yet. Share your ideas!</p></div>`;
+    if (!spStories) {
+        hist.innerHTML = spStoriesLoadFailed
+            ? `<div class="sp-empty-state-small"><div class="sp-empty-char">📡</div><p>Couldn't load your stories. Check your internet and open this page again.</p></div>`
+            : `<div class="sp-empty-state-small"><p>Loading your stories…</p></div>`;
         return;
     }
-    hist.innerHTML = spState.creations.slice().reverse().map(c => `
-        <div class="sp-submission-card">
-            <div class="sp-sub-thumb"><i class="fa-solid fa-image"></i></div>
-            <div class="sp-sub-info">
-                <div class="sp-sub-title">${escapeText(c.title)}</div>
-                <div class="sp-sub-chapter">Chapter ${c.chapterId}</div>
-                <div class="sp-sub-date">${new Date(c.date).toLocaleDateString()}</div>
-            </div>
-            <div class="sp-sub-status pending">Submitted</div>
-        </div>
-    `).join('');
+    if (!spStories.length) {
+        hist.innerHTML = `<div class="sp-empty-state-small"><div class="sp-empty-char">🎨</div><p>No stories yet. Send your first one above!</p></div>`;
+        return;
+    }
+    hist.innerHTML = spStories.map(story => {
+        const ch = CHAPTERS.find(c => c.id === story.chapter_id);
+        const by = story.source === 'teacher' ? 'Scanned by your teacher' : `Chance ${story.attempt} of ${STORY_CHANCES}`;
+        return `
+            <details class="sp-story-card">
+                <summary>
+                    <div class="sp-sub-thumb">📖</div>
+                    <div class="sp-sub-info">
+                        <div class="sp-sub-title">Chapter ${story.chapter_id}${ch ? `: ${escapeText(ch.title)}` : ''}</div>
+                        <div class="sp-sub-chapter">${by}</div>
+                        <div class="sp-sub-date">${new Date(story.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <span class="sp-sub-status reviewed">Tips ready</span>
+                </summary>
+                <div class="sp-story-body">${storyBodyHtml(story)}</div>
+            </details>`;
+    }).join('');
 }
 
 function renderAchievements() {
@@ -735,27 +794,31 @@ function spStudioChapterChanged() {
         document.getElementById('spStudioMissionTitle').textContent = `Chapter ${ch.id}: ${ch.title}`;
         document.getElementById('spStudioMissionDesc').textContent = ch.create?.challenge || 'Create something amazing!';
     }
-
-    const subs = spState.creations.filter(c => c.chapterId === studioCid);
-    const count = subs.length;
-    document.getElementById('spLimitSub').textContent = `${count} / 2 used`;
-
-    const dots = document.getElementById('spLimitDots');
-    dots.innerHTML = `
-        <div class="sp-limit-dot ${count > 0 ? 'used' : 'empty'}"></div>
-        <div class="sp-limit-dot ${count > 1 ? 'used' : 'empty'}"></div>
-    `;
-
-    const form = document.getElementById('spStudioForm');
-    if (count >= 2) {
-        form.style.opacity = '0.5';
-        form.style.pointerEvents = 'none';
-        document.getElementById('spSubmitBtn').innerHTML = 'Limit Reached for this Chapter';
-    } else {
-        form.style.opacity = '1';
-        form.style.pointerEvents = 'auto';
-        document.getElementById('spSubmitBtn').innerHTML = '<i class="fa-solid fa-rocket"></i> Submit My Creation! 🚀';
+    if (spResultChapter !== null && spResultChapter !== studioCid) {
+        document.getElementById('spStoryResult').hidden = true;
+        spResultChapter = null;
     }
+
+    const known = spStories !== null;
+    const used = storyChancesUsed(studioCid);
+    const left = Math.max(0, STORY_CHANCES - used);
+    document.getElementById('spLimitSub').textContent = known
+        ? `${used} / ${STORY_CHANCES} used`
+        : (spStoriesLoadFailed ? "Couldn't check your chances" : 'Checking your chances…');
+    document.getElementById('spLimitDots').innerHTML = Array.from({ length: STORY_CHANCES }, (_, i) =>
+        `<div class="sp-limit-dot ${known && i < used ? 'used' : 'empty'}"></div>`).join('');
+
+    const full = known && left === 0;
+    const btn = document.getElementById('spSubmitBtn');
+    document.getElementById('spStudioForm').classList.toggle('sp-studio-locked', full);
+    document.getElementById('spUploadArea').setAttribute('aria-disabled', String(full || spSending));
+    btn.disabled = !known || full || spSending;
+    btn.innerHTML = spSending
+        ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading your story…'
+        : full ? 'Both chances used for this chapter' : '<i class="fa-solid fa-paper-plane"></i> Send My Story';
+    document.getElementById('spStudioNote').textContent = full
+        ? 'Great work! Your stories and tips are below.'
+        : `${left === 1 ? 'This uses your last chance' : `This uses 1 of your ${left} chances`} for this chapter. If the photo can't be read, it won't use a chance.`;
 }
 
 function renderHistory() {
@@ -800,45 +863,113 @@ function spPickAvatar(el, src) {
 // ACTIONS
 // ==========================================================================
 function spTriggerUpload() {
+    if (spSending || document.getElementById('spStudioForm').classList.contains('sp-studio-locked')) return;
     document.getElementById('spFileInput').click();
 }
 
 function spHandleFile(e) {
-    if (e.target.files.length) {
-        document.getElementById('spUploadArea').classList.add('has-file');
-        document.getElementById('spUploadPreview').style.display = 'block';
-        document.getElementById('spUploadPreview').textContent = `Selected: ${e.target.files[0].name}`;
+    const file = e.target.files[0];
+    e.target.value = ''; // allow choosing the same photo again
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        spShowStudioError('Please choose a photo (JPG or PNG) of your story.');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        spPhotoSrc = reader.result;
+        spShowStudioError('');
+        const img = document.getElementById('spUploadPhoto');
+        img.src = spPhotoSrc;
+        img.hidden = false;
+        document.getElementById('spUploadPrompt').hidden = true;
+        const area = document.getElementById('spUploadArea');
+        area.classList.add('has-file');
+        area.setAttribute('aria-label', 'Change the photo of your story');
+    };
+    reader.readAsDataURL(file);
+}
+
+function spClearPhoto() {
+    spPhotoSrc = null;
+    const img = document.getElementById('spUploadPhoto');
+    img.hidden = true;
+    img.removeAttribute('src');
+    document.getElementById('spUploadPrompt').hidden = false;
+    const area = document.getElementById('spUploadArea');
+    area.classList.remove('has-file');
+    area.setAttribute('aria-label', 'Take or choose a photo of your story');
+}
+
+function spShowStudioError(message) {
+    const el = document.getElementById('spStudioError');
+    el.textContent = message;
+    el.hidden = !message;
+}
+
+function spStoryErrorMessage(err) {
+    switch (err && err.code) {
+        case 'unreadable': return "We couldn't read that photo. Try again in good light, with the whole page showing. Don't worry — this didn't use a chance.";
+        case 'limit_reached': return "You've already used both chances for this chapter.";
+        case 'busy': return 'Your story helper is busy right now. Please try again in a minute.';
+        case 'offline': return 'No internet connection. Please try again when you are online.';
+        default: return 'Something went wrong while reading your story. Please try again.';
     }
 }
 
-function spSubmitCreation() {
-    const title = document.getElementById('spSubTitle').value.trim();
-    const description = document.getElementById('spSubDesc').value.trim();
-    const count = spState.creations.filter(c => c.chapterId === studioCid).length;
-    if (count >= 2) return;
-    if (!title) { showToast('Please add a title!'); return; }
-    
-    spState.creations.push({
-        chapterId: studioCid,
-        title,
-        description,
-        date: new Date().toISOString()
-    });
-    
-    addHistory(`Submitted creation: ${title}`, '🎨');
-    addXP(25, 'Creation Submitted');
-    if(spState.creations.length === 1) awardBadge('create_1');
-    
-    saveState();
+function showStoryResult(story) {
+    const box = document.getElementById('spStoryResult');
+    box.innerHTML = `
+        <div class="sp-story-result-head">
+            <div class="sp-story-result-icon">🎉</div>
+            <div>
+                <h3>Your story is back!</h3>
+                <p>Here is what you wrote, and some tips from your story helper.</p>
+            </div>
+        </div>
+        ${storyBodyHtml(story)}`;
+    box.hidden = false;
+    spResultChapter = story.chapter_id;
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function spSubmitCreation() {
+    if (spSending) return;
+    const ch = CHAPTERS.find(c => c.id === studioCid);
+    if (!ch || storyChancesUsed(studioCid) >= STORY_CHANCES) return;
+    if (!spPhotoSrc) {
+        spShowStudioError('First, take or choose a photo of your story.');
+        return;
+    }
+
+    spShowStudioError('');
+    spSending = true;
     spStudioChapterChanged();
-    renderSubmissions();
-    document.getElementById('spSubTitle').value = '';
-    document.getElementById('spSubDesc').value = '';
-    document.getElementById('spUploadArea').classList.remove('has-file');
-    document.getElementById('spUploadPreview').style.display = 'none';
-    
-    showToast('Creation submitted successfully! 🚀');
-    triggerConfetti();
+    try {
+        const result = await HMCloud.submitStoryPhoto(ch, spPhotoSrc);
+        const story = {
+            student_id: currentUser.studentId, chapter_id: ch.id, source: 'student', attempt: result.attemptsUsed,
+            story_text: result.text, feedback: result.feedback, created_at: new Date().toISOString()
+        };
+        spStories = [story, ...(spStories || [])];
+
+        spState.creations.push({ chapterId: ch.id, title: `Chapter ${ch.id} story`, date: story.created_at });
+        addHistory(`Sent a story for Chapter ${ch.id}`, '🎨');
+        addXP(25, 'Story Sent');
+        if (spState.creations.length === 1) awardBadge('create_1');
+        saveState();
+
+        spClearPhoto();
+        showStoryResult(story);
+        triggerConfetti();
+    } catch (err) {
+        spShowStudioError(spStoryErrorMessage(err));
+        if (err && err.code === 'limit_reached') await loadStories();
+    } finally {
+        spSending = false;
+        spStudioChapterChanged();
+        renderSubmissions();
+    }
 }
 
 // ==========================================================================

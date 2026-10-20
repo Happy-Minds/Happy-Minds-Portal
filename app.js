@@ -2166,7 +2166,7 @@ function renderCreateStage(chapter) {
     const textArea = document.getElementById('storyTextArea');
     textArea.value = '';
     document.getElementById('sentenceCount').textContent = '0';
-    document.getElementById('aiFeedbackPanel').classList.remove('shown');
+    renderStoryStudents(chapter);
 
     document.querySelectorAll('#createCheckSection input[type="checkbox"]').forEach(cb => { cb.checked = false; });
 
@@ -2246,6 +2246,124 @@ function analyzeWritingContent() {
     const text = document.getElementById('storyTextArea').value.trim();
     const sentences = text ? text.split(/[.!?]+/).filter(s => s.trim().length > 0) : [];
     document.getElementById('sentenceCount').textContent = sentences.length;
+    // Feedback on screen always belongs to the text in the box.
+    clearStoryFeedback();
+}
+
+// ================= Student stories: feedback + save (Create) =================
+// In class the teacher scans the stories of a few students they choose. For
+// each: pick the student, scan (or type) the story, check the text, Get
+// Feedback, then Save — story and feedback go to that student's record
+// (story_submissions), for parent and trainer reports. Teacher saves are
+// separate from the 2 chances each student has in the student portal.
+let storyFeedback = null;  // { praise, tip, question } for the text in the box
+let storyRequestId = 0;    // bumped whenever the text changes, so a late answer for old text is ignored
+
+function renderStoryStudents(chapter) {
+    const select = document.getElementById('storyStudentSelect');
+    select.replaceChildren(new Option('Choose a student…', ''),
+        ...HappyMindsConfig.STUDENTS.map(s => new Option(s.name, s.id)));
+    clearStoryFeedback();
+    refreshSavedStories(chapter.id);
+}
+
+async function refreshSavedStories(chapterId) {
+    const list = document.getElementById('storySavedList');
+    try {
+        const stories = await HMCloud.listStories({ chapterId, source: 'teacher' });
+        if (chapterId !== appState.currentChapterId) return;
+        const names = [...new Set(stories.map(s => s.student_id))]
+            .map(id => HappyMindsConfig.STUDENTS.find(st => st.id === id)?.name || id);
+        list.innerHTML = names.length
+            ? names.map(name => `<span class="story-saved-chip"><i class="fa-solid fa-check"></i> ${escapeReportText(name)}</span>`).join('')
+            : '<span class="story-saved-empty">No stories saved for this chapter yet</span>';
+    } catch (err) {
+        list.innerHTML = '';
+    }
+}
+
+function clearStoryFeedback() {
+    storyFeedback = null;
+    storyRequestId++;
+    document.getElementById('aiFeedbackPanel').classList.remove('shown');
+    setStoryFeedbackBusy(false);
+    updateStorySaveButton();
+}
+
+function setStoryFeedbackBusy(busy) {
+    const btn = document.getElementById('storyFeedbackBtn');
+    btn.disabled = busy;
+    btn.innerHTML = busy
+        ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading the story…'
+        : '<i class="fa-solid fa-comment-dots blue"></i> Get Feedback';
+}
+
+function updateStorySaveButton() {
+    const studentId = document.getElementById('storyStudentSelect').value;
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === studentId);
+    const btn = document.getElementById('storySaveBtn');
+    btn.hidden = !storyFeedback;
+    btn.disabled = !student;
+    document.getElementById('storySaveLabel').textContent = student ? `Save to ${student.name}` : 'Choose a student to save';
+}
+
+function renderStoryFeedback(feedback) {
+    const rows = [['What went well', feedback.praise], ['Try this next time', feedback.tip], ['Think about', feedback.question]];
+    document.getElementById('aiFeedbackList').innerHTML = rows
+        .map(([label, text]) => `<dt>${label}</dt><dd>${escapeReportText(text)}</dd>`).join('');
+    document.getElementById('aiFeedbackPanel').classList.add('shown');
+}
+
+function storyErrorMessage(err, action) {
+    if (err && err.code === 'offline') return "Couldn't reach Happy Minds. Check the internet connection and try again.";
+    if (err && err.code === 'busy') return 'The story helper is busy right now. Please try again in a minute.';
+    return `Couldn't ${action} right now. Please try again.`;
+}
+
+async function requestStoryFeedback() {
+    const text = document.getElementById('storyTextArea').value.trim();
+    if (!text) {
+        showNotification("Scan or type the student's story first.");
+        return;
+    }
+    clearStoryFeedback();
+    const requestId = storyRequestId;
+    setStoryFeedbackBusy(true);
+    try {
+        const feedback = await HMCloud.storyFeedback(getCurrentChapter(), text);
+        if (requestId !== storyRequestId) return;
+        storyFeedback = feedback;
+        renderStoryFeedback(feedback);
+        updateStorySaveButton();
+    } catch (err) {
+        if (requestId === storyRequestId) showNotification(storyErrorMessage(err, 'get feedback'));
+    } finally {
+        if (requestId === storyRequestId) setStoryFeedbackBusy(false);
+    }
+}
+
+async function saveStudentStory() {
+    const select = document.getElementById('storyStudentSelect');
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === select.value);
+    const textArea = document.getElementById('storyTextArea');
+    const text = textArea.value.trim();
+    if (!student || !storyFeedback || !text) return;
+
+    const chapterId = appState.currentChapterId;
+    const btn = document.getElementById('storySaveBtn');
+    btn.disabled = true;
+    document.getElementById('storySaveLabel').textContent = 'Saving…';
+    try {
+        await HMCloud.saveStory(student.id, chapterId, text, storyFeedback);
+        showNotification(`Saved ${student.name}'s story and feedback.`);
+        textArea.value = '';
+        select.value = '';
+        analyzeWritingContent();
+        refreshSavedStories(chapterId);
+    } catch (err) {
+        showNotification(storyErrorMessage(err, 'save the story'));
+        updateStorySaveButton();
+    }
 }
 
 function finishCreateStage() {
@@ -2255,8 +2373,8 @@ function finishCreateStage() {
 
 // ================= Handwriting Scan (OCR) — shared by Create & Perform =================
 // Real camera capture + real file upload, then real text extraction:
-// HappyMindsConfig.OCR_ENDPOINT (a proper vision/OCR backend) if configured,
-// otherwise Tesseract.js running entirely in the browser. Tesseract is built
+// the `stories` Edge Function (Claude Haiku, via HMCloud.readStoryPhoto),
+// or Tesseract.js in the browser if that can't be reached. Tesseract is built
 // for clean printed text — on real handwriting it doesn't fail quietly, it
 // produces confident-looking noise (e.g. ": | ~& a ol | WA) NT SR SE ..."),
 // which is worse than no result at all if it gets inserted as if it were
@@ -2287,7 +2405,7 @@ function resetOcrModalUi() {
     area.innerHTML = `
         <i class="fa-solid fa-camera camera-large-icon"></i>
         <p>Position the handwritten page in frame</p>
-        <span class="ocr-accuracy-note">Works best on clear, printed handwriting — always check the result.</span>`;
+        <span class="ocr-accuracy-note">Clear, well-lit photos work best — always check the result.</span>`;
 
     document.getElementById('ocrVideo').style.display = 'none';
     document.getElementById('ocrPreviewImg').style.display = 'none';
@@ -2409,19 +2527,13 @@ function showOcrFailure() {
 }
 
 async function requestOcrText(imageSrc) {
-    if (HappyMindsConfig.OCR_ENDPOINT) {
-        try {
-            const blob = await (await fetch(imageSrc)).blob();
-            const formData = new FormData();
-            formData.append('image', blob, 'scan.png');
-            const res = await fetch(HappyMindsConfig.OCR_ENDPOINT, { method: 'POST', body: formData });
-            if (!res.ok) throw new Error(`OCR service returned ${res.status}`);
-            const data = await res.json();
-            if (data.text) return data.text;
-            throw new Error('OCR service returned no text');
-        } catch (err) {
-            console.warn('Backend OCR failed, falling back to in-browser OCR.', err);
-        }
+    try {
+        return await HMCloud.readStoryPhoto(imageSrc);
+    } catch (err) {
+        // The reader looked at the page and found no readable writing: that
+        // is the answer — the in-browser reader would only guess.
+        if (err.code === 'unreadable') throw err;
+        console.warn('Handwriting reader unavailable, falling back to in-browser OCR.', err);
     }
 
     // In-browser OCR is a real attempt, not a demo — if it can't produce a
