@@ -12,12 +12,6 @@ const HappyMindsConfig = {
     // path and the Explore page shows a friendly "video coming soon" state.
     VIDEO_BASE_URL: 'videos',
 
-    // Where the Perform (scanner) screen uploads each captured worksheet
-    // photo. Ask Rittu/Intern D for: (1) this exact address, (2) what
-    // student/chapter fields must travel with the photo. Leave null to run
-    // in offline demo mode (scan always succeeds instantly, nothing is sent).
-    SCAN_UPLOAD_ENDPOINT: null,
-
     // Student stories: reads photos of handwritten stories and gives kind
     // feedback with Claude Haiku. It is the `stories` Supabase Edge Function
     // (supabase/functions/stories); cloud.js calls it.

@@ -2634,7 +2634,8 @@ body.remote-mode .explorer-spotlight { display: none; }
     flex-wrap: wrap;
 }
 
-#storyTextArea {
+#storyTextArea,
+.story-desk-text {
     width: 100%;
     height: 220px;
     border: 2px solid #E2E8F0;
@@ -2648,7 +2649,8 @@ body.remote-mode .explorer-spotlight { display: none; }
     margin-bottom: 16px;
 }
 
-#storyTextArea:focus {
+#storyTextArea:focus,
+.story-desk-text:focus {
     border-color: var(--primary-blue);
     box-shadow: 0 0 12px rgba(14, 165, 233, 0.15);
 }
@@ -2760,7 +2762,8 @@ body.remote-mode .explorer-spotlight { display: none; }
     color: var(--text-muted);
 }
 
-.btn-glass[hidden] { display: none; }
+.btn-glass[hidden],
+.btn-primary-glowing[hidden] { display: none; }
 
 .btn-glass:disabled {
     opacity: 0.55;
@@ -2836,19 +2839,26 @@ body.remote-mode .explorer-spotlight { display: none; }
 .perform-empty-state h3 { font-size: 20px; font-weight: 800; }
 .perform-empty-state p { color: var(--text-muted); font-weight: 600; max-width: 420px; margin-bottom: 12px; }
 
-.scanner-wrapper-card {
-    background: white;
-    border: 2px solid #E2E8F0;
-    border-radius: 32px;
-    padding: 32px;
-    box-shadow: var(--shadow-soft);
-    position: relative;
-}
-
 .scanner-selectors-bar {
     display: flex;
-    gap: 24px;
-    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    margin-bottom: 20px;
+}
+
+/* Scan tab: the same story flow as the Create step */
+.scan-desk-photo-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    margin-bottom: 14px;
+}
+
+.scan-desk-hint {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
 .selector-field {
@@ -2869,90 +2879,10 @@ body.remote-mode .explorer-spotlight { display: none; }
     cursor: pointer;
 }
 
-.camera-viewport {
-    position: relative;
-    width: 100%;
-    height: 320px;
-    background: #0F172A;
-    border-radius: 24px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    margin-bottom: 20px;
-}
-
-.scanner-laser-beam {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: var(--accent-green);
-    box-shadow: 0 0 15px var(--accent-green);
-    display: none;
-}
-
-.scanner-laser-beam.active-scan {
-    display: block;
-    animation: scanAnim 2s infinite linear;
-}
-
-@keyframes scanAnim {
-    0% { top: 0; }
-    50% { top: 98%; }
-    100% { top: 0; }
-}
-
-.viewport-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    opacity: 0.8;
-}
-
 .camera-large-icon {
     font-size: 32px;
     line-height: 1;
     color: var(--primary-blue);
-}
-
-.viewport-placeholder p {
-    margin: 0;
-}
-
-.scanner-controls-overlay {
-    position: absolute;
-    bottom: 20px;
-    display: flex;
-    gap: 16px;
-}
-
-.fast-scan-footer {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-.fast-scan-badge {
-    background: #FEF3C7;
-    color: #92400E;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    font-weight: 900;
-}
-
-.teacher-scanner-char {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    height: 180px;
 }
 
 /* ==========================================================================
@@ -4547,12 +4477,8 @@ body.remote-mode .explorer-spotlight { display: none; }
 
     .stepper-steps { overflow-x: auto; }
 
-    .quiz-question-card, .think-talk-section, .writing-checklist-card, .writing-editor-card, .scanner-wrapper-card, .reveal-card.revealed, .ritual-card {
+    .quiz-question-card, .think-talk-section, .writing-checklist-card, .writing-editor-card, .reveal-card.revealed, .ritual-card {
         padding: 20px;
-    }
-
-    .teacher-scanner-char {
-        display: none;
     }
 
     .scanner-selectors-bar { flex-direction: column; align-items: stretch; gap: 14px; }
@@ -4563,8 +4489,6 @@ body.remote-mode .explorer-spotlight { display: none; }
        overflow at narrow widths. */
     .selector-field { flex-direction: column; align-items: flex-start; gap: 6px; }
     .custom-select { width: 100%; max-width: 100%; text-overflow: ellipsis; }
-
-    .camera-viewport { height: 240px; }
 
     .editor-footer { flex-direction: column; align-items: stretch; }
 

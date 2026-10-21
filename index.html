@@ -1678,49 +1678,52 @@
             <section id="scan-view" class="view-section">
                 <div class="roadmap-header">
                     <div class="roadmap-title-area">
-                        <h2>Scan a Worksheet</h2>
-                        <p>Capture a student's handwritten page and send it to their portfolio — fast, no waiting.</p>
+                        <h2>Scan a Story</h2>
+                        <p>Scan any student's handwritten story, for any chapter. Check the text, get kind feedback, then save it to the student's record — their parent sees it in their report.</p>
                     </div>
                 </div>
 
-                <!-- Performance Controls & Scanner Layout -->
-                <div class="scanner-wrapper-card">
+                <div class="writing-editor-card scan-desk">
                     <div class="scanner-selectors-bar">
                         <div class="selector-field">
-                            <label>Student:</label>
+                            <label for="studentSelect">Student</label>
                             <select id="studentSelect" class="custom-select" onchange="onStudentSelectChange(this.value)"></select>
                         </div>
-
                         <div class="selector-field">
-                            <label>Chapter:</label>
+                            <label for="scanChapterSelect">Chapter</label>
                             <select id="scanChapterSelect" class="custom-select" onchange="onScanChapterChange(this.value)"></select>
                         </div>
                     </div>
 
-                    <div class="camera-viewport">
-                        <div class="scanner-laser-beam" id="scannerLaser"></div>
+                    <div class="scan-desk-photo-row">
+                        <button class="btn-primary-glowing compact" onclick="openOcrScanModal('scanStoryText')">
+                            <i class="fa-solid fa-camera"></i> Scan Student's Writing
+                        </button>
+                        <span class="scan-desk-hint">Take or choose a photo of the page. You can also type the story.</span>
+                    </div>
 
-                        <div class="viewport-placeholder" id="viewportPlaceholder">
-                            <i class="fa-solid fa-camera camera-large-icon"></i>
-                            <p>Position handwritten worksheet within camera frame</p>
-                        </div>
+                    <label for="scanStoryText" class="visually-hidden">Story text</label>
+                    <textarea id="scanStoryText" class="story-desk-text" placeholder="The story appears here after scanning — check it and fix any word that was misread." oninput="onScanStoryInput()"></textarea>
 
-                        <div class="scanner-controls-overlay">
-                            <button class="btn-primary-glowing" onclick="triggerScannerProcess()">
-                                <i class="fa-solid fa-camera"></i> Take Photo
-                            </button>
-                            <button class="btn-glass" onclick="triggerScannerProcess()">
-                                <i class="fa-solid fa-folder-open"></i> Choose Photo
-                            </button>
+                    <div class="ai-feedback-panel" id="scanFeedbackPanel" aria-live="polite">
+                        <i class="fa-solid fa-robot"></i>
+                        <div class="ai-feedback-body">
+                            <dl class="ai-feedback-list" id="scanFeedbackList"></dl>
+                            <span class="ai-feedback-source">AI feedback — read it before sharing with the student</span>
                         </div>
                     </div>
 
-                    <div class="fast-scan-footer">
-                        <span class="fast-scan-badge"><i class="fa-solid fa-bolt yellow"></i> FAST SCAN</span>
-                        <span>Capture → Send → Next Student. AI processing happens in the background.</span>
+                    <div class="editor-footer">
+                        <span class="scan-desk-hint">Stories saved here appear in the student's report and the class story report.</span>
+                        <div class="editor-actions">
+                            <button class="btn-glass compact" id="scanFeedbackBtn" onclick="requestStoryFeedback('scan')">
+                                <i class="fa-solid fa-comment-dots blue"></i> Get Feedback
+                            </button>
+                            <button class="btn-primary-glowing compact" id="scanSaveBtn" onclick="saveStudentStory('scan')" hidden>
+                                <i class="fa-solid fa-floppy-disk"></i> <span id="scanSaveLabel">Save</span>
+                            </button>
+                        </div>
                     </div>
-
-                    <img src="assets/teacher_avatar.png" alt="Teacher Avatar" class="teacher-scanner-char">
                 </div>
             </section>
 
@@ -2068,19 +2071,6 @@
     </div>
 
     <!-- Scan Completed Success Modal -->
-    <div id="scanSuccessModal" class="modal-backdrop" onclick="if (event.target === this) closeScanSuccessModal()">
-        <div class="modal-card scan-modal">
-            <div class="scan-success-icon-wrapper">
-                <i class="fa-solid fa-circle-check green-check"></i>
-            </div>
-            <h2>SCANNED!</h2>
-            <p>Photo sent! Feedback will appear in the portfolio shortly. You can move to the next student now.</p>
-            <button class="btn-primary-glowing full-width" onclick="closeScanSuccessModal()">
-                Next Student <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-    </div>
-
     <!-- Chapter 1's dedicated Practice experience (self-contained IIFE) -->
     <script src="chapter1-practice.js"></script>
     <!-- Custom JS -->

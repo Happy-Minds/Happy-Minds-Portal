@@ -605,6 +605,8 @@ function renderAdminTrainerCard() {
 }
 
 function showNotification(msg) {
+    // A new message replaces the one on screen instead of piling on top of it.
+    document.querySelectorAll('.toast-notification').forEach(old => old.remove());
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.textContent = msg;
@@ -2273,26 +2275,55 @@ function analyzeWritingContent() {
     document.getElementById('sentenceCount').textContent = sentences.length;
     // Feedback on screen always belongs to the text in the box, and an
     // emptied box no longer belongs to the photo that was scanned into it.
-    if (!text) storyPhoto = null;
-    clearStoryFeedback();
+    if (!text) storyDeskState.create.photo = null;
+    clearStoryFeedback('create');
 }
 
-// ================= Student stories: feedback + save (Create) =================
-// In class the teacher scans the stories of a few students they choose. For
-// each: pick the student, scan (or type) the story, check the text, Get
-// Feedback, then Save — story and feedback go to that student's record
-// (story_submissions), for parent and trainer reports. Teacher saves are
-// separate from the 2 chances each student has in the student portal.
-let storyFeedback = null;  // { praise, tip, question } for the text in the box
-let storyRequestId = 0;    // bumped whenever the text changes, so a late answer for old text is ignored
-let storyPhoto = null;     // JPEG Blob of the page scanned into the box, or null if typed
+// ================= Student stories: scan → feedback → save =================
+// Two "story desks" share this flow: the Create step (in class, for the few
+// students the teacher chooses) and the Scan tab (any student, any chapter,
+// e.g. a notebook page handed in later). For each story: pick the student,
+// scan (or type) it, check the text, Get Feedback, then Save — story, feedback
+// and photo go to that student's record (story_submissions), for parent and
+// trainer reports. Teacher saves are separate from the 2 chances each
+// student has in the student portal.
+const STORY_DESKS = {
+    create: {
+        text: 'storyTextArea', student: 'storyStudentSelect',
+        panel: 'aiFeedbackPanel', list: 'aiFeedbackList',
+        feedbackBtn: 'storyFeedbackBtn', saveBtn: 'storySaveBtn', saveLabel: 'storySaveLabel',
+        chapterId: () => appState.currentChapterId,
+        afterSave: chapterId => { analyzeWritingContent(); refreshSavedStories(chapterId); }
+    },
+    scan: {
+        text: 'scanStoryText', student: 'studentSelect',
+        panel: 'scanFeedbackPanel', list: 'scanFeedbackList',
+        feedbackBtn: 'scanFeedbackBtn', saveBtn: 'scanSaveBtn', saveLabel: 'scanSaveLabel',
+        chapterId: () => appState.scanTargetChapterId,
+        afterSave: () => onScanStoryInput()
+    }
+};
+
+// Per desk: feedback for the text in the box, a counter bumped whenever the
+// text changes (so a late answer for old text is ignored), and the JPEG of
+// the page scanned into the box (null if the story was typed).
+const storyDeskState = {
+    create: { feedback: null, requestId: 0, photo: null },
+    scan: { feedback: null, requestId: 0, photo: null }
+};
+
+const deskEl = (desk, part) => document.getElementById(STORY_DESKS[desk][part]);
+
+function storyDeskForTextArea(textAreaId) {
+    return Object.keys(STORY_DESKS).find(desk => STORY_DESKS[desk].text === textAreaId) || null;
+}
 
 function renderStoryStudents(chapter) {
     const select = document.getElementById('storyStudentSelect');
     select.replaceChildren(new Option('Choose a student…', ''),
         ...HappyMindsConfig.STUDENTS.map(s => new Option(s.name, s.id)));
-    storyPhoto = null;
-    clearStoryFeedback();
+    storyDeskState.create.photo = null;
+    clearStoryFeedback('create');
     refreshSavedStories(chapter.id);
 }
 
@@ -2325,36 +2356,36 @@ function classDayKey(iso) {
     return new Date(iso).toLocaleDateString('en-CA');
 }
 
-function clearStoryFeedback() {
-    storyFeedback = null;
-    storyRequestId++;
-    document.getElementById('aiFeedbackPanel').classList.remove('shown');
-    setStoryFeedbackBusy(false);
-    updateStorySaveButton();
+function clearStoryFeedback(desk = 'create') {
+    const state = storyDeskState[desk];
+    state.feedback = null;
+    state.requestId++;
+    deskEl(desk, 'panel').classList.remove('shown');
+    setStoryFeedbackBusy(desk, false);
+    updateStorySaveButton(desk);
 }
 
-function setStoryFeedbackBusy(busy) {
-    const btn = document.getElementById('storyFeedbackBtn');
+function setStoryFeedbackBusy(desk, busy) {
+    const btn = deskEl(desk, 'feedbackBtn');
     btn.disabled = busy;
     btn.innerHTML = busy
         ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading the story…'
         : '<i class="fa-solid fa-comment-dots blue"></i> Get Feedback';
 }
 
-function updateStorySaveButton() {
-    const studentId = document.getElementById('storyStudentSelect').value;
-    const student = HappyMindsConfig.STUDENTS.find(s => s.id === studentId);
-    const btn = document.getElementById('storySaveBtn');
-    btn.hidden = !storyFeedback;
+function updateStorySaveButton(desk = 'create') {
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === deskEl(desk, 'student').value);
+    const btn = deskEl(desk, 'saveBtn');
+    btn.hidden = !storyDeskState[desk].feedback;
     btn.disabled = !student;
-    document.getElementById('storySaveLabel').textContent = student ? `Save to ${student.name}` : 'Choose a student to save';
+    deskEl(desk, 'saveLabel').textContent = student ? `Save to ${student.name}` : 'Choose a student to save';
 }
 
-function renderStoryFeedback(feedback) {
+function renderStoryFeedback(desk, feedback) {
     const rows = [['What went well', feedback.praise], ['Try this next time', feedback.tip], ['Think about', feedback.question]];
-    document.getElementById('aiFeedbackList').innerHTML = rows
+    deskEl(desk, 'list').innerHTML = rows
         .map(([label, text]) => `<dt>${label}</dt><dd>${escapeReportText(text)}</dd>`).join('');
-    document.getElementById('aiFeedbackPanel').classList.add('shown');
+    deskEl(desk, 'panel').classList.add('shown');
 }
 
 function storyErrorMessage(err, action) {
@@ -2363,50 +2394,50 @@ function storyErrorMessage(err, action) {
     return `Couldn't ${action} right now. Please try again.`;
 }
 
-async function requestStoryFeedback() {
-    const text = document.getElementById('storyTextArea').value.trim();
+async function requestStoryFeedback(desk = 'create') {
+    const text = deskEl(desk, 'text').value.trim();
     if (!text) {
         showNotification("Scan or type the student's story first.");
         return;
     }
-    clearStoryFeedback();
-    const requestId = storyRequestId;
-    setStoryFeedbackBusy(true);
+    const state = storyDeskState[desk];
+    clearStoryFeedback(desk);
+    const requestId = state.requestId;
+    setStoryFeedbackBusy(desk, true);
     try {
-        const feedback = await HMCloud.storyFeedback(getCurrentChapter(), text);
-        if (requestId !== storyRequestId) return;
-        storyFeedback = feedback;
-        renderStoryFeedback(feedback);
-        updateStorySaveButton();
+        const feedback = await HMCloud.storyFeedback(getChapterById(STORY_DESKS[desk].chapterId()), text);
+        if (requestId !== state.requestId) return;
+        state.feedback = feedback;
+        renderStoryFeedback(desk, feedback);
+        updateStorySaveButton(desk);
     } catch (err) {
-        if (requestId === storyRequestId) showNotification(storyErrorMessage(err, 'get feedback'));
+        if (requestId === state.requestId) showNotification(storyErrorMessage(err, 'get feedback'));
     } finally {
-        if (requestId === storyRequestId) setStoryFeedbackBusy(false);
+        if (requestId === state.requestId) setStoryFeedbackBusy(desk, false);
     }
 }
 
-async function saveStudentStory() {
-    const select = document.getElementById('storyStudentSelect');
+async function saveStudentStory(desk = 'create') {
+    const state = storyDeskState[desk];
+    const select = deskEl(desk, 'student');
     const student = HappyMindsConfig.STUDENTS.find(s => s.id === select.value);
-    const textArea = document.getElementById('storyTextArea');
+    const textArea = deskEl(desk, 'text');
     const text = textArea.value.trim();
-    if (!student || !storyFeedback || !text) return;
+    if (!student || !state.feedback || !text) return;
 
-    const chapterId = appState.currentChapterId;
-    const btn = document.getElementById('storySaveBtn');
-    btn.disabled = true;
-    document.getElementById('storySaveLabel').textContent = 'Saving…';
+    const chapterId = STORY_DESKS[desk].chapterId();
+    deskEl(desk, 'saveBtn').disabled = true;
+    deskEl(desk, 'saveLabel').textContent = 'Saving…';
     try {
-        await HMCloud.saveStory(student.id, chapterId, text, storyFeedback, storyPhoto);
+        await HMCloud.saveStory(student.id, chapterId, text, state.feedback, state.photo);
         showNotification(`Saved ${student.name}'s story and feedback.`);
         textArea.value = '';
         select.value = '';
-        storyPhoto = null;
-        analyzeWritingContent();
-        refreshSavedStories(chapterId);
+        state.photo = null;
+        STORY_DESKS[desk].afterSave(chapterId);
     } catch (err) {
         showNotification(storyErrorMessage(err, 'save the story'));
-        updateStorySaveButton();
+        updateStorySaveButton(desk);
     }
 }
 
@@ -2703,9 +2734,10 @@ async function extractOcrText() {
         const text = await requestOcrText(ocrCapturedImageSrc, photo);
         const textarea = document.getElementById(ocrScanTargetId);
         textarea.value = text;
-        if (ocrScanTargetId === 'storyTextArea') {
-            analyzeWritingContent();
-            storyPhoto = photo; // saved with the story, for the class report
+        const desk = storyDeskForTextArea(ocrScanTargetId);
+        if (desk) {
+            textarea.dispatchEvent(new Event('input'));
+            storyDeskState[desk].photo = photo; // saved with the story, for the class report
         }
 
         closeOcrScanModal();
@@ -4402,48 +4434,31 @@ function openScanView() {
 
 function renderScanView() {
     const studentSelect = document.getElementById('studentSelect');
-    studentSelect.innerHTML = HappyMindsConfig.STUDENTS.map(s => `<option value="${s.id}">${s.name} (${s.grade})</option>`).join('');
-    appState.scanTargetStudentId = HappyMindsConfig.STUDENTS[0].id;
+    const keepStudent = studentSelect.value;
+    studentSelect.replaceChildren(new Option('Choose a student…', ''),
+        ...HappyMindsConfig.STUDENTS.map(s => new Option(s.name, s.id)));
+    studentSelect.value = keepStudent;
 
     const chapterSelect = document.getElementById('scanChapterSelect');
-    chapterSelect.innerHTML = CHAPTERS.map(c => `<option value="${c.id}">Chapter ${String(c.id).padStart(2, '0')} — ${c.title}</option>`).join('');
+    chapterSelect.innerHTML = CHAPTERS.map(c => `<option value="${c.id}">Chapter ${String(c.id).padStart(2, '0')} — ${escapeReportText(c.title)}</option>`).join('');
     chapterSelect.value = appState.scanTargetChapterId;
-
-    document.getElementById('viewportPlaceholder').style.display = 'flex';
-    document.getElementById('scannerLaser').classList.remove('active-scan');
+    updateStorySaveButton('scan');
 }
 
 function onStudentSelectChange(id) {
     appState.scanTargetStudentId = id;
+    updateStorySaveButton('scan');
 }
 
+// Feedback is written for the chapter's task, so a new chapter needs new feedback.
 function onScanChapterChange(id) {
     appState.scanTargetChapterId = Number(id);
+    clearStoryFeedback('scan');
 }
 
-function triggerScannerProcess() {
-    const laser = document.getElementById('scannerLaser');
-    laser.classList.add('active-scan');
-
-    // Upload happens in the background; the teacher never waits for it.
-    if (HappyMindsConfig.SCAN_UPLOAD_ENDPOINT) {
-        const student = HappyMindsConfig.STUDENTS.find(s => s.id === appState.scanTargetStudentId);
-        fetch(HappyMindsConfig.SCAN_UPLOAD_ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studentId: student.id, chapterId: appState.scanTargetChapterId })
-        }).catch(err => console.warn('Background upload failed (teacher already moved on):', err));
-    }
-
-    setTimeout(() => {
-        laser.classList.remove('active-scan');
-        document.getElementById('scanSuccessModal').classList.add('active-modal');
-    }, 350);
-}
-
-function closeScanSuccessModal() {
-    document.getElementById('scanSuccessModal').classList.remove('active-modal');
-    // Ready immediately for the next student — no AI wait on this screen.
+function onScanStoryInput() {
+    if (!document.getElementById('scanStoryText').value.trim()) storyDeskState.scan.photo = null;
+    clearStoryFeedback('scan');
 }
 
 // A chapter is marked complete only once its Chapter Reflection is
