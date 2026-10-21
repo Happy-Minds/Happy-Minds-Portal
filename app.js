@@ -3904,7 +3904,9 @@ function renderPrepReadiness(chapterId) {
 // ("No words tagged yet") rather than showing a fake number.
 
 function renderParentDashboard(account) {
-    document.getElementById('parentDashboardContent').innerHTML = buildStudentReportHtml(account.studentId);
+    const container = document.getElementById('parentDashboardContent');
+    container.innerHTML = buildStudentReportHtml(account.studentId);
+    loadReportStories(container, account.studentId);
 }
 
 function openReportsHome() {
@@ -3920,7 +3922,9 @@ function openReportsHome() {
 }
 
 function openStudentReport(studentId) {
-    document.getElementById('teacherReportContent').innerHTML = buildStudentReportHtml(studentId);
+    const container = document.getElementById('teacherReportContent');
+    container.innerHTML = buildStudentReportHtml(studentId);
+    loadReportStories(container, studentId);
     navigateTo('teacher-report');
 }
 
@@ -3956,7 +3960,7 @@ function buildPortalActivityHtml(student, portal) {
         [(portal.badges || []).length, 'Badges Earned'],
         [(portal.completedPractice || []).length, 'Practice Sets Done'],
         [(portal.completedFixIt || []).length, 'Fix It Activities Done'],
-        [creations.length, 'Creations Submitted']
+        [creations.length, 'Stories Sent']
     ];
 
     return `
@@ -3969,16 +3973,6 @@ function buildPortalActivityHtml(student, portal) {
                         <div class="admin-stat-label">${label}</div>
                     </div>`).join('')}
             </div>
-        </div>
-
-        <div class="admin-section-card">
-            <h3><i class="fa-solid fa-palette"></i> Creations</h3>
-            ${creations.length
-                ? `<div class="admin-chapter-list">${creations.map(c => {
-                    const chapter = getChapterById(parseInt(c.chapterId, 10));
-                    return `<div class="admin-list-row"><span class="admin-list-num">Ch${String(c.chapterId).padStart(2, '0')}</span><span class="admin-list-title">"${escapeReportText(c.title)}"</span><span class="admin-list-username">${chapter ? chapter.title : ''} · ${formatDate(c.date)}</span></div>`;
-                }).join('')}</div>`
-                : `<p class="prep-readiness-explain">${student.name} hasn't submitted a creation yet.</p>`}
         </div>
 
         <div class="admin-section-card">
@@ -4033,7 +4027,63 @@ function buildStudentReportHtml(studentId) {
                 : `<p class="prep-readiness-explain">No words tagged to ${student.name} yet — the teacher tags who said each Lumora Wall word during Explore.</p>`}
         </div>
 
+        <div class="admin-section-card">
+            <h3><i class="fa-solid fa-book-open-reader"></i> ${student.name}'s Stories</h3>
+            <p class="prep-readiness-explain">Every story ${student.name} wrote, exactly as written, with the kind feedback it received: stories the teacher scanned in class, and stories sent from the Learning Space.</p>
+            <div class="report-stories" data-report-stories>
+                <p class="prep-readiness-explain">Loading stories…</p>
+            </div>
+        </div>
+
         ${buildPortalActivityHtml(student, loadStudentPortalState(studentId))}`;
+}
+
+// Fills the report's Stories section. Row Level Security makes sure a parent
+// only ever receives their own child's stories; staff can open any student.
+async function loadReportStories(container, studentId) {
+    const box = container.querySelector('[data-report-stories]');
+    if (!box) return;
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === studentId);
+    const name = student ? student.name : 'This student';
+    let stories;
+    try {
+        stories = (await HMCloud.listStories()).filter(s => s.student_id === studentId);
+    } catch (err) {
+        box.innerHTML = `<p class="prep-readiness-explain">Couldn't load the stories. Check the internet connection and open this page again.</p>`;
+        return;
+    }
+    if (!box.isConnected) return; // the report was closed or re-opened meanwhile
+    if (!stories.length) {
+        box.innerHTML = `<p class="prep-readiness-explain">No stories yet. ${escapeReportText(name)}'s stories will appear here when the teacher scans one in class or ${escapeReportText(name)} sends one from the Learning Space.</p>`;
+        return;
+    }
+    box.innerHTML = stories.map((story, i) => {
+        const chapter = getChapterById(story.chapter_id);
+        const f = story.feedback || {};
+        const date = new Date(story.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        const source = story.source === 'teacher'
+            ? '<span class="report-story-source class"><i class="fa-solid fa-chalkboard-user"></i> Written in class</span>'
+            : '<span class="report-story-source portal"><i class="fa-solid fa-house-laptop"></i> Sent from the Learning Space</span>';
+        return `
+            <details class="report-story"${i === 0 ? ' open' : ''}>
+                <summary>
+                    <span class="admin-list-num">Ch${String(story.chapter_id).padStart(2, '0')}</span>
+                    <span class="report-story-title">${escapeReportText(chapter ? chapter.title : `Chapter ${story.chapter_id}`)}</span>
+                    ${source}
+                    <span class="report-story-date">${date}</span>
+                </summary>
+                <div class="report-story-body">
+                    <h4>Story, as ${escapeReportText(name)} wrote it</h4>
+                    <p class="report-story-text">${escapeReportText(story.story_text)}</p>
+                    <h4>Feedback</h4>
+                    <dl class="report-story-feedback">
+                        <dt>What went well</dt><dd>${escapeReportText(f.praise)}</dd>
+                        <dt>Try this next time</dt><dd>${escapeReportText(f.tip)}</dd>
+                        <dt>Think about</dt><dd>${escapeReportText(f.question)}</dd>
+                    </dl>
+                </div>
+            </details>`;
+    }).join('');
 }
 
 // ================= TRAINER/ADMIN: Teacher Usage Report =================

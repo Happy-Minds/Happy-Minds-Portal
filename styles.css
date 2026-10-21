@@ -3039,6 +3039,12 @@ body.remote-mode .explorer-spotlight { display: none; }
     padding: 36px;
     width: 90%;
     max-width: 500px;
+    /* Never taller than the screen: long content scrolls inside the card,
+       so its buttons can always be reached on a phone. */
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     position: relative;
     box-shadow: 0 25px 50px rgba(0,0,0,0.25);
     animation: modalPop 0.3s ease-out;
@@ -3087,6 +3093,19 @@ body.remote-mode .explorer-spotlight { display: none; }
 }
 
 .ocr-scan-area p { font-weight: 700; font-size: 14px; }
+
+/* The live camera and the photo preview fit the window whatever the photo's
+   size (phone photos are often 3000-4000px), keeping the buttons in view. */
+.ocr-video,
+.ocr-preview-img {
+    width: 100%;
+    max-height: 50vh;
+    max-height: 50dvh;
+    object-fit: contain;
+    background: #0F172A;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
 
 .scan-upload-btn {
     padding: 8px 16px;
@@ -3276,6 +3295,16 @@ body.remote-mode .explorer-spotlight { display: none; }
     to { opacity: 0; transform: translateY(12px); }
 }
 
+@keyframes toastInTop {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOutTop {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-12px); }
+}
+
 /* ==========================================================================
    LOGIN GATE
    ========================================================================== */
@@ -3457,6 +3486,103 @@ body.remote-mode .explorer-spotlight { display: none; }
 }
 
 .admin-list-row:hover { background: #F8FAFC; }
+
+/* Student report: the child's stories with their feedback (parents + staff) */
+.report-stories {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.report-story {
+    border: 1.5px solid #E2E8F0;
+    border-radius: 16px;
+    background: #F8FAFC;
+}
+
+.report-story[open] { background: white; border-color: #BAE6FD; }
+
+.report-story summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    list-style: none;
+    border-radius: 16px;
+}
+
+.report-story summary::-webkit-details-marker { display: none; }
+.report-story summary:focus-visible { outline: 3px solid var(--primary-blue); outline-offset: 2px; }
+.report-story .admin-list-num { width: auto; }
+
+.report-story-title {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--text-dark);
+    flex: 1 1 auto;
+}
+
+.report-story-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.report-story-source.class { background: #E0F2FE; color: #0369A1; }
+.report-story-source.portal { background: #EDE9FE; color: #6D28D9; }
+
+.report-story-date {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.report-story-body { padding: 0 14px 16px; }
+
+.report-story-body h4 {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin: 4px 0 6px;
+}
+
+.report-story-text {
+    white-space: pre-wrap;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.65;
+    color: var(--text-dark);
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.report-story-feedback dt {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    margin-top: 8px;
+}
+
+.report-story-feedback dt:first-child { margin-top: 0; }
+
+.report-story-feedback dd {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: #1E3A8A;
+}
 
 .admin-list-num {
     font-weight: 800;
@@ -4391,7 +4517,20 @@ body.remote-mode .explorer-spotlight { display: none; }
 
     .celebration-actions { flex-direction: column; }
 
-    .toast-notification { left: 16px; right: 16px; bottom: 16px; text-align: center; }
+    /* On phones, notifications drop in at the top: the bottom is covered by
+       the Script button and the browser's own toolbar. */
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: auto;
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        max-width: none;
+        text-align: center;
+        border-radius: 20px;
+        animation-name: toastInTop;
+    }
+
+    .toast-notification.leaving { animation-name: toastOutTop; }
 }
 
 /* ==========================================================================

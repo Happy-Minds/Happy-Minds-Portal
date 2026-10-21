@@ -1260,19 +1260,22 @@ body {
    ========================================================================== */
 .sp-toast {
     position: fixed;
-    bottom: 24px; left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); left: 50%;
     transform: translateX(-50%) translateY(80px);
     background: #1E293B;
     color: white;
     font-size: 14px;
     font-weight: 700;
     padding: 14px 24px;
-    border-radius: var(--sp-r-full);
+    border-radius: var(--sp-r-lg);
     z-index: 9999;
     opacity: 0;
     transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-    white-space: nowrap;
-    max-width: 90vw;
+    /* Long messages wrap instead of running off the sides of a phone. */
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    line-height: 1.4;
 }
 .sp-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 

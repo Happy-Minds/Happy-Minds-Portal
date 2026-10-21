@@ -975,11 +975,15 @@ async function spSubmitCreation() {
 // ==========================================================================
 // UTILS
 // ==========================================================================
+// One toast box is reused, so a new message restarts the timer; otherwise an
+// earlier message's timer would hide the new one before it could be read.
+let toastTimer = null;
 function showToast(msg) {
     const t = document.getElementById('spToast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), Math.max(3000, msg.length * 60));
 }
 
 function triggerConfetti() {
