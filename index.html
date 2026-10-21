@@ -76,7 +76,7 @@
                 <button class="nav-btn" data-view="chapters" data-roles="teacher,trainer,admin" onclick="navigateTo('chapters')">
                     <i class="fa-solid fa-map"></i> Chapters
                 </button>
-                <button class="nav-btn" data-view="scan" data-roles="teacher,trainer,admin" onclick="openScanView()">
+                <button class="nav-btn" data-view="scan" data-roles="teacher" onclick="openScanView()">
                     <i class="fa-solid fa-qrcode"></i> Scan
                 </button>
                 <button class="nav-btn" data-view="observe" data-role="trainer" onclick="openObservationPicker()" style="display:none;">
@@ -120,7 +120,7 @@
                     <i class="fa-solid fa-angle-down"></i>
 
                     <div class="user-menu-dropdown" id="userMenuDropdown">
-                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher,trainer,admin" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
+                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
                             <i class="fa-solid fa-display"></i> Projector mode
                         </button>
                         <button onclick="handleLogout(event)">
@@ -133,6 +133,11 @@
 
         <!-- Dynamic View Container -->
         <main class="content-container">
+            <!-- Trainers/admins browsing a lesson: nothing they do here is saved -->
+            <div class="view-only-banner" role="status">
+                <i class="fa-solid fa-eye"></i>
+                <span><strong>Preview only.</strong> You're seeing what the teacher sees. Nothing you do here is saved, counts as class time, or shows on a projector.</span>
+            </div>
 
             <!-- ================= VIEW 1: HOME PAGE ================= -->
             <section id="home-view" class="view-section active-view">
@@ -638,7 +643,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -886,7 +891,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -1307,7 +1312,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -1419,7 +1424,7 @@
 
                         <div class="writing-editor-card">
                             <!-- Stories the teacher scans for a few students and saves to their record -->
-                            <div class="story-student-bar">
+                            <div class="story-student-bar teacher-only">
                                 <label for="storyStudentSelect" class="story-student-label">
                                     <i class="fa-solid fa-user-pen"></i> Whose story?
                                 </label>
@@ -1434,7 +1439,7 @@
                             <div class="sentence-starter-bar">
                                 <span class="starter-label">Sentence Starter:</span>
                                 <div id="starterBar" class="starter-bar-buttons"></div>
-                                <button class="btn-glass compact scan-upload-btn" onclick="openOcrScanModal('storyTextArea')">
+                                <button class="btn-glass compact scan-upload-btn teacher-only" onclick="openOcrScanModal('storyTextArea')">
                                     <i class="fa-solid fa-camera blue"></i> Scan Student's Writing
                                 </button>
                             </div>
@@ -1454,7 +1459,7 @@
                                     <span id="sentenceCount">0</span> / <span id="sentenceTargetNum">6</span> sentences
                                 </div>
                                 <div class="editor-actions">
-                                    <button class="btn-glass compact" id="storyFeedbackBtn" onclick="requestStoryFeedback()">
+                                    <button class="btn-glass compact teacher-only" id="storyFeedbackBtn" onclick="requestStoryFeedback()">
                                         <i class="fa-solid fa-comment-dots blue"></i> Get Feedback
                                     </button>
                                     <button class="btn-glass compact" id="storySaveBtn" onclick="saveStudentStory()" hidden>
@@ -1515,7 +1520,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>

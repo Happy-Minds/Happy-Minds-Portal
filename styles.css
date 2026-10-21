@@ -1108,6 +1108,29 @@ body {
 
 .stage-timer-badge i { color: var(--primary-blue); }
 
+/* Trainers/admins browsing lessons (body.view-only): teacher-only controls
+   are hidden and a banner says nothing is saved. */
+body.view-only .teacher-only,
+body.view-only .stage-timer-badge { display: none !important; }
+
+.view-only-banner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: #FEF3C7;
+    border: 1.5px solid #FDE68A;
+    color: #92400E;
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.view-only-banner i { font-size: 16px; flex-shrink: 0; }
+body.view-only.lesson-view .view-only-banner { display: flex; }
+
 /* Clock paused (screen off or nobody using the portal); resumes on the next tap. */
 .stage-timer-badge.paused { opacity: 0.55; }
 .stage-timer-badge.paused i { color: var(--text-muted); }

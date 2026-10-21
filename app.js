@@ -78,6 +78,23 @@ function localDateString(date) {
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
+// ================= View-only staff (trainers, admins) =================
+// Trainers and admins can open every chapter, Teacher Prep and the lesson
+// screens to see what the teacher sees, but only the teacher runs the class:
+// nothing they do there is saved, counts as class time, marks a stage or
+// chapter done, uses the story helper, or controls a projector. They do
+// still save their own work (observations). To give admins full teacher
+// controls again, remove 'admin' here.
+const VIEW_ONLY_ROLES = ['trainer', 'admin'];
+
+function isViewOnly() {
+    return !!appState.currentUser && VIEW_ONLY_ROLES.includes(appState.currentUser.role);
+}
+
+function viewOnlyNotice(what) {
+    showNotification(`Preview only — ${what}`);
+}
+
 function loadClassProgress() {
     const saved = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY);
     if (saved) return { completedChapters: saved.completedChapters || [], chapterProgress: saved.chapterProgress || {} };
@@ -85,6 +102,7 @@ function loadClassProgress() {
 }
 
 function saveClassProgress() {
+    if (isViewOnly()) return;
     HMCloud.save(CLASS_PROGRESS_STORAGE_KEY, {
         completedChapters: appState.completedChapters,
         chapterProgress: appState.chapterProgress
@@ -112,11 +130,13 @@ function getProgress(chapterId) {
 }
 
 function markStageDone(chapterId, stage) {
+    if (isViewOnly()) return;
     getProgress(chapterId)[stage] = true;
     saveClassProgress();
 }
 
 function markChapterComplete(chapterId) {
+    if (isViewOnly()) return;
     if (!appState.completedChapters.includes(chapterId)) {
         appState.completedChapters.push(chapterId);
         saveClassProgress();
@@ -124,7 +144,7 @@ function markChapterComplete(chapterId) {
 }
 
 function isChapterUnlocked(id) {
-    if (id === 1) return true;
+    if (id === 1 || isViewOnly()) return true;
     return appState.completedChapters.includes(id - 1) || appState.completedChapters.includes(id);
 }
 
@@ -139,10 +159,12 @@ function loadTimeTracking() {
 }
 
 function saveTimeTracking() {
+    if (isViewOnly()) return;
     HMCloud.save(TIME_TRACKING_STORAGE_KEY, appState.timeTracking);
 }
 
 function startTimer(chapterId, stage) {
+    if (isViewOnly()) return; // only the teacher's time is class time
     stopTimer();
     pausedTimerKey = null;
     activeTimerKey = { chapterId, stage };
@@ -274,6 +296,9 @@ function closeAllModals() {
     document.querySelectorAll('.modal-backdrop.active-modal').forEach(m => m.classList.remove('active-modal'));
 }
 
+// Screens where a view-only trainer/admin sees the "Preview only" banner.
+const PREVIEW_BANNER_VIEWS = ['chapter-detail', 'prep', 'explore-stage', 'practice-stage', 'create-stage', 'perform-stage'];
+
 function navigateTo(viewId) {
     appState.currentView = viewId;
     closeAllModals();
@@ -286,6 +311,7 @@ function navigateTo(viewId) {
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-view') === viewId);
     });
+    document.body.classList.toggle('lesson-view', PREVIEW_BANNER_VIEWS.includes(viewId));
 
     if (viewId === 'home') renderHomeHeroStats();
     if (viewId !== 'explore-stage') {
@@ -359,7 +385,7 @@ function startChapterStage(stageName) {
 
     // Class 2 (Create + Perform) only opens once the Class 1 planner is fully
     // ticked off — either done by the teacher or auto-tracked by the app.
-    if ((stageName === 'create' || stageName === 'perform') && !isPlannerComplete(chapter.id, 'class1')) {
+    if (!isViewOnly() && (stageName === 'create' || stageName === 'perform') && !isPlannerComplete(chapter.id, 'class1')) {
         showNotification('Complete the Class 1 planner before moving on to Create & Perform.');
         openPlannerModal(chapter.id, 'class1', stageName);
         return;
@@ -381,7 +407,7 @@ function startChapterStage(stageName) {
         renderCreateStage(chapter);
         navigateTo('create-stage');
         startTimer(chapter.id, 'create');
-        if (!isPlannerComplete(chapter.id, 'class2')) {
+        if (!isViewOnly() && !isPlannerComplete(chapter.id, 'class2')) {
             openPlannerModal(chapter.id, 'class2');
         }
     } else if (stageName === 'perform') {
@@ -448,6 +474,7 @@ function enterApp(account) {
     }
 
     appState.currentUser = account;
+    document.body.classList.toggle('view-only', isViewOnly());
     reloadSavedState();
     renderChaptersRoadmap();
     renderChapterHub();
@@ -508,6 +535,7 @@ async function handleLogout(event) {
     updateScriptFab('login');
     await HMCloud.signOut();
     appState.currentUser = null;
+    document.body.classList.remove('view-only', 'lesson-view');
     reloadSavedState();
     document.getElementById('userMenuDropdown').classList.remove('open');
     document.getElementById('loginForm').reset();
@@ -930,7 +958,7 @@ function continuePlanner() {
 // sent (video, storybook pages, one Think & Talk question at a time, the
 // draw prompt, wrap-up…) — never the script, sample answers or roving
 // prompts, which stay in chapter.prep on the teacher's device.
-const PROJECTOR_ROLES = ['teacher', 'trainer', 'admin'];
+const PROJECTOR_ROLES = ['teacher'];
 let remoteChannel = null;
 let projectorConnected = false;
 
@@ -983,6 +1011,7 @@ function broadcastToProjector(msg) {
 // (drag it onto the projector display). On a phone the projector is already
 // running on the laptop, so the button only reports the connection.
 function openProjectorView() {
+    if (isViewOnly()) return;
     if (projectorConnected) {
         showNotification('The projector is connected. Your taps on this device control it.');
         return;
@@ -2477,6 +2506,7 @@ function storyErrorMessage(err, action) {
 }
 
 async function requestStoryFeedback(desk = 'create') {
+    if (isViewOnly()) return;
     const text = deskEl(desk, 'text').value.trim();
     if (!text) {
         showNotification("Scan or type the student's story first.");
@@ -2500,6 +2530,7 @@ async function requestStoryFeedback(desk = 'create') {
 }
 
 async function saveStudentStory(desk = 'create') {
+    if (isViewOnly()) return;
     const state = storyDeskState[desk];
     const select = deskEl(desk, 'student');
     const student = HappyMindsConfig.STUDENTS.find(s => s.id === select.value);
@@ -2696,6 +2727,7 @@ let ocrCapturedImageSrc = null;
 let tesseractLoadPromise = null;
 
 function openOcrScanModal(targetTextareaId) {
+    if (isViewOnly()) return;
     ocrScanTargetId = targetTextareaId;
     resetOcrModalUi();
     document.getElementById('ocrScanModal').classList.add('active-modal');
@@ -3100,6 +3132,7 @@ function loadReflections() {
 }
 
 function saveReflections() {
+    if (isViewOnly()) return;
     HMCloud.save(REFLECTION_STORAGE_KEY, appState.reflections);
 }
 
@@ -3119,6 +3152,7 @@ function isReflectionPending(chapterId) {
 }
 
 function openChapterReflection() {
+    if (isViewOnly()) return;
     const chapter = getCurrentChapter();
     if (!chapter.reflection) {
         // No reflection content for this chapter yet — don't block chapter
@@ -3665,6 +3699,7 @@ function loadLumoraWall() {
 }
 
 function saveLumoraWall() {
+    if (isViewOnly()) return;
     HMCloud.save(LUMORA_WALL_STORAGE_KEY, appState.lumoraWall);
 }
 
@@ -3679,6 +3714,7 @@ function getLumoraWallWords(chapterId) {
 }
 
 function addLumoraWallWord() {
+    if (isViewOnly()) { viewOnlyNotice('the teacher adds Lumora Wall words in class.'); return; }
     const input = document.getElementById('lumoraWallInput');
     const studentSelect = document.getElementById('lumoraWallStudentSelect');
     const word = input.value.trim();
@@ -3692,6 +3728,7 @@ function addLumoraWallWord() {
 }
 
 function removeLumoraWallWord(index) {
+    if (isViewOnly()) { viewOnlyNotice('the teacher manages the Lumora Wall.'); return; }
     getLumoraWallWords(appState.currentChapterId).splice(index, 1);
     saveLumoraWall();
     renderLumoraWall();
@@ -3776,6 +3813,7 @@ function loadPrepStatus() {
 }
 
 function savePrepStatus() {
+    if (isViewOnly()) return;
     HMCloud.save(PREP_STATUS_STORAGE_KEY, appState.prepStatus);
 }
 
@@ -3793,7 +3831,7 @@ function openTeacherPrep() {
         return;
     }
     const status = getPrepStatus(chapter.id);
-    if (!status.firstOpenedAt) {
+    if (!status.firstOpenedAt && !isViewOnly()) {
         status.firstOpenedAt = new Date().toISOString();
         savePrepStatus();
     }
@@ -4008,6 +4046,7 @@ function renderPrepReadyTaps(chapterId) {
 }
 
 function togglePrepReady(key) {
+    if (isViewOnly()) { viewOnlyNotice("the teacher ticks their own prep checklist."); return; }
     const chapter = getCurrentChapter();
     const status = getPrepStatus(chapter.id);
     status.readyChecks[key] = !status.readyChecks[key];
@@ -4517,6 +4556,7 @@ function openPrintPage(title, bodyHtml) {
 
 // ================= VIEW 9: Scan (standalone teacher tool, from the nav bar) =================
 function openScanView() {
+    if (isViewOnly()) return;
     renderScanView();
     navigateTo('scan');
     startTimer(appState.scanTargetChapterId, 'scan');
@@ -4556,6 +4596,10 @@ function onScanStoryInput() {
 // submitted — finishing Perform opens the Reflection form rather than
 // completing the chapter directly; submitReflection() does that instead.
 function finishChapterPerform() {
+    if (isViewOnly()) {
+        viewOnlyNotice('the teacher finishes the chapter and fills in its reflection.');
+        return;
+    }
     const chapter = getCurrentChapter();
     if (!isPlannerComplete(chapter.id, 'class2')) {
         showNotification('Complete the Class 2 planner before finishing the chapter.');
