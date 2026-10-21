@@ -1815,7 +1815,7 @@
                     <h3><i class="fa-solid fa-chalkboard-user"></i> Teacher Usage</h3>
                     <div class="admin-list-row" id="teacherReportRow" style="cursor:pointer;" onclick="openTeacherReport()">
                         <img src="assets/teacher_avatar.png" alt="" class="admin-list-avatar">
-                        <span class="admin-list-title">Ms. Anita — prep readiness &amp; in-class time</span>
+                        <span class="admin-list-title">Ms. Anita — prep readiness, in-class time &amp; chapter reflections</span>
                         <i class="fa-solid fa-chevron-right"></i>
                     </div>
                 </div>
@@ -1978,6 +1978,21 @@
     </div>
 
     <!-- Handwriting Scan Modal: shared by Create (first draft) and Perform (rewrite) -->
+    <!-- After a trainer submits an observation: offer the signed form as a PDF -->
+    <div id="observeDoneModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="observeDoneTitle" onclick="if (event.target === this) closeObserveDoneModal()">
+        <div class="modal-card scan-modal">
+            <div class="scan-success-icon-wrapper"><i class="fa-solid fa-circle-check"></i></div>
+            <h2 id="observeDoneTitle">Observation submitted</h2>
+            <p>Hold the feedback conversation within 24 hours. Save the signed form as a PDF to share it with the teacher.</p>
+            <div class="modal-actions-row observe-done-actions">
+                <button class="btn-glass" onclick="closeObserveDoneModal()">Done</button>
+                <button class="btn-primary-glowing compact" onclick="closeObserveDoneModal(); printObservationSummary(0)">
+                    <i class="fa-solid fa-file-pdf"></i> Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="ocrScanModal" class="modal-backdrop" onclick="if (event.target === this) closeOcrScanModal()">
         <div class="modal-card ocr-modal">
             <button class="modal-close-btn" onclick="closeOcrScanModal()">&times;</button>

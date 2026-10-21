@@ -235,6 +235,11 @@ function renderNotificationCenter() {
     const badge = document.getElementById('notificationBadge');
     if (!list || !badge) return;
 
+    if (appState.currentUser && REFLECTION_REVIEWER_ROLES.includes(appState.currentUser.role)) {
+        renderReviewerNotifications(list, badge);
+        return;
+    }
+
     const pending = appState.completedChapters.filter(id => isReflectionPending(id));
 
     badge.textContent = pending.length;
@@ -3235,7 +3240,7 @@ function renderObservationHistory() {
         <div class="admin-list-row">
             <span class="admin-list-title">${obs.chapterTitle} — Session ${obs.session}</span>
             <span class="admin-list-tag role-teacher">${new Date(obs.submittedAt).toLocaleDateString()}</span>
-            <button class="btn-glass compact" title="Print / save as PDF" onclick="printObservationSummary(${i})"><i class="fa-solid fa-print"></i></button>
+            <button class="btn-glass compact" title="Print / save as PDF" onclick="printObservationSummary(${i})"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             ${obs.followUp
                 ? `<span class="admin-list-tag full">Checked in — tried: ${obs.followUp.tried}</span>`
                 : `<button class="btn-glass compact" onclick="openFollowUpModal(${i})"><i class="fa-solid fa-comment-dots"></i> 5-min check-in</button>`}
@@ -3416,8 +3421,8 @@ function submitObservation() {
 
     appState.observations.push(observeDraft);
     saveObservations();
-    showNotification('Observation submitted. Hold the feedback conversation within 24 hours.');
     openObservationPicker();
+    document.getElementById('observeDoneModal').classList.add('active-modal');
 }
 
 // ================= Observation follow-up + print =================
@@ -3461,39 +3466,72 @@ function saveFollowUp() {
     showNotification('Follow-up saved.');
 }
 
-// Opens the browser's print dialog on a clean, standalone copy of the signed
-// feedback form — the honest version of "Sign and send PDF" without a real
-// backend: the trainer (or school) saves it as a PDF from there.
+// The whole observation form as the trainer filled it in, as a PDF.
 function printObservationSummary(reversedIndex) {
     const obs = appState.observations.slice().reverse()[reversedIndex];
     if (!obs) return;
-    const w = window.open('', '_blank');
-    if (!w) {
-        showNotification('Allow pop-ups for this site to print the feedback form.');
-        return;
-    }
-    w.document.write(`<!DOCTYPE html><html><head><title>Observation Feedback — ${obs.chapterTitle}</title>
-        <style>
-            body { font-family: Arial, sans-serif; padding: 32px; color: #1F2937; max-width: 640px; margin: 0 auto; }
-            h1 { font-size: 20px; margin-bottom: 4px; }
-            h2 { font-size: 14px; margin: 22px 0 6px; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; }
-            p { font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
-            .meta { color: #6B7280; font-size: 13px; }
-        </style></head><body>
-        <h1>Classroom Observation Feedback</h1>
-        <p class="meta">${obs.chapterTitle} · Session ${obs.session} · ${new Date(obs.submittedAt).toLocaleString()}</p>
-        <h2>Strengths</h2><p>${obs.strengths || '—'}</p>
-        <h2>Core Model Notes</h2><p>${obs.coreNotes || '—'}</p>
-        <h2>Key Area for Improvement</h2><p>${obs.keyArea || '—'}</p>
-        <h2>Actionable Suggestion</h2><p>${obs.suggestion || '—'}</p>
-        <h2>Follow-up</h2><p>Teacher will try this in the next session: ${obs.followupTeacher ? 'Yes' : 'No'}
-Observer 5-minute check-in: ${obs.followupObserver ? 'Yes' : 'No'}
-${obs.followUp ? `Check-in done — tried: ${obs.followUp.tried}${obs.followUp.note ? ' — ' + obs.followUp.note : ''}` : 'Check-in not done yet'}</p>
-        <h2>Signatures</h2><p>Observer: ${obs.signObserver || '—'}      Teacher: ${obs.signTeacher || '—'}</p>
-        </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+    const e = escapeReportText;
+    const answer = v => (v === undefined || v === null || v === '') ? '<span class="na">Not answered</span>' : e(v);
+    const yesNo = v => v === true || v === 'yes' ? 'Yes' : v === false || v === 'no' ? 'No' : '<span class="na">Not answered</span>';
+    const stars = n => n ? `<span class="reflection-report-stars">${'★'.repeat(n)}<span>${'★'.repeat(5 - n)}</span></span> ${n}/5` : '<span class="na">Not answered</span>';
+    const ticks = (items, picked) => `<ul class="ticks">${items.map((t, i) => `<li>${picked && picked[i] ? '✓' : '✗'} ${e(t)}</li>`).join('')}</ul>`;
+    const section = (title, rows) => `<section><h2>${title}</h2><dl>${rows.map(([label, html]) => `<dt>${label}</dt><dd>${html}</dd>`).join('')}</dl></section>`;
+
+    const chapter = getChapterById(obs.chapterId);
+    const phases = obs.session === 1 ? ['Explore', 'Practice'] : ['Create', 'Perform'];
+    const minutes = getTimeReport(obs.chapterId)[obs.chapterId] || {};
+    const pct = obs.classSize ? Math.round(((obs.tally || 0) / obs.classSize) * 100) : 0;
+    const ev = obs.evidence || {};
+    const nonNeg = OBSERVE_NONNEGOTIABLES[obs.session] || [];
+    const outputLabel = chapter && chapter.prep ? chapter.prep.lessonPlan.studentOutputs[obs.session === 1 ? 'session1' : 'session2'] : '';
+
+    openPrintPage(`Observation - Chapter ${obs.chapterId} Session ${obs.session} - ${new Date(obs.submittedAt).toISOString().slice(0, 10)}`, `
+        <header>
+            <div class="brand">Happy Minds · Classroom Observation</div>
+            <h1>${e(obs.chapterTitle)} — Session ${obs.session}</h1>
+            <p class="meta">Observed by ${e(obs.signObserver || '—')} · ${new Date(obs.submittedAt).toLocaleString()}</p>
+        </header>
+        ${section('A. Core Model Adherence', phases.map(p => [p, `${answer((obs.partA || {})[p])}${(obs.partANotes || {})[p] ? `<br><span style="font-weight:normal">${e(obs.partANotes[p])}</span>` : ''}`]))}
+        ${section('B. Facilitator vs Lecturer', [['Behaviours seen', ticks(OBSERVE_BEHAVIORS, obs.partB)]])}
+        ${section('C. Student Engagement', [
+            ['Students who spoke', `${obs.tally || 0} of ${obs.classSize} (${pct}%)`],
+            ['On-task', stars(obs.onTask)],
+            ['Positive body language', stars(obs.bodyLanguage)],
+            ['Any disengaged student — what did the teacher do?', answer(obs.disengagedNote)]
+        ])}
+        ${section('D. Pacing &amp; Time Management', [
+            ...(obs.session === 1 ? ['explore', 'practice'] : ['create', 'perform']).map(st => [
+                `${st[0].toUpperCase()}${st.slice(1)} — planned vs actual`,
+                `${(obs.partDPlanned || {})[st] ? `${e(obs.partDPlanned[st])} min planned` : 'Not planned'} · ${Math.round((minutes[st] || 0) * 10) / 10} min actual`
+            ]),
+            ['Did the teacher rush or drag any part?', answer((obs.partD || {}).note)]
+        ])}
+        ${section('E. Differentiation &amp; Support', [['Seen', ticks(OBSERVE_DIFFERENTIATION, obs.partE)]])}
+        ${section('Evidence &amp; Expectations', [
+            ['Not a lecture class', answer(ev.notLecture)],
+            ['Explore came before grammar/rules', answer(ev.exploreFirst)],
+            ['Warm, low-pressure room', answer(ev.warmRoom)],
+            [`Session output met${outputLabel ? `: "${e(outputLabel)}"` : ''}`, answer(ev.outputCoverage)],
+            ['Examples of student work seen (0-4)', answer(ev.examplesSeen)]
+        ])}
+        ${section('Non-Negotiables', nonNeg.map((item, i) => [e(item), yesNo((obs.nonNeg || {})[i])]))}
+        ${section('Feedback', [
+            ['Strengths', answer(obs.strengths)],
+            ['Core model notes', answer(obs.coreNotes)],
+            ['One key area for improvement', answer(obs.keyArea)],
+            ['Actionable suggestion', answer(obs.suggestion)],
+            ['Teacher will try this in the next session', yesNo(obs.followupTeacher)],
+            ['Observer 5-minute check-in before the next class', yesNo(obs.followupObserver)],
+            ...(obs.followUp ? [['Check-in', `Done — tried: ${e(obs.followUp.tried)}${obs.followUp.note ? ` — ${e(obs.followUp.note)}` : ''}`]] : [])
+        ])}
+        <div class="signatures">
+            <div><strong>${e(obs.signObserver || '')}&nbsp;</strong>Observer</div>
+            <div><strong>${e(obs.signTeacher || '')}&nbsp;</strong>Teacher</div>
+        </div>`);
+}
+
+function closeObserveDoneModal() {
+    document.getElementById('observeDoneModal').classList.remove('active-modal');
 }
 
 // ================= Signature Feature: Lumora Wall =================
@@ -4093,6 +4131,8 @@ async function loadReportStories(container, studentId) {
 // nothing here is mocked.
 function openTeacherReport() {
     document.getElementById('teacherReportContent').innerHTML = buildTeacherReportHtml();
+    markReflectionsSeen(submittedReflections());
+    renderNotificationCenter();
     navigateTo('teacher-report');
 }
 
@@ -4129,7 +4169,7 @@ function buildTeacherReportHtml() {
     return `
         <div class="admin-header">
             <h2><img src="${teacher.avatar}" alt="" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:10px;">${teacher.name} — Portal Usage</h2>
-            <p>Prep readiness per chapter and real in-class time logged per stage.</p>
+            <p>Prep readiness per chapter, real in-class time logged per stage, and the teacher's chapter reflections.</p>
         </div>
 
         <div class="admin-section-card">
@@ -4140,7 +4180,213 @@ function buildTeacherReportHtml() {
         <div class="admin-section-card">
             <h3><i class="fa-solid fa-stopwatch"></i> In-Class Time Logged</h3>
             ${timeRows ? `<div class="admin-chapter-list">${timeRows}</div>` : '<p class="prep-readiness-explain">No class time logged yet — time is tracked automatically as the teacher runs each stage.</p>'}
+        </div>
+
+        <div class="admin-section-card" id="teacherReflectionsCard">
+            <h3><i class="fa-solid fa-clipboard-check"></i> Chapter Reflections</h3>
+            ${buildReflectionsReportHtml()}
         </div>`;
+}
+
+// ================= TRAINER/ADMIN: Chapter Reflections =================
+// The teacher submits a Chapter Reflection after each chapter (saved in the
+// staff-only "reflections" document). Trainers and admins read them here, in
+// the Teacher Usage report, and get a notice in the bell when a new one
+// arrives. Which reflections a trainer has already opened is remembered on
+// that trainer's own device.
+const REFLECTION_REVIEWER_ROLES = ['trainer', 'admin'];
+const REFLECTIONS_SEEN_KEY = 'happyMindsReflectionsSeen';
+
+function submittedReflections() {
+    return Object.entries(appState.reflections || {})
+        .filter(([, r]) => r && r.submitted)
+        .map(([chapterId, r]) => ({ chapterId: parseInt(chapterId, 10), ...r }))
+        .filter(r => getChapterById(r.chapterId))
+        .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+}
+
+const reflectionSeenKey = r => `${r.chapterId}|${r.submittedAt || ''}`;
+
+function loadSeenReflections() {
+    try { return new Set(JSON.parse(localStorage.getItem(REFLECTIONS_SEEN_KEY) || '[]')); } catch (err) { return new Set(); }
+}
+
+function markReflectionsSeen(list) {
+    const seen = loadSeenReflections();
+    list.forEach(r => seen.add(reflectionSeenKey(r)));
+    try { localStorage.setItem(REFLECTIONS_SEEN_KEY, JSON.stringify([...seen])); } catch (err) { /* private mode: notices just stay */ }
+}
+
+function renderReviewerNotifications(list, badge) {
+    const seen = loadSeenReflections();
+    const fresh = submittedReflections().filter(r => !seen.has(reflectionSeenKey(r)));
+    badge.textContent = fresh.length;
+    badge.style.display = fresh.length ? 'flex' : 'none';
+
+    if (!fresh.length) {
+        list.innerHTML = `<div class="notification-dropdown-empty">You're all caught up — no new chapter reflections.</div>`;
+        return;
+    }
+    list.innerHTML = fresh.map(r => {
+        const chapter = getChapterById(r.chapterId);
+        const when = r.submittedAt ? new Date(r.submittedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+        return `
+            <div class="reflection-reminder-card">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <div class="reflection-reminder-text">
+                    <strong>New reflection: ${escapeReportText(chapter.title)}</strong>
+                    <span>Chapter ${String(r.chapterId).padStart(2, '0')}${when ? ` · submitted ${when}` : ''}</span>
+                </div>
+                <button class="btn-primary-glowing compact" onclick="closeNotificationMenu(); openReflectionInReport(${r.chapterId});">
+                    Read It <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>`;
+    }).join('');
+}
+
+function openReflectionInReport(chapterId) {
+    openTeacherReport();
+    const item = document.querySelector(`#teacherReportContent .reflection-report[data-chapter="${chapterId}"]`);
+    if (item) {
+        item.open = true;
+        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function formatReflectionAnswer(chapter, field, value) {
+    if (field.type === 'rating5') {
+        const n = Number(value) || 0;
+        return n ? `<span class="reflection-report-stars" aria-label="${n} out of 5">${'★'.repeat(n)}<span>${'★'.repeat(5 - n)}</span></span> ${n}/5` : null;
+    }
+    if (field.type === 'yesno') return value === 'yes' ? 'Yes' : value === 'no' ? 'No' : null;
+    if (field.type === 'checklist') {
+        const items = (value || []).map(i => chapter.reflection.commonErrors[i]).filter(Boolean);
+        return items.length ? `<ul>${items.map(t => `<li>${escapeReportText(t)}</li>`).join('')}</ul>` : 'None checked';
+    }
+    if (value === undefined || value === null || value === '') return null;
+    return escapeReportText(value);
+}
+
+// One reflection as sections of { label, html } rows, for the report and the PDF.
+function reflectionSections(r) {
+    const chapter = getChapterById(r.chapterId);
+    const nextChapter = getChapterById(r.chapterId + 1);
+    const minutes = getTimeReport(r.chapterId)[r.chapterId] || {};
+    const prefills = {
+        session1Minutes: Math.round(((minutes.explore || 0) + (minutes.practice || 0)) * 10) / 10,
+        session2Minutes: Math.round(((minutes.create || 0) + (minutes.perform || 0)) * 10) / 10,
+        nextChapterNote: nextChapter ? `Chapter ${String(nextChapter.id).padStart(2, '0')}: ${nextChapter.title}` : 'This was the final chapter'
+    };
+    const answers = r.answers || {};
+    return REFLECTION_TEMPLATE.map(section => ({
+        title: `${section.id}. ${section.title.replace('{grammarFocus}', chapter.reflection.grammarFocus)}`,
+        rows: section.fields.map(field => {
+            const raw = answers[field.key] !== undefined ? answers[field.key] : prefills[field.key];
+            return {
+                label: field.label.replace('{grammarFocus}', chapter.reflection.grammarFocus),
+                html: formatReflectionAnswer(chapter, field, raw)
+            };
+        })
+    }));
+}
+
+const reflectionDate = r => r.submittedAt
+    ? new Date(r.submittedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
+
+function buildReflectionsReportHtml() {
+    const list = submittedReflections();
+    if (!list.length) {
+        return '<p class="prep-readiness-explain">No reflections submitted yet. The teacher fills one in after finishing each chapter, and it appears here.</p>';
+    }
+    return `<div class="report-stories">${list.map((r, i) => {
+        const chapter = getChapterById(r.chapterId);
+        const rating = Number((r.answers || {}).overallRating) || 0;
+        const sections = reflectionSections(r).map(section => `
+            <section class="reflection-report-section">
+                <h4>${escapeReportText(section.title)}</h4>
+                <dl>${section.rows.map(row => `<dt>${escapeReportText(row.label)}</dt><dd${row.html === null ? ' class="empty"' : ''}>${row.html === null ? 'Not answered' : row.html}</dd>`).join('')}</dl>
+            </section>`).join('');
+        return `
+            <details class="report-story reflection-report" data-chapter="${r.chapterId}"${i === 0 ? ' open' : ''}>
+                <summary>
+                    <span class="admin-list-num">Ch${String(r.chapterId).padStart(2, '0')}</span>
+                    <span class="report-story-title">${escapeReportText(chapter.title)}</span>
+                    ${rating ? `<span class="report-story-source class">Overall ${rating}/5</span>` : ''}
+                    <span class="report-story-date">${reflectionDate(r)}</span>
+                </summary>
+                <div class="report-story-body">
+                    <div class="reflection-report-actions">
+                        <button class="btn-glass compact" onclick="printReflection(${r.chapterId})">
+                            <i class="fa-solid fa-file-pdf blue"></i> Print / Save as PDF
+                        </button>
+                    </div>
+                    <div class="reflection-report-body">${sections}</div>
+                </div>
+            </details>`;
+    }).join('')}</div>`;
+}
+
+function printReflection(chapterId) {
+    const r = submittedReflections().find(x => x.chapterId === chapterId);
+    if (!r) return;
+    const chapter = getChapterById(chapterId);
+    const teacher = HappyMindsConfig.ACCOUNTS.find(a => a.role === 'teacher');
+    const sections = reflectionSections(r).map(section => `
+        <section>
+            <h2>${escapeReportText(section.title)}</h2>
+            <dl>${section.rows.map(row => `<dt>${escapeReportText(row.label)}</dt><dd>${row.html === null ? '<span class="na">Not answered</span>' : row.html}</dd>`).join('')}</dl>
+        </section>`).join('');
+    openPrintPage(`Chapter Reflection - Chapter ${chapter.id} - ${chapter.title}`, `
+        <header>
+            <div class="brand">Happy Minds · Chapter Reflection</div>
+            <h1>Chapter ${chapter.id}: ${escapeReportText(chapter.title)}</h1>
+            <p class="meta">${teacher ? `${escapeReportText(teacher.name)} · ` : ''}Submitted ${escapeReportText(reflectionDate(r))}</p>
+        </header>
+        ${sections}`);
+}
+
+// ================= Print / save as PDF =================
+// Opens a clean copy of a form in a new tab and the browser's print dialog,
+// where "Save as PDF" is one of the printers (also on phones). The tab title
+// becomes the PDF's file name.
+const PRINT_PAGE_STYLES = `
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #1F2937; max-width: 760px; margin: 0 auto; padding: 28px; }
+    header { border-bottom: 2px solid #0EA5E9; padding-bottom: 10px; margin-bottom: 8px; }
+    .brand { font-size: 12px; font-weight: bold; color: #0EA5E9; text-transform: uppercase; letter-spacing: 1px; }
+    h1 { font-size: 21px; margin: 4px 0 6px; }
+    .meta { font-size: 13px; color: #4B5563; margin: 0; }
+    section { break-inside: avoid; page-break-inside: avoid; padding: 10px 0; border-bottom: 1px solid #E5E7EB; }
+    h2 { font-size: 14px; margin: 0 0 6px; color: #0369A1; }
+    dl { margin: 0; }
+    dt { font-size: 12px; color: #6B7280; margin-top: 6px; }
+    dd { margin: 1px 0 0; font-size: 13px; font-weight: bold; line-height: 1.5; white-space: pre-wrap; }
+    dd ul { white-space: normal; margin: 2px 0; padding-left: 18px; font-weight: normal; }
+    dd ul.ticks { list-style: none; padding-left: 0; }
+    .na { color: #9CA3AF; font-weight: normal; font-style: italic; }
+    .reflection-report-stars { color: #F59E0B; letter-spacing: 1px; }
+    .reflection-report-stars span { color: #D1D5DB; }
+    .signatures { display: flex; gap: 40px; margin-top: 18px; }
+    .signatures div { flex: 1; border-top: 1px solid #9CA3AF; padding-top: 6px; font-size: 12px; color: #4B5563; }
+    .signatures strong { display: block; font-size: 14px; color: #1F2937; margin-bottom: 2px; }
+    @media print { body { padding: 0; max-width: none; } }
+`;
+
+function openPrintPage(title, bodyHtml) {
+    const w = window.open('', '_blank');
+    if (!w) {
+        showNotification('Allow pop-ups for this site to save the PDF.');
+        return;
+    }
+    w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>${escapeReportText(title)}</title><style>${PRINT_PAGE_STYLES}</style></head>
+        <body>${bodyHtml}</body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
 }
 
 // ================= VIEW 9: Scan (standalone teacher tool, from the nav bar) =================

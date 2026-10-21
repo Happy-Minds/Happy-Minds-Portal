@@ -3577,6 +3577,52 @@ body.remote-mode .explorer-spotlight { display: none; }
 
 .report-story-feedback dt:first-child { margin-top: 0; }
 
+/* Trainer report: a teacher's Chapter Reflection, read-only */
+.reflection-report-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.observe-done-actions { justify-content: center; flex-wrap: wrap; }
+
+.reflection-report-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.reflection-report-section {
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.reflection-report-section h4 { margin: 0 0 8px; color: var(--text-dark); }
+
+.reflection-report-section dt {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+.reflection-report-section dt:first-child { margin-top: 0; }
+
+.reflection-report-section dd {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.reflection-report-section dd.empty { color: #94A3B8; font-weight: 600; font-style: italic; }
+.reflection-report-section dd ul { white-space: normal; padding-left: 18px; }
+.reflection-report-stars { color: var(--accent-orange); letter-spacing: 1px; }
+.reflection-report-stars span { color: #E2E8F0; }
+
 .report-story-feedback dd {
     font-size: 14px;
     font-weight: 600;
