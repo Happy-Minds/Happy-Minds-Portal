@@ -330,8 +330,21 @@ body {
 
 .notification-dropdown-list .reflection-reminder-card .btn-primary-glowing.compact { width: 100%; justify-content: center; }
 
-@media (max-width: 480px) {
-    .notification-dropdown { width: calc(100vw - 32px); right: -8px; }
+/* On phones and narrow tablets the bell sits at the left of the header, so a
+   panel hung from its right edge would open off-screen. Instead it spans the
+   screen just below the bell (top set in toggleNotificationMenu). */
+@media (max-width: 720px) {
+    .notification-dropdown {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        width: auto;
+        top: var(--notification-top, 80px);
+        max-height: calc(100vh - var(--notification-top, 80px) - 16px);
+        max-height: calc(100dvh - var(--notification-top, 80px) - 16px);
+        z-index: 400;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+    }
 }
 
 /* ==========================================================================

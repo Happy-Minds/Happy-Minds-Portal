@@ -414,7 +414,11 @@ function toggleUserMenu() {
 
 function toggleNotificationMenu(event) {
     if (event) event.stopPropagation();
-    document.getElementById('notificationDropdown').classList.toggle('open');
+    const dropdown = document.getElementById('notificationDropdown');
+    // Phones show the panel full-width under the bell (see styles.css).
+    const bell = event && event.currentTarget;
+    if (bell) dropdown.style.setProperty('--notification-top', `${Math.round(bell.getBoundingClientRect().bottom + 8)}px`);
+    dropdown.classList.toggle('open');
 }
 
 function closeNotificationMenu() {
