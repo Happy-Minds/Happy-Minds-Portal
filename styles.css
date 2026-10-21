@@ -1108,6 +1108,10 @@ body {
 
 .stage-timer-badge i { color: var(--primary-blue); }
 
+/* Clock paused (screen off or nobody using the portal); resumes on the next tap. */
+.stage-timer-badge.paused { opacity: 0.55; }
+.stage-timer-badge.paused i { color: var(--text-muted); }
+
 .stepper-steps {
     display: flex;
     gap: 8px;
@@ -1605,7 +1609,8 @@ body.remote-mode .explorer-spotlight { display: none; }
     gap: 16px;
 }
 
-.storybook-nav #storybookPrevBtn:disabled {
+.storybook-nav #storybookPrevBtn:disabled,
+.storybook-nav #createModelPrevBtn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
@@ -4401,7 +4406,8 @@ body.remote-mode .explorer-spotlight { display: none; }
        dots move above the buttons, which then split the row evenly. */
     .storybook-nav { flex-wrap: wrap; justify-content: center; gap: 12px; }
     .storybook-dots { order: -1; width: 100%; justify-content: center; }
-    .storybook-nav #storybookPrevBtn, .storybook-nav #storybookNextBtn { flex: 1; justify-content: center; }
+    .storybook-nav #storybookPrevBtn, .storybook-nav #storybookNextBtn,
+    .storybook-nav #createModelPrevBtn, .storybook-nav #createModelNextBtn { flex: 1; justify-content: center; }
 
     .login-card { padding: 32px 24px; }
     .admin-stats-row { grid-template-columns: 1fr; }

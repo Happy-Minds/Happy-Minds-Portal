@@ -144,14 +144,84 @@ function saveTimeTracking() {
 
 function startTimer(chapterId, stage) {
     stopTimer();
+    pausedTimerKey = null;
     activeTimerKey = { chapterId, stage };
     activeTimerStartedAt = Date.now();
+    lastActivityAt = Date.now();
     updateStageTimerDisplay();
 }
 
-function stopTimer() {
+// Leaving the page for good (another page, sign out, closing the tab).
+function endTimer() {
+    stopTimer();
+    pausedTimerKey = null;
+}
+
+// ---- Only count time the teacher is really there ----
+// The clock pauses while the tab is hidden (screen locked, another app or
+// tab) and after a stretch with no taps, typing or scrolling, so a page left
+// open does not add hours. A playing video or read-aloud counts as activity.
+// Lesson stages allow a longer quiet stretch than prep or scanning, because
+// a class can work silently (drawing, writing) while the teacher watches.
+const TIMER_IDLE_LIMIT_MS = { prep: 5 * 60 * 1000, scan: 5 * 60 * 1000 };
+const TIMER_IDLE_LIMIT_LESSON_MS = 20 * 60 * 1000;
+// Prep and scanning are hands-on: once idle, only the first minute after the
+// last tap is counted. A quiet lesson may still be running, so it keeps its time.
+const TIMER_IDLE_GRACE_MS = 60 * 1000;
+let pausedTimerKey = null;
+let lastActivityAt = Date.now();
+
+function pauseTimer(endAt) {
+    if (!activeTimerKey) return;
+    const key = activeTimerKey;
+    stopTimer(endAt);
+    pausedTimerKey = key;
+    updateStageTimerDisplay();
+}
+
+function resumeTimer() {
+    if (!pausedTimerKey || document.visibilityState !== 'visible') return;
+    const { chapterId, stage } = pausedTimerKey;
+    startTimer(chapterId, stage);
+}
+
+function lessonMediaPlaying() {
+    if (ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1) return true;
+    const video = document.getElementById('chapterVideo');
+    if (video && !video.paused && !video.ended) return true;
+    return !!(window.speechSynthesis && window.speechSynthesis.speaking);
+}
+
+function checkTimerIdle() {
+    if (!activeTimerKey) return;
+    if (lessonMediaPlaying()) { lastActivityAt = Date.now(); return; }
+    const handsOn = activeTimerKey.stage in TIMER_IDLE_LIMIT_MS;
+    const limit = handsOn ? TIMER_IDLE_LIMIT_MS[activeTimerKey.stage] : TIMER_IDLE_LIMIT_LESSON_MS;
+    if (Date.now() - lastActivityAt > limit) pauseTimer(handsOn ? lastActivityAt + TIMER_IDLE_GRACE_MS : undefined);
+}
+
+['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(type => {
+    window.addEventListener(type, () => {
+        lastActivityAt = Date.now();
+        if (pausedTimerKey) resumeTimer();
+    }, { passive: true, capture: true });
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        pauseTimer();
+    } else {
+        lastActivityAt = Date.now();
+        resumeTimer();
+    }
+});
+window.addEventListener('pagehide', endTimer);
+setInterval(checkTimerIdle, 15000);
+
+// endAt: when the time stopped counting (default now; earlier for idle).
+function stopTimer(endAt = Date.now()) {
     if (!activeTimerKey || !activeTimerStartedAt) return;
-    const seconds = (Date.now() - activeTimerStartedAt) / 1000;
+    const seconds = Math.max(0, (Math.min(endAt, Date.now()) - activeTimerStartedAt) / 1000);
     const { chapterId, stage } = activeTimerKey;
     if (!appState.timeTracking[chapterId]) appState.timeTracking[chapterId] = {};
     appState.timeTracking[chapterId][stage] = (appState.timeTracking[chapterId][stage] || 0) + seconds;
@@ -180,20 +250,24 @@ function updateStageTimerDisplay() {
     if (!badges.length) return;
 
     let seconds = 0;
-    if (activeTimerKey && activeTimerStartedAt) {
-        const { chapterId, stage } = activeTimerKey;
-        const stored = (appState.timeTracking[chapterId] && appState.timeTracking[chapterId][stage]) || 0;
-        seconds = stored + (Date.now() - activeTimerStartedAt) / 1000;
+    const key = activeTimerKey || pausedTimerKey;
+    if (key) {
+        const { chapterId, stage } = key;
+        seconds = (appState.timeTracking[chapterId] && appState.timeTracking[chapterId][stage]) || 0;
+        if (activeTimerKey && activeTimerStartedAt) seconds += (Date.now() - activeTimerStartedAt) / 1000;
     }
 
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     const text = `${mins}:${String(secs).padStart(2, '0')}`;
-    badges.forEach(el => { el.textContent = text; });
+    badges.forEach(el => {
+        el.textContent = text;
+        el.closest('.stage-timer-badge')?.classList.toggle('paused', !!pausedTimerKey && !activeTimerKey);
+    });
 }
 
 setInterval(updateStageTimerDisplay, 1000);
-window.addEventListener('beforeunload', stopTimer);
+window.addEventListener('beforeunload', endTimer);
 
 // ================= Navigation & View Routing =================
 function closeAllModals() {
@@ -203,7 +277,7 @@ function closeAllModals() {
 function navigateTo(viewId) {
     appState.currentView = viewId;
     closeAllModals();
-    stopTimer();
+    endTimer();
 
     document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
     const targetView = document.getElementById(`${viewId}-view`);
@@ -428,7 +502,7 @@ function closeNotificationMenu() {
 async function handleLogout(event) {
     event.stopPropagation();
     // Record time on the open stage before the session (and save access) ends.
-    stopTimer();
+    endTimer();
     await stopProjectorForSignOut();
     closeRemoteChannel();
     updateScriptFab('login');
@@ -2245,6 +2319,7 @@ function renderCreateModelSentence(chapter) {
     document.getElementById('createModelDots').innerHTML = sentences.map((_, i) =>
         `<span class="storybook-dot ${i === createModelIndex ? 'active' : ''}"></span>`).join('');
 
+    document.getElementById('createModelPrevBtn').disabled = createModelIndex === 0;
     document.getElementById('createModelNextBtn').innerHTML = createModelIndex === sentences.length - 1
         ? 'Continue to Writing <i class="fa-solid fa-arrow-right"></i>'
         : 'Next Sentence <i class="fa-solid fa-arrow-right"></i>';
@@ -2259,6 +2334,13 @@ function createModelNext() {
     }
     createModelIndex++;
     renderCreateModelSentence(chapter);
+    broadcastToProjector({ type: 'create-model', sentenceIndex: createModelIndex });
+}
+
+function createModelPrev() {
+    if (createModelIndex === 0) return;
+    createModelIndex--;
+    renderCreateModelSentence(getCurrentChapter());
     broadcastToProjector({ type: 'create-model', sentenceIndex: createModelIndex });
 }
 
@@ -4187,18 +4269,25 @@ function buildTeacherReportHtml() {
             </div>`;
     }).join('');
 
+    // Class time is the four lesson stages; prep and scanning happen outside
+    // the lesson, so they are listed on their own and not added to it.
+    const CLASS_STAGES = ['explore', 'practice', 'create', 'perform'];
+    const fmtMin = seconds => `${Math.round(seconds / 60)} min`;
     const timeRows = Object.entries(appState.timeTracking).map(([chapterId, stages]) => {
         const chapter = getChapterById(parseInt(chapterId, 10));
         if (!chapter) return '';
-        const total = Object.values(stages || {}).reduce((s, v) => s + v, 0);
-        if (!total) return '';
-        const breakdown = Object.entries(stages).map(([stage, seconds]) => `${stage}: ${Math.round(seconds / 60)}m`).join(' · ');
+        const st = stages || {};
+        const classSeconds = CLASS_STAGES.reduce((sum, k) => sum + (st[k] || 0), 0);
+        const outside = [['prep', 'Prep'], ['scan', 'Scanning']].filter(([k]) => st[k] >= 30);
+        if (classSeconds < 30 && !outside.length) return '';
+        const breakdown = CLASS_STAGES.filter(k => st[k] >= 30).map(k => `${k}: ${Math.round(st[k] / 60)}m`).join(' · ');
         return `
-            <div class="admin-list-row">
+            <div class="admin-list-row time-report-row">
                 <span class="admin-list-num">Ch${String(chapterId).padStart(2, '0')}</span>
-                <span class="admin-list-title">${chapter.title}</span>
-                <span class="admin-list-username">${breakdown}</span>
-                <span class="admin-list-tag full">${Math.round(total / 60)} min total</span>
+                <span class="admin-list-title">${escapeReportText(chapter.title)}</span>
+                <span class="admin-list-username">${breakdown || 'No class time yet'}</span>
+                <span class="admin-list-tag full">Class ${fmtMin(classSeconds)}</span>
+                ${outside.map(([k, label]) => `<span class="admin-list-tag partial">${label} ${fmtMin(st[k])}</span>`).join('')}
             </div>`;
     }).join('');
 
@@ -4214,8 +4303,9 @@ function buildTeacherReportHtml() {
         </div>
 
         <div class="admin-section-card">
-            <h3><i class="fa-solid fa-stopwatch"></i> In-Class Time Logged</h3>
-            ${timeRows ? `<div class="admin-chapter-list">${timeRows}</div>` : '<p class="prep-readiness-explain">No class time logged yet — time is tracked automatically as the teacher runs each stage.</p>'}
+            <h3><i class="fa-solid fa-stopwatch"></i> Time Logged</h3>
+            <p class="prep-readiness-explain" style="margin-bottom:10px;">Class time is Explore, Practice, Create and Perform. Prep and scanning are shown separately. The clock pauses when the screen is off or nobody has touched the portal for a while.</p>
+            ${timeRows ? `<div class="admin-chapter-list">${timeRows}</div>` : '<p class="prep-readiness-explain">No time logged yet — time is tracked automatically as the teacher runs each stage.</p>'}
         </div>
 
         <div class="admin-section-card" id="teacherReflectionsCard">
@@ -4454,6 +4544,7 @@ function onStudentSelectChange(id) {
 function onScanChapterChange(id) {
     appState.scanTargetChapterId = Number(id);
     clearStoryFeedback('scan');
+    if (appState.currentView === 'scan') startTimer(appState.scanTargetChapterId, 'scan');
 }
 
 function onScanStoryInput() {
