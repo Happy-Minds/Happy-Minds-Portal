@@ -9,7 +9,8 @@
    natural pauses at full stops, long pages are never cut off (some voices
    stop after ~15 seconds of one utterance), and Pause/Resume is dependable —
    several voices ignore speechSynthesis.pause(), so Pause cancels and Resume
-   re-reads the sentence it stopped in. Words are highlighted as they are
+   carries on from the word it stopped at (or re-reads that sentence, if the
+   voice doesn't report word positions). Words are highlighted as they are
    spoken where the voice reports word positions; otherwise the sentence is.
    ========================================================================== */
 
@@ -36,7 +37,9 @@ const HMNarration = (() => {
     const PRONUNCIATIONS = {
         Aanya: 'Aahnya',
         Lumora: 'Loomora',
-        Nima: 'Neema'
+        Nima: 'Neema',
+        Sela: 'Sella',    // SEH-la
+        Toli: 'Tohlee'    // TOH-lee
     };
 
     let voice = null;
@@ -96,7 +99,9 @@ const HMNarration = (() => {
     // with 'playing' | 'paused' | 'idle' (idle = next play starts from the
     // top), and info.error = 'not-allowed' if the browser blocked sound.
     function createReader({ container, onChange }) {
-        const r = { state: 'idle', sentences: [], index: 0, run: 0, el: null };
+        // index = sentence being read; word = word within it last reported by
+        // the voice, where Resume carries on from.
+        const r = { state: 'idle', sentences: [], index: 0, word: 0, run: 0, el: null };
         const notify = info => { if (onChange) onChange(r.state, info || {}); };
         const clear = () => {
             if (r.el) r.el.querySelectorAll('.sb-word').forEach(w => w.classList.remove('speaking', 'reading'));
@@ -109,15 +114,19 @@ const HMNarration = (() => {
             notify(info);
         }
 
-        function speakSentence() {
+        function speakSentence(fromWord = 0) {
             const run = ++r.run;
             const sentence = r.sentences[r.index];
             if (!sentence) { finish(); return; }
 
             clear();
             sentence.words.forEach(w => w.span.classList.add('reading'));
+            r.word = fromWord;
+            // Resuming mid-sentence speaks only the rest of it; word positions
+            // reported by the voice are shifted back to the whole sentence.
+            const offset = sentence.words[fromWord] ? sentence.words[fromWord].start : 0;
 
-            const utter = new SpeechSynthesisUtterance(sentence.text);
+            const utter = new SpeechSynthesisUtterance(sentence.text.slice(offset));
             const v = pickVoice();
             if (v) { utter.voice = v; utter.lang = v.lang; } else { utter.lang = 'en-IN'; }
             utter.rate = 0.9;
@@ -126,13 +135,14 @@ const HMNarration = (() => {
             utter.onboundary = (e) => {
                 if (run !== r.run || (e.name && e.name !== 'word')) return;
                 sentence.words.forEach(w => w.span.classList.remove('speaking'));
-                const word = sentence.words.find(w => e.charIndex >= w.start && e.charIndex < w.end);
-                if (word) word.span.classList.add('speaking');
+                const at = e.charIndex + offset;
+                const i = sentence.words.findIndex(w => at >= w.start && at < w.end);
+                if (i >= 0) { r.word = i; sentence.words[i].span.classList.add('speaking'); }
             };
             const next = () => {
                 if (run !== r.run || r.state !== 'playing') return;
                 r.index++;
-                speakSentence();
+                speakSentence(0);
             };
             utter.onend = next;
             utter.onerror = (e) => {
@@ -146,19 +156,21 @@ const HMNarration = (() => {
         return {
             get state() { return r.state; },
 
-            // Starts from the top; after pause() it resumes.
+            // Starts from the top; after pause() it carries on where it stopped.
             play() {
                 if (!supported || r.state === 'playing') return;
-                if (r.state === 'idle') {
+                const resuming = r.state === 'paused';
+                if (!resuming) {
                     r.el = container();
                     r.sentences = r.el ? buildSentences(r.el) : [];
                     r.index = 0;
+                    r.word = 0;
                 }
                 if (!r.sentences.length) return;
                 r.state = 'playing';
                 notify();
                 window.speechSynthesis.cancel();
-                speakSentence();
+                speakSentence(resuming ? r.word : 0);
             },
 
             pause() {
