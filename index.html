@@ -120,7 +120,7 @@
                     <i class="fa-solid fa-angle-down"></i>
 
                     <div class="user-menu-dropdown" id="userMenuDropdown">
-                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
+                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher,trainer,admin" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
                             <i class="fa-solid fa-display"></i> Projector mode
                         </button>
                         <button onclick="handleLogout(event)">
@@ -643,7 +643,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -891,7 +891,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -1312,7 +1312,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>
@@ -1451,6 +1451,10 @@
                                 <div class="ai-feedback-body">
                                     <dl class="ai-feedback-list" id="aiFeedbackList"></dl>
                                     <span class="ai-feedback-source">AI feedback — read it before sharing with the student</span>
+                                    <!-- Puts only the feedback (never the story) on the projector -->
+                                    <button type="button" class="btn-glass compact teacher-only ai-feedback-project-btn" id="storyProjectBtn" onclick="toggleStoryFeedbackOnProjector()" aria-pressed="false">
+                                        <i class="fa-solid fa-tv"></i> <span id="storyProjectLabel">Show on projector</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -1520,7 +1524,7 @@
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
-                        <button class="projector-status-dot teacher-only" onclick="openProjectorView()" title="Open projector view">
+                        <button class="projector-status-dot" onclick="openProjectorView()" title="Open projector view">
                             <i class="fa-solid fa-tv"></i> <span>Open projector view</span>
                         </button>
                     </div>

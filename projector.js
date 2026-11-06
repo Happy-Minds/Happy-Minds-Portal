@@ -368,6 +368,16 @@ function renderCreateCheck() {
     showProjScreen('proj-create-check');
 }
 
+// Feedback on one student's story, shown when the teacher chooses to.
+// Only the feedback comes here, never the story text.
+function renderCreateFeedback(name, feedback) {
+    showProjScreen('proj-create-feedback');
+    document.getElementById('proj-feedback-title').textContent = name ? `Feedback for ${name}` : 'Story feedback';
+    document.getElementById('proj-feedback-praise').textContent = feedback.praise || '';
+    document.getElementById('proj-feedback-tip').textContent = feedback.tip || '';
+    document.getElementById('proj-feedback-question').textContent = feedback.question || '';
+}
+
 // ---------- Practice stage (generic 5-activity template) ----------
 // Mirrors the teacher's actual interactions live (a tile placed, a word
 // found, a sentence word picked) rather than just the activity's starting
@@ -686,6 +696,7 @@ function handleProjectorMessage(msg) {
         case 'create-model': renderCreateModel(msg.sentenceIndex); break;
         case 'create-write': renderCreateWrite(msg.wallWords); break;
         case 'create-check': renderCreateCheck(); break;
+        case 'create-feedback': renderCreateFeedback(msg.name, msg.feedback || {}); break;
         case 'practice-activity': renderPracticeActivity(msg); break;
         case 'practice-sort-placed': renderPracticeSortPlaced(msg.zoneId, msg.word); break;
         case 'practice-builder-word': renderPracticeBuilderWord(msg.word); break;

@@ -958,7 +958,9 @@ function continuePlanner() {
 // sent (video, storybook pages, one Think & Talk question at a time, the
 // draw prompt, wrap-up…) — never the script, sample answers or roving
 // prompts, which stay in chapter.prep on the teacher's device.
-const PROJECTOR_ROLES = ['teacher'];
+// Trainers and admins can run it too (e.g. to demo a lesson): each account
+// has its own channel, so their projector never shows a teacher's class.
+const PROJECTOR_ROLES = ['teacher', 'trainer', 'admin'];
 let remoteChannel = null;
 let projectorConnected = false;
 
@@ -1011,7 +1013,6 @@ function broadcastToProjector(msg) {
 // (drag it onto the projector display). On a phone the projector is already
 // running on the laptop, so the button only reports the connection.
 function openProjectorView() {
-    if (isViewOnly()) return;
     if (projectorConnected) {
         showNotification('The projector is connected. Your taps on this device control it.');
         return;
@@ -1134,6 +1135,8 @@ function broadcastCurrentCreateState() {
 
     if (checkSection.classList.contains('revealed')) {
         broadcastToProjector({ type: 'create-check' });
+    } else if (writeSection.classList.contains('revealed') && storyFeedbackOnProjector) {
+        broadcastStoryFeedback();
     } else if (writeSection.classList.contains('revealed')) {
         broadcastToProjector({ type: 'create-write', wallWords: getLumoraWallWords(chapter.id) });
     } else if (modelSection.classList.contains('revealed')) {
@@ -2317,6 +2320,9 @@ function revealCreateStep(sectionId) {
     } else if (sectionId === 'createWriteSection') {
         broadcastToProjector({ type: 'create-write', wallWords: getLumoraWallWords(chapter.id) });
     } else if (sectionId === 'createCheckSection') {
+        // The checklist replaces any story feedback on the projector.
+        storyFeedbackOnProjector = false;
+        updateStoryProjectButton();
         broadcastToProjector({ type: 'create-check' });
     }
 }
@@ -2471,6 +2477,7 @@ function clearStoryFeedback(desk = 'create') {
     const state = storyDeskState[desk];
     state.feedback = null;
     state.requestId++;
+    if (desk === 'create') hideStoryFeedbackFromProjector();
     deskEl(desk, 'panel').classList.remove('shown');
     setStoryFeedbackBusy(desk, false);
     updateStorySaveButton(desk);
@@ -2497,6 +2504,53 @@ function renderStoryFeedback(desk, feedback) {
     deskEl(desk, 'list').innerHTML = rows
         .map(([label, text]) => `<dt>${label}</dt><dd>${escapeReportText(text)}</dd>`).join('');
     deskEl(desk, 'panel').classList.add('shown');
+}
+
+// In class (Create desk only), the teacher can put a story's feedback on
+// the projector once they have read it. Only the three feedback lines and
+// the student's first name go there, never the story itself. It comes off
+// again when the feedback is cleared (new text, new scan, saved story).
+let storyFeedbackOnProjector = false;
+
+function broadcastStoryFeedback() {
+    const feedback = storyDeskState.create.feedback;
+    if (!feedback) return;
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === deskEl('create', 'student').value);
+    broadcastToProjector({
+        type: 'create-feedback',
+        name: student ? student.name.split(' ')[0] : '',
+        feedback: { praise: feedback.praise, tip: feedback.tip, question: feedback.question }
+    });
+}
+
+function updateStoryProjectButton() {
+    document.getElementById('storyProjectLabel').textContent = storyFeedbackOnProjector ? 'Back to the class view' : 'Show on projector';
+    document.getElementById('storyProjectBtn').setAttribute('aria-pressed', String(storyFeedbackOnProjector));
+}
+
+function toggleStoryFeedbackOnProjector() {
+    if (isViewOnly() || !storyDeskState.create.feedback) return;
+    if (storyFeedbackOnProjector) {
+        hideStoryFeedbackFromProjector();
+        return;
+    }
+    if (!projectorConnected) {
+        showNotification('Open the projector view first, then show the feedback.');
+        return;
+    }
+    storyFeedbackOnProjector = true;
+    broadcastStoryFeedback();
+    updateStoryProjectButton();
+}
+
+function hideStoryFeedbackFromProjector() {
+    if (!storyFeedbackOnProjector) return;
+    storyFeedbackOnProjector = false;
+    updateStoryProjectButton();
+    if (document.getElementById('createWriteSection').classList.contains('revealed')
+        && !document.getElementById('createCheckSection').classList.contains('revealed')) {
+        broadcastToProjector({ type: 'create-write', wallWords: getLumoraWallWords(appState.currentChapterId) });
+    }
 }
 
 function storyErrorMessage(err, action) {

@@ -321,7 +321,7 @@ const CHAPTERS = [
                     { type: 'support_prompt', text: "Worried about spelling? Just sound it out and write what you hear. We can fix spelling later." },
                     { type: 'stage_direction', text: 'At 5 minutes left.' },
                     { type: 'teacher_says', text: 'Five more minutes! How does your adventure end? Did you go back home? Did you promise to return? Add your ending now.' },
-                    { type: 'platform', text: "Optional: Scan Student's Writing. Photograph a finished page to get the story as text with kind feedback. Read the feedback yourself before sharing it, then Save; the story goes to the child's My Stories and the parent's report. You can also scan after class from the Scan tab." }
+                    { type: 'platform', text: "Optional: Scan Student's Writing. Photograph a finished page to get the story as text with kind feedback. Read the feedback yourself first. To share it with the class, tap Show on projector: only the feedback and the child's first name show, never the story. Then Save; the story goes to the child's My Stories and the parent's report. You can also scan after class from the Scan tab." }
                 ]},
                 { step: 5, stage: 'Create', title: 'Check my story', minutes: 2, lines: [
                     { type: 'platform', text: "Tap We're Done Writing. Check My Story shows three ticks: I used at least 2 nouns from my list · My names start with capital letters · My story has a beginning." },
