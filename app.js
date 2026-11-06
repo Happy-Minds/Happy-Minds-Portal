@@ -3874,7 +3874,9 @@ const PREP_LINE_LABELS = {
     expected_answers: 'Expected answers',
     stage_direction: 'Stage direction',
     roving_prompt: 'Roving prompt',
-    support_prompt: 'Support prompt (Stuck student button)'
+    support_prompt: 'Support prompt (Stuck student button)',
+    platform: 'Platform',
+    workbook: 'Workbook'
 };
 
 function renderPrepScriptLine(line) {
@@ -3893,7 +3895,22 @@ function renderPrepScriptLine(line) {
     if (line.type === 'support_prompt') {
         return `<div class="prep-line-card prep-line-support"><i class="fa-solid fa-life-ring"></i> ${line.text}</div>`;
     }
+    // What the screen / the students' workbooks are doing at this point.
+    if (line.type === 'platform' || line.type === 'workbook') {
+        return `<p class="prep-line prep-line-tagged"><span class="prep-tag prep-tag-${line.type}">${PREP_LINE_LABELS[line.type]}</span> ${line.text}</p>`;
+    }
     return '';
+}
+
+function renderPrepStepHead(step, extra = '') {
+    return `
+            <div class="prep-step-head">
+                <span class="prep-step-num">${step.step}</span>
+                <span class="prep-step-stage">${step.stage}</span>
+                <h4>${step.title}</h4>
+                ${step.minutes ? `<span class="prep-step-time">${step.minutes} min</span>` : ''}
+                ${extra}
+            </div>`;
 }
 
 // ================= Lesson script panel (during class) =================
@@ -3996,12 +4013,7 @@ function renderScriptPanel(session) {
     const body = document.getElementById('scriptPanelBody');
     body.innerHTML = steps.map(step => `
         <div class="prep-step-card script-step${step.step === currentStep ? ' is-current' : ''}" data-step="${step.step}">
-            <div class="prep-step-head">
-                <span class="prep-step-num">${step.step}</span>
-                <span class="prep-step-stage">${step.stage}</span>
-                <h4>${step.title}</h4>
-                ${step.step === currentStep ? '<span class="script-here">You are here</span>' : ''}
-            </div>
+            ${renderPrepStepHead(step, step.step === currentStep ? '<span class="script-here">You are here</span>' : '')}
             ${step.lines.map(renderPrepScriptLine).join('')}
         </div>`).join('');
 
@@ -4022,11 +4034,7 @@ function showPrepSession(sessionNum, btnEl) {
 
     document.getElementById('prepScriptSteps').innerHTML = steps.map(step => `
         <div class="prep-step-card">
-            <div class="prep-step-head">
-                <span class="prep-step-num">${step.step}</span>
-                <span class="prep-step-stage">${step.stage}</span>
-                <h4>${step.title}</h4>
-            </div>
+            ${renderPrepStepHead(step)}
             ${step.lines.map(renderPrepScriptLine).join('')}
         </div>`).join('');
 }

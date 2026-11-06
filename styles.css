@@ -3875,10 +3875,27 @@ body.remote-mode .explorer-spotlight { display: none; }
 }
 
 .prep-step-head h4 { font-size: 14.5px; font-weight: 800; }
+.prep-step-time { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
 
 .prep-line { font-size: 13.5px; line-height: 1.6; margin-bottom: 8px; }
 .prep-line-says { font-weight: 600; color: var(--text-dark); }
 .prep-line-direction { font-style: italic; color: var(--text-muted); }
+.prep-line-tagged { color: var(--text-dark); }
+
+/* Lesson-plan tags: what the screen / the workbook is doing at this step */
+.prep-tag {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-right: 4px;
+    vertical-align: 1px;
+}
+.prep-tag-platform { background: #CCFBF1; color: #0F766E; }
+.prep-tag-workbook { background: #FFEDD5; color: #C2410C; }
 
 .prep-line-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 
@@ -4767,6 +4784,7 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 .script-step .prep-step-head { flex-wrap: wrap; }
+.prep-step-time + .script-here { margin-left: 0; }
 .script-here {
     margin-left: auto;
     font-size: 11px;

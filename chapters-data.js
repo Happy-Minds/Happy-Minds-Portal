@@ -69,7 +69,7 @@ const CHAPTERS = [
             challenge: 'Write a short story about your magical world.',
             bullets: ['What the place looks like', 'Who or what you met', 'What happened to you', 'How you felt'],
             starters: ['One day, I opened my magic door and stepped into...', 'In my magical world, I...'],
-            target: '5-6 sentences',
+            target: '6-8 sentences',
             hints: [
                 'Have you thought about what makes your world special for the people who live there?',
                 'Try describing what you hear and smell in your imaginary world!',
@@ -138,116 +138,226 @@ const CHAPTERS = [
         // Teacher Prep page: what the Teacher QR opens, before class. Script
         // lines are structured by type (matches the brief's admin-panel line
         // types) so the same data could later feed both this page and the
-        // in-class teacher remote.
+        // in-class teacher remote. Chapter 1 follows the blended lesson-plan
+        // template: each step has its minutes, and `platform` / `workbook`
+        // lines say what the screen and the students' workbooks are doing.
         prep: {
             // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
             activityStep: 5,
             lessonPlan: {
                 objectives: [
-                    'Use imagination and sensory detail to describe an invented world',
-                    'Identify and use common and proper nouns correctly',
-                    'Build confidence speaking and sharing ideas aloud'
+                    'Say that a noun is a naming word for a person, place or thing',
+                    'Tell a common noun from a proper noun, and say that proper nouns start with a capital letter',
+                    'Find 5 common nouns in their own drawing and give 3 things a special name (proper nouns)',
+                    'Write a short story about their magical world using their nouns, and read it aloud to a partner'
                 ],
                 studentOutputs: {
-                    session1: 'A drawing of their magical world + a list of 5 common nouns',
-                    session2: 'A short story (at least 2-3 sentences) + verbal feedback to a peer'
+                    session1: 'A drawing of their magical world + a Noun Hunt list: 5 common nouns and 3 proper nouns',
+                    session2: 'A short story (6-8 sentences) using their nouns + feedback to a partner'
                 },
-                materials: ['Whiteboard or chart paper', 'Markers (multiple colours)', 'Timer', 'Student workbooks', 'Pencils, erasers, coloured pencils'],
+                materials: [
+                    'Student workbooks (Chapter 1 pages)',
+                    'Pencils, erasers, colours',
+                    'Projector or smart TV, with your phone or laptop as the remote',
+                    'Whiteboard and markers (backup if there is no screen)'
+                ],
                 differentiation: [
-                    { level: 'Advanced', action: 'Can you write 8 sentences instead of 5? Can you add adjectives?' },
-                    { level: 'Struggling', action: 'Write 3 sentences instead of 5. I will help you.' },
-                    { level: 'Very Shy', action: 'You can draw your answer. You can whisper to me.' }
+                    { level: 'Advanced', action: 'Find 2 more nouns for your Noun Hunt. Can you write 8 sentences and add describing words?' },
+                    { level: 'Struggling', action: 'Point to things in your drawing with me and name them. Write 3 nouns and 3 sentences first.' },
+                    { level: 'Very Shy', action: 'You can draw your answer or whisper it to me. Read to your partner first, never to the class unless you want to.' }
                 ]
             },
             beforeClassChecklist: [
-                'Materials ready (paper, pencils, colours)',
-                'Drawing space in workbook',
-                'Answer cards printed (if used)',
-                'Projector tested'
+                'Open Chapter 1 and the projector view; test the sound and play the first seconds of the video',
+                'Workbooks ready at Chapter 1 (Let\'s Draw! and Noun Hunt from Your Drawing)',
+                'Pencils and colours on every table',
+                'No screen today? Tell the door story aloud, write the class\'s words on the board, and draw the common / proper table'
             ],
             session1Script: [
-                { step: 1, stage: 'Explore', title: 'Settle and breathe', lines: [
-                    { type: 'teacher_says', text: "Good morning, everyone! Before we begin, let's take a deep breath together. Breathe in... and out. Now, get comfortable. I'm going to ask your imagination to do something special today. Is your imagination ready?" },
-                    { type: 'stage_direction', text: 'Pause for nods, thumbs up, or verbal responses.' }
+                { step: 1, stage: 'Explore', title: 'Setting the stage', minutes: 2, lines: [
+                    { type: 'platform', text: 'Open Chapter 1 › Explore with the projector view on. The Settle card is on your screen; the video waits until you tap “Class is calm — Start”.' },
+                    { type: 'workbook', text: 'Workbooks stay closed.' },
+                    { type: 'teacher_says', text: "Good morning, everyone! Before we begin, let's take a deep breath together. Breathe in... and out. Wonderful. Get comfortable. You can close your eyes if you like. I'm going to ask your imagination to do something special today. Is your imagination ready?" },
+                    { type: 'stage_direction', text: 'Pause for nods, thumbs up, or verbal responses. Then speak in a calm, storytelling voice.' },
+                    { type: 'teacher_says', text: "Perfect. Now, imagine this. You are in your room. It's a normal day. Everything is just where you left it. But then... you notice something strange. There's a door in your wall. You've never seen it before. It wasn't there yesterday. It's glowing softly. You feel curious. You walk toward it. You reach out... and you open it." },
+                    { type: 'stage_direction', text: 'Pause for about 5 seconds.' },
+                    { type: 'teacher_says', text: 'You step through the doorway... and you leave your room behind. You are now standing in a brand new world. A magical world. A world only you have discovered.' }
                 ]},
-                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
-                    { type: 'teacher_says', text: 'Keep that picture in your mind as you watch — this door leads to a world just like the one I asked you to imagine.' },
-                    { type: 'stage_direction', text: 'Play the Chapter 1 video. Pause if a question comes up.' }
+                { step: 2, stage: 'Explore', title: 'Watch the video', minutes: 3, lines: [
+                    { type: 'platform', text: 'Tap “Class is calm — Start”, then play the Chapter 1 video (about 2½ minutes). It plays full screen on the projector with no buttons on it; you play and pause it from your device.' },
+                    { type: 'teacher_says', text: "Open your eyes, but keep that picture in your mind. Let's watch what happens when someone else finds a door just like yours." },
+                    { type: 'stage_direction', text: 'Let the video play through without talking over it. If someone missed the start, use Replay from start.' }
                 ]},
-                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
-                    { type: 'teacher_says', text: "Now let's read Aanya's story together, page by page." },
-                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
+                { step: 3, stage: 'Explore', title: 'Storybook read-along', minutes: 3, lines: [
+                    { type: 'platform', text: 'When the video ends, the Lumora Storybook opens: 8 pages of “The Door That Wasn\'t There”. Tap the speaker to read each page aloud; every word lights up on the projector as it is read. Pause carries on from the same word. Tap Next to turn the page.' },
+                    { type: 'teacher_says', text: "Now let's read Aanya's story together. Watch the words light up and read along in your head." },
+                    { type: 'stage_direction', text: 'Give the class a moment to look at each picture before you tap Next.' },
+                    { type: 'stage_direction', text: 'On page 6, ask the class.' },
+                    { type: 'teacher_says', text: 'Aanya gave the little blue bird a name. What did she call it?' },
+                    { type: 'expected_answers', text: 'Pip!' },
+                    { type: 'teacher_says', text: "Aanya found a whole world behind her door: Flame the dragon, a castle made of clouds, a bird called Pip. Now it's YOUR turn." }
                 ]},
-                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
+                { step: 4, stage: 'Explore', title: 'The Think & Talk circle', minutes: 4, lines: [
+                    { type: 'platform', text: 'Think & Talk opens after the last page, with the four questions from the workbook. As students call out answers, type the key word only on the Lumora Wall (for example mushroom, castle, dragon). The words appear on the projector and come back as the Word Bank in Create.' },
+                    { type: 'teacher_says', text: "This is your world, so you are the expert. I'm just the visitor. When you have an idea, call it out, and I'll put it up on our Lumora Wall. There are no wrong answers. Ready?" },
                     { type: 'teacher_says', text: 'First question. You just walked through the door. What is the VERY first thing you see? Call it out!' },
                     { type: 'expected_answers', text: 'A giant mushroom! / A waterfall that goes up! / A rainbow tree!' },
-                    { type: 'teacher_says', text: 'Now, tell me, what kind of place is this?' },
-                    { type: 'expected_answers', text: 'A candy forest! / A floating castle! / An ocean of stars!' }
+                    { type: 'teacher_says', text: 'What kind of place is it? A forest? A city? A desert? A sky full of islands?' },
+                    { type: 'expected_answers', text: 'A candy forest! / A floating castle! / An ocean of stars!' },
+                    { type: 'teacher_says', text: 'Every magical world needs a name. What is the name of YOUR world?' },
+                    { type: 'expected_answers', text: 'Sparklewood! / Glowville! / The Whispering Mountains!' },
+                    { type: 'platform', text: "Type the world names with capital letters. Don't explain why yet; you will come back to them in Practice." },
+                    { type: 'teacher_says', text: 'Now use your other senses. What can you SMELL in your world? What can you HEAR? What does the ground feel like when you TOUCH it?' },
+                    { type: 'expected_answers', text: 'Cinnamon! / A dragon snoring! / Bells ringing! / Soft like cotton!' },
+                    { type: 'stage_direction', text: 'Move between the screen and the group with open gestures. Keep it quick: four to six words per question is plenty.' }
                 ]},
-                { step: 5, stage: 'Explore', title: 'Draw your world', lines: [
-                    { type: 'teacher_says', text: 'Now, we are going to capture this world. Draw a map of your magical world. Use colors. You have about 7 minutes to draw.' },
-                    { type: 'roving_prompt', text: 'Wow! Tell me about this. What is this tall thing here?' },
-                    { type: 'roving_prompt', text: 'I see you have a river here. What color is the water in your world?' },
-                    { type: 'support_prompt', text: 'Stuck? Remember you said you heard a dragon snoring. Where is that dragon? Can you draw a little cave for it?' }
+                { step: 5, stage: 'Explore', title: 'Draw your world', minutes: 7, lines: [
+                    { type: 'teacher_says', text: "You are the first explorer ever to visit your world, so let's draw a map of it. Use colours, and add at least 6 or 7 different things: trees, castles, clouds, animals, people. You'll need them in Practice. You have 7 minutes. Let's begin!" },
+                    { type: 'workbook', text: 'Open to Chapter 1 › Explore › Let\'s Draw! and draw in the space on the page.' },
+                    { type: 'platform', text: 'Tap Continue to Drawing, then Start 7-min timer. The projector shows the countdown; Pause on your device stops both.' },
+                    { type: 'roving_prompt', text: 'Wow! Tell me about this. What is this tall thing here? What colour is it?' },
+                    { type: 'roving_prompt', text: 'I see you have a river here. What colour is the water in your world? Can you add that colour?' },
+                    { type: 'support_prompt', text: 'Stuck? Someone said they heard a dragon snoring. Where is the dragon in your world? Can you draw a little cave for it?' },
+                    { type: 'stage_direction', text: 'At 2 minutes left.' },
+                    { type: 'teacher_says', text: 'Two more minutes! Add one final detail. What is the most important thing in your world? Add it now!' },
+                    { type: 'stage_direction', text: 'Check that each drawing has at least 6 things in it; the Noun Hunt needs them.' }
                 ]},
-                { step: 6, stage: 'Explore', title: 'Wrap up', lines: [
-                    { type: 'teacher_says', text: "Pencils down. Look at what you've created. Give yourself a clap! Now we're going on a word adventure." }
+                { step: 6, stage: 'Explore', title: 'Gallery moment and wrap up', minutes: 1, lines: [
+                    { type: 'platform', text: "Tap We're Done Drawing. The wrap-up screen shows; tap Go to Practice when the class is ready." },
+                    { type: 'teacher_says', text: "Pencils down. Look at what you've created. In just a few minutes, you've built an entire world. Hold up your drawing so your neighbour can see it. Give yourself a clap!" },
+                    { type: 'workbook', text: 'Keep the workbook open at your drawing.' },
+                    { type: 'teacher_says', text: "We're about to go on a different kind of adventure. A word adventure!" }
                 ]},
-                { step: 7, stage: 'Practice', title: 'Grammar Spotlight: Nouns', lines: [
-                    { type: 'teacher_says', text: 'Every word has a job. Some words name things — we call these nouns. First, a noun can name a person. What are some people?' },
-                    { type: 'expected_answers', text: 'Boy! / Teacher! / Mom! / King!' },
-                    { type: 'teacher_says', text: 'Second, a noun can name a place. Third, a noun can name a thing.' },
-                    { type: 'expected_answers', text: 'School! / Mountain! / Book! / Dragon!' }
+                { step: 7, stage: 'Practice', title: 'Introducing nouns', minutes: 3, lines: [
+                    { type: 'platform', text: 'The Practice screen, Word Detective, shows the rule on the projector: nouns are naming words; a common noun is a general name (dragon), a proper noun is a special name (Flame).' },
+                    { type: 'workbook', text: 'Open to Practice › Grammar Spotlight: Nouns.' },
+                    { type: 'stage_direction', text: 'This is not a lecture; it is a guided discovery. Hold up three fingers and count them off.' },
+                    { type: 'teacher_says', text: 'Explorers, every word has a job. Some words name things. We call them nouns. A noun is a naming word, and it can name three kinds of things.' },
+                    { type: 'teacher_says', text: 'A noun can name a person, like a king, a teacher, a boy. Who lives in your world?' },
+                    { type: 'expected_answers', text: 'A wizard! / A queen! / A friendly giant!' },
+                    { type: 'teacher_says', text: 'A noun can name a place, like a castle, a forest, a school. And a noun can name a thing: something real like a book, or something imaginary like a dragon.' },
+                    { type: 'expected_answers', text: 'Mountain! / Park! / Dragon! / Cloud!' },
+                    { type: 'teacher_says', text: 'Look at your drawing. Every person, every place and every thing you drew is a noun!' }
                 ]},
-                { step: 8, stage: 'Practice', title: "Try It Together (Maya and Flame)", lines: [
-                    { type: 'teacher_says', text: "'Dog' is a common noun — any dog. But 'Scooby' is a proper noun — one specific dog. Proper nouns always start with a capital letter." },
-                    { type: 'stage_direction', text: "Point to Maya's drawing — her dragon is named Flame." },
-                    { type: 'expected_answers', text: "Common! / Proper! / Because it's ONE specific dragon!" }
+                { step: 8, stage: 'Practice', title: 'Missions 1-2: Discover and classify', minutes: 2, lines: [
+                    { type: 'platform', text: 'Start the missions. Mission 1 · Discover: tap a glowing clue in the magical world (castle, dragon, bird, river, bridge...). Mission 2 · Classify: the class decides, then you tap Common or Proper. The projector follows every tap.' },
+                    { type: 'teacher_says', text: 'Detectives, look carefully at the magical world. Something is glowing. What can we name?' },
+                    { type: 'expected_answers', text: 'The castle! / The dragon! / The river!' },
+                    { type: 'teacher_says', text: "Castle. Is that a general name for any castle, or a special name for one castle? Common or proper?" },
+                    { type: 'expected_answers', text: 'Common! / Because it could be any castle!' },
+                    { type: 'stage_direction', text: 'Invite one student up to tap the next clue, or let them point and you tap.' }
                 ]},
-                { step: 9, stage: 'Practice', title: 'Noun Hunt from your drawing', lines: [
-                    { type: 'teacher_says', text: 'Look at your drawing. It is FULL of nouns. Find 5 common nouns and write them down. You have 8 minutes.' },
-                    { type: 'roving_prompt', text: 'I see you drew a big mountain. What is that? Write that down.' },
-                    { type: 'support_prompt', text: "Let's look together. Point to something in your drawing. What is it?" }
+                { step: 9, stage: 'Practice', title: 'Mission 3: Common vs. proper nouns', minutes: 3, lines: [
+                    { type: 'workbook', text: 'Look at Try It Together: Maya drew a dragon and named him “Flame”.' },
+                    { type: 'platform', text: 'Mission 3 · Why? shows dragon (a general name) next to Flame (a special name). Ask the class first, then tap their answer: A “It is an animal” or B “It is a special name given to the dragon”.' },
+                    { type: 'teacher_says', text: "'Dragon' is a common noun. It can be any dragon. But 'Flame' is a proper noun. It's the name of ONE specific dragon: Maya's dragon. It works the same for dog and Scooby, girl and Meera, city and Mumbai." },
+                    { type: 'teacher_says', text: "Here's the rule. Proper nouns always start with a capital letter. Always. Common nouns start with a small letter, unless they're at the beginning of a sentence." },
+                    { type: 'teacher_says', text: 'Remember the world names on our Lumora Wall, like Sparklewood and Glowville? I wrote them with capital letters. Why do you think I did that?' },
+                    { type: 'expected_answers', text: "Because they're proper nouns! / They're special names!" },
+                    { type: 'teacher_says', text: "You've got it! Your world's name is a proper noun." }
                 ]},
-                { step: 10, stage: 'Practice', title: 'Quick check and close', lines: [
-                    { type: 'teacher_says', text: "Quick check! Is 'Mumbai' common or proper?" },
-                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
+                { step: 10, stage: 'Practice', title: 'Missions 4-5: Name it and fix it', minutes: 3, lines: [
+                    { type: 'platform', text: 'Mission 4 · Magical Naming Machine: pick dragon, rock, bird, flower or castle and type the name the class chooses; it turns into a proper noun with a capital letter. Mission 5 · Grammar Fixer: tap the words in “maya saw a dragon named flame.” that need a capital, then Check.' },
+                    { type: 'teacher_says', text: "Let's give our bird a special name. Aanya called hers Pip. What shall we call ours?" },
+                    { type: 'expected_answers', text: 'Sky! / Bluey! / Chirpy!' },
+                    { type: 'teacher_says', text: "See? 'Bird' is a common noun. When we give it its own name, it becomes a proper noun, with a capital letter." },
+                    { type: 'teacher_says', text: "Uh-oh, someone forgot their capital letters! 'maya saw a dragon named flame.' Which words are special names?" },
+                    { type: 'expected_answers', text: 'Maya! / Flame!' }
+                ]},
+                { step: 11, stage: 'Practice', title: 'Noun Hunt from your drawing', minutes: 7, lines: [
+                    { type: 'stage_direction', text: 'The core Practice activity: students use what they have learned on their own creative work.' },
+                    { type: 'platform', text: 'Mission 6 · Noun Hunt: model it with the class first. Students call out clues; tap each one, classify it, and give some a special name. The mission continues once you have 5 common nouns and 3 proper nouns. Keep this part to about 2 minutes. There is no timer on this screen, so watch the clock.' },
+                    { type: 'teacher_says', text: "Now the hunt moves into YOUR world! Look at your drawing. Find 5 common nouns and write them on the lines, with small letters. Then give 3 things in your world a special name and write those, with a capital letter. Don't just pick the first things you see. Look closely. You have 5 minutes. Begin!" },
+                    { type: 'workbook', text: 'Practice › Noun Hunt from Your Drawing: 5 common nouns, then 3 proper nouns (capital letters).' },
+                    { type: 'roving_prompt', text: 'I see a big mountain. What is it? A mountain. That is a common noun. Write it down!' },
+                    { type: 'roving_prompt', text: 'Your dragon needs a name! What do you call him? Great. Capital letter, because it is a proper noun.' },
+                    { type: 'roving_prompt', text: '5 already? Can you find 2 more nouns hiding in your world?' },
+                    { type: 'support_prompt', text: "Let's look together. Point to something in your drawing. What is it? A tree? Good. Tree is a common noun. Write it down. What's this? A house? You've got two already!" },
+                    { type: 'stage_direction', text: 'At 1 minute left.' },
+                    { type: 'teacher_says', text: 'One more minute! Check your spelling. Common nouns start with small letters; proper nouns start with capitals.' }
+                ]},
+                { step: 12, stage: 'Practice', title: 'Quick check and wrap up', minutes: 2, lines: [
+                    { type: 'platform', text: 'Tap Continue to the Quick Check. It asks 3 questions: mountain, Mumbai, Flame. Ask, take a show of thumbs, then tap Most / Some / Few. Any “Few” flags a Fix It Zone suggestion for this class.' },
+                    { type: 'teacher_says', text: "Let's see how sharp our detectives are! Thumbs up if you know the answer. Is 'mountain' a common noun or a proper noun?" },
+                    { type: 'expected_answers', text: "Common! / Because it's any mountain!" },
+                    { type: 'teacher_says', text: "What about 'Mumbai'? And 'Flame'? Why?" },
+                    { type: 'expected_answers', text: "Proper! / Because it's ONE special name, and it starts with a capital letter!" },
+                    { type: 'stage_direction', text: 'Note anyone who got 2 or more wrong. Check their Noun Hunt list and point them to the Fix It Zone (Box C) in their Learning Space at home.' },
+                    { type: 'teacher_says', text: 'Today you imagined an entire magical world, you drew it, and you learned that everything in your world has a name. Those names are called nouns! Next time, we go back through the magic door and write a story about it. Keep your workbooks safe. Great work, everyone!' }
                 ]}
             ],
             session2Script: [
-                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
-                    { type: 'teacher_says', text: 'Welcome back, explorers! Last session, you stepped through a magic door, imagined a whole new world, drew it, and learned that everything in your world has a name. Remember?' },
-                    { type: 'stage_direction', text: 'Pause for student responses.' }
+                { step: 1, stage: 'Create', title: 'Opening and recap', minutes: 3, lines: [
+                    { type: 'platform', text: 'Open Chapter 1 › Create. The opening card shows the welcome line; tap Continue when you are ready for the starter.' },
+                    { type: 'workbook', text: 'Workbooks open at the drawing and the Noun Hunt list from last time.' },
+                    { type: 'teacher_says', text: "Welcome back, explorers! Hold up your drawing. Who remembers their dragon's name?" },
+                    { type: 'expected_answers', text: 'Flame! / Sparky! / Ember!' },
+                    { type: 'teacher_says', text: 'Last session, you stepped through a magic door, imagined a whole new world, drew it, and learned that everything in it has a name: a noun. Your drawing and your noun list are your map and your treasure chest of words.' },
+                    { type: 'teacher_says', text: "Close your eyes for a moment. You're in your room. The door appears. You open it. You step through..." },
+                    { type: 'stage_direction', text: 'Pause for about 10 seconds.' },
+                    { type: 'teacher_says', text: "But this time, something is different. This time, you walk. You explore. Something happens. Something exciting. Something magical. Open your eyes. Are you ready to write your adventure?" }
                 ]},
-                { step: 2, stage: 'Create', title: 'Story starter', lines: [
-                    { type: 'teacher_says', text: "Here is what we're going to do. You are going to write a short story. Your story will start like this: 'One day, I opened my magic door and stepped into...'" }
+                { step: 2, stage: 'Create', title: 'Story starter', minutes: 2, lines: [
+                    { type: 'platform', text: 'The Story Starter shows large on the projector: “One day, I opened my magic door and stepped into...”' },
+                    { type: 'workbook', text: 'Create › Write Your Magical Adventure! Copy the starter on the first line.' },
+                    { type: 'teacher_says', text: "Your story will start like this: 'One day, I opened my magic door and stepped into...' Copy it into your workbook now. From there, you decide what happens." },
+                    { type: 'teacher_says', text: "You can write about what the place looks like, who or what you met, what happened to you, and how you felt. You don't have to answer them all. Pick the ones you like." }
                 ]},
-                { step: 3, stage: 'Create', title: 'Teacher models a story', lines: [
-                    { type: 'teacher_says', text: 'Let me try writing one together with you. One day, I opened my magic door and stepped into... a world called Glimmerwood...' },
-                    { type: 'stage_direction', text: 'Write or speak slowly, thinking aloud. Point to the nouns as you go.' }
+                { step: 3, stage: 'Create', title: 'Teacher models a story', minutes: 4, lines: [
+                    { type: 'platform', text: 'Tap Continue. The model story appears one sentence at a time, with its nouns highlighted. Tap Next Sentence as you read, and point to each highlighted noun.' },
+                    { type: 'teacher_says', text: "Watch me try first. One day, I opened my magic door and stepped into... a world called Glimmerwood. Glimmerwood has a capital G. Why?" },
+                    { type: 'expected_answers', text: "It's a proper noun! / It's the world's special name!" },
+                    { type: 'teacher_says', text: "The trees had silver leaves that chimed like tiny bells when the wind blew. I met a fox with golden fur who could talk. He said, 'Follow me!' We ran through a meadow of glowing flowers. I felt so happy and curious. I wanted to stay forever." },
+                    { type: 'teacher_says', text: 'See what I did? I used my senses. I added a character. I said how I felt. And look at all the nouns: door, world, trees, leaves, fox, flowers. Your secret ingredient is your Noun Hunt list. Use at least 2 of your nouns in your story.' }
                 ]},
-                { step: 4, stage: 'Create', title: 'Write your story', lines: [
-                    { type: 'teacher_says', text: 'You have about 15 minutes to write your adventure. Ready? Begin!' },
-                    { type: 'roving_prompt', text: 'I see you met a dragon! What color is the dragon? Can you add that detail?' },
-                    { type: 'support_prompt', text: "Stuck? Let's look at your drawing together. Point to something. What is it?" }
+                { step: 4, stage: 'Create', title: 'Write your story', minutes: 14, lines: [
+                    { type: 'platform', text: 'Tap Continue. Write Your Story shows the “Think about...” list, the Word Bank from the class\'s Lumora Wall, and Need a Hint? for a fresh idea.' },
+                    { type: 'workbook', text: 'Create › Write your story here. Aim for 6-8 sentences.' },
+                    { type: 'teacher_says', text: 'You have about 14 minutes to write your adventure. Use at least 2 nouns from your list, and aim for 6 to 8 sentences. Ready? Begin!' },
+                    { type: 'roving_prompt', text: 'Oh, you met a dragon! What colour is the dragon? Can you add that detail?' },
+                    { type: 'roving_prompt', text: "I see 'river' from your noun list. Where does the river go? Does it lead somewhere?" },
+                    { type: 'roving_prompt', text: 'How did you feel when you saw it? Scared? Excited? Add that too. Now your story has feelings!' },
+                    { type: 'support_prompt', text: "Stuck? Let's look at your drawing together. Point to something. A castle? Who lives there? Write: 'I saw a castle. A queen lived there.' You've started!" },
+                    { type: 'support_prompt', text: "Worried about spelling? Just sound it out and write what you hear. We can fix spelling later." },
+                    { type: 'stage_direction', text: 'At 5 minutes left.' },
+                    { type: 'teacher_says', text: 'Five more minutes! How does your adventure end? Did you go back home? Did you promise to return? Add your ending now.' },
+                    { type: 'platform', text: "Optional: Scan Student's Writing. Photograph a finished page to get the story as text with kind feedback. Read the feedback yourself before sharing it, then Save; the story goes to the child's My Stories and the parent's report. You can also scan after class from the Scan tab." }
                 ]},
-                { step: 5, stage: 'Create', title: 'Check my story', lines: [
-                    { type: 'teacher_says', text: 'Pencils down! Read your story to yourself. Is there one more detail you want to add?' },
-                    { type: 'stage_direction', text: "Remind students: invented spelling is fine — we can fix spelling later." }
+                { step: 5, stage: 'Create', title: 'Check my story', minutes: 2, lines: [
+                    { type: 'platform', text: "Tap We're Done Writing. Check My Story shows three ticks: I used at least 2 nouns from my list · My names start with capital letters · My story has a beginning." },
+                    { type: 'teacher_says', text: 'Pencils down! Read your story to yourself. Did you use 2 nouns from your list? Do your special names start with capital letters? Is there one more detail, a colour, a feeling or a sound, that you want to add?' },
+                    { type: 'stage_direction', text: 'Invented spelling is always okay. This is about the ideas.' },
+                    { type: 'teacher_says', text: 'You just took the world in your imagination and turned it into words on a page. That is what writers do. Give yourselves a round of applause!' }
                 ]},
-                { step: 6, stage: 'Perform', title: 'Feedback frame', lines: [
-                    { type: 'teacher_says', text: "When you listen to someone else's story, notice what you loved, and one cool thing they imagined. Let's practice: 'I loved ___. One cool thing: ___.'" }
+                { step: 6, stage: 'Perform', title: 'Feedback frame', minutes: 2, lines: [
+                    { type: 'platform', text: 'Tap Go to Perform. The frame “I loved ___. One cool thing: ___.” shows large on the projector.' },
+                    { type: 'workbook', text: 'Perform › Share and Shine! The two lines: What I loved about their story · One cool thing they imagined.' },
+                    { type: 'teacher_says', text: 'A story is meant to be heard. Your story is YOURS. No one else has your world. When you listen to someone else, notice two things: what you loved about their story, and one cool thing they imagined.' },
+                    { type: 'teacher_says', text: 'Let\'s practise. If I read a story about a chocolate river and a singing tree, what might you say?' },
+                    { type: 'expected_answers', text: 'I loved the chocolate river! / One cool thing: a tree that sings!' },
+                    { type: 'stage_direction', text: 'Model the frame with one volunteer, then the whole class says it once together.' }
                 ]},
-                { step: 7, stage: 'Perform', title: 'Pair share', lines: [
-                    { type: 'teacher_says', text: "Reader, take a deep breath — you've got this. Listener, get ready to listen." },
-                    { type: 'support_prompt', text: "Feeling nervous? That's okay. You don't have to read loudly — just so your partner can hear." }
+                { step: 7, stage: 'Perform', title: 'Pair share', minutes: 8, lines: [
+                    { type: 'platform', text: 'Tap Continue to Pair Share. Tap Start Partner 1 (4 minutes), then Switch Partner for the second reader.' },
+                    { type: 'teacher_says', text: "Reader, take a deep breath. You've got this. Read slowly and clearly, like you're telling a secret nobody else knows yet. Listener, listen with your whole self. No interrupting. When the story ends, you are the cheerleader." },
+                    { type: 'workbook', text: 'After each story, the listener fills in the two Perform lines.' },
+                    { type: 'roving_prompt', text: 'Listener, what did you love about their story? And what is one cool thing they imagined?' },
+                    { type: 'roving_prompt', text: "Slow down a little, friend. You have a beautiful story. Read it like you're telling us a secret." },
+                    { type: 'support_prompt', text: "Feeling nervous? That's okay. You don't have to read loudly, just so your partner can hear. Want me to stay here while you start?" },
+                    { type: 'teacher_says', text: "If you've both shared, thank your partner. Say something like 'I really enjoyed your story.' Kind words matter." }
                 ]},
-                { step: 8, stage: 'Perform', title: "Explorer's Stage", lines: [
-                    { type: 'teacher_says', text: 'Who wants to share one favorite part of their story with the whole class?' },
-                    { type: 'stage_direction', text: 'Pick 2-3 volunteers only. Never pick at random.' }
+                { step: 8, stage: 'Perform', title: "Explorer's Stage", minutes: 3, lines: [
+                    { type: 'platform', text: "Tap Continue to the Explorer's Stage. Ask for a volunteer, pick their name, then tap Spotlight; the spotlight and applause show on the projector." },
+                    { type: 'teacher_says', text: 'Who wants to share one favourite part of their story with the whole class?' },
+                    { type: 'stage_direction', text: 'Pick 2-3 volunteers only. Never pick at random; the portal never does either.' },
+                    { type: 'teacher_says', text: 'What was one story you heard today that surprised you? Call it out!' },
+                    { type: 'expected_answers', text: 'A world made of candy! / Someone had a pet cloud! / A tree that told jokes!' }
                 ]},
-                { step: 9, stage: 'Perform', title: 'Close', lines: [
-                    { type: 'teacher_says', text: "Today, you created a story, performed by reading it aloud, and became a listener who celebrated someone else's creativity. See you next time, explorers!" }
+                { step: 9, stage: 'Perform', title: 'Close', minutes: 2, lines: [
+                    { type: 'workbook', text: 'I Can Check Myself! Students tick the four boxes for Chapter 1.' },
+                    { type: 'teacher_says', text: "Today, you did three things. You created a story. You performed by reading it aloud. And you became a listener who celebrated someone else's creativity. That is what storytellers do." },
+                    { type: 'teacher_says', text: 'Take your story home and read it to someone you love. Every time you share your story, you open that magic door for someone else. See you next time, explorers!' },
+                    { type: 'platform', text: 'Tap Continue. The closing door shows on the projector. Tap Finish Chapter; the reflection box is optional and only for you.' }
                 ]}
             ]
         },
