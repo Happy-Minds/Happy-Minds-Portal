@@ -100,7 +100,7 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" placeholder="Search chapters..." id="searchInput">
                 </div>
-                <div class="notification-center" data-roles="teacher,trainer,admin">
+                <div class="notification-center" data-roles="trainer,admin">
                     <button class="icon-badge-btn" onclick="toggleNotificationMenu(event)">
                         <i class="fa-solid fa-bell"></i>
                         <span class="badge-count" id="notificationBadge" style="display:none;">0</span>
@@ -602,26 +602,6 @@
                     <button class="btn-primary-glowing full-width" onclick="submitObservation()">
                         <i class="fa-solid fa-check-double"></i> Submit Observation
                     </button>
-                </div>
-            </section>
-
-            <!-- ================= VIEW: CHAPTER REFLECTION (teacher, after Session 2) ================= -->
-            <section id="reflection-view" class="view-section">
-                <div class="prep-header">
-                    <div class="badge-icon pink"><i class="fa-solid fa-clipboard-question"></i></div>
-                    <div class="prep-header-text">
-                        <h2 id="reflectionTitle">Chapter Reflection</h2>
-                        <p>A chapter is complete once this is submitted. Saves as you go — finish it in two sittings if you need to.</p>
-                    </div>
-                </div>
-
-                <div id="reflectionSections"></div>
-
-                <div class="prep-section-card reflection-submit-card">
-                    <button class="btn-primary-glowing full-width" onclick="submitReflection()">
-                        <i class="fa-solid fa-check-double"></i> Submit Reflection &amp; Complete Chapter
-                    </button>
-                    <p class="reflection-autosave-note" id="reflectionAutosaveNote"></p>
                 </div>
             </section>
 
@@ -1829,7 +1809,7 @@
                     <h3><i class="fa-solid fa-chalkboard-user"></i> Teacher Usage</h3>
                     <div class="admin-list-row" id="teacherReportRow" style="cursor:pointer;" onclick="openTeacherReport()">
                         <img src="assets/teacher_avatar.png" alt="" class="admin-list-avatar">
-                        <span class="admin-list-title">Ms. Anita — prep readiness, in-class time &amp; chapter reflections</span>
+                        <span class="admin-list-title">Ms. Anita — prep readiness &amp; in-class time</span>
                         <i class="fa-solid fa-chevron-right"></i>
                     </div>
                 </div>

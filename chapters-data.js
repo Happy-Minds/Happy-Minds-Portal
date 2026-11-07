@@ -357,7 +357,7 @@ const CHAPTERS = [
                     { type: 'workbook', text: 'I Can Check Myself! Students tick the four boxes for Chapter 1.' },
                     { type: 'teacher_says', text: "Today, you did three things. You created a story. You performed by reading it aloud. And you became a listener who celebrated someone else's creativity. That is what storytellers do." },
                     { type: 'teacher_says', text: 'Take your story home and read it to someone you love. Every time you share your story, you open that magic door for someone else. See you next time, explorers!' },
-                    { type: 'platform', text: 'Tap Continue. The closing door shows on the projector. Tap Finish Chapter; the reflection box is optional and only for you.' }
+                    { type: 'platform', text: 'Tap Continue. The closing door shows on the projector. Tap Finish Chapter. The short notes box above it is optional and only for you.' }
                 ]}
             ]
         },

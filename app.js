@@ -325,11 +325,9 @@ function navigateTo(viewId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Brief: the Chapter Reflection "stays on the teacher's home screen until
-// submitted". Rather than a banner that overwhelms the home page, pending
-// reflections (and any future alert type) live in the header's notification
-// dropdown, with the badge count reflecting real pending state — not the
-// hardcoded "2" this used to show.
+// The header bell: trainers and admins get a notice for each submitted
+// Chapter Reflection they haven't opened yet. Teachers have no notices now
+// that they no longer fill in reflections, so the bell is hidden for them.
 function renderNotificationCenter() {
     const list = document.getElementById('notificationDropdownList');
     const badge = document.getElementById('notificationBadge');
@@ -339,31 +337,8 @@ function renderNotificationCenter() {
         renderReviewerNotifications(list, badge);
         return;
     }
-
-    const pending = appState.completedChapters.filter(id => isReflectionPending(id));
-
-    badge.textContent = pending.length;
-    badge.style.display = pending.length ? 'flex' : 'none';
-
-    if (!pending.length) {
-        list.innerHTML = `<div class="notification-dropdown-empty">You're all caught up — no pending reflections.</div>`;
-        return;
-    }
-
-    list.innerHTML = pending.map(id => {
-        const chapter = getChapterById(id);
-        return `
-            <div class="reflection-reminder-card">
-                <i class="fa-solid fa-clipboard-question"></i>
-                <div class="reflection-reminder-text">
-                    <strong>Reflection pending: ${chapter.title}</strong>
-                    <span>Chapter ${String(id).padStart(2, '0')} isn't complete until this is submitted.</span>
-                </div>
-                <button class="btn-primary-glowing compact" onclick="closeNotificationMenu(); appState.currentChapterId=${id}; openChapterReflection();">
-                    Complete It <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </div>`;
-    }).join('');
+    badge.style.display = 'none';
+    list.innerHTML = `<div class="notification-dropdown-empty">You're all caught up.</div>`;
 }
 
 function openChapterDetail(chapterId) {
@@ -3117,11 +3092,12 @@ function spotlightVolunteer() {
     broadcastToProjector({ type: 'perform-spotlight', name: student.name });
 }
 
-// ================= VIEW: Chapter Reflection (teacher, after Session 2) =================
-// Shared template — Sections 1-8 and 10-14 are identical for every chapter;
-// only Section 9 (common errors) and the grammar-focus text are chapter data
-// (chapter.reflection). In the real brief this template lives in an admin
-// panel; app.js is the stand-in for that until one exists.
+// ================= Chapter Reflection (no longer filled in) =================
+// Teachers no longer fill in a Chapter Reflection after each chapter. The
+// template stays so trainers and admins can still read the reflections that
+// were submitted before (Reports page and its PDF). Sections 1-8 and 10-14
+// are shared; only Section 9 and the grammar focus are chapter data
+// (chapter.reflection).
 const REFLECTION_TEMPLATE = [
     { id: 1, title: 'Lesson Delivery & Pacing', example: 'Session 1 ran 44 min, Session 2 ran 47 min — Perform overran slightly.', fields: [
         { key: 'session1Minutes', type: 'number_readonly', label: 'Actual time — Session 1 (minutes)' },
@@ -3183,172 +3159,6 @@ const REFLECTION_TEMPLATE = [
 
 function loadReflections() {
     return HMCloud.get(REFLECTION_STORAGE_KEY) || {};
-}
-
-function saveReflections() {
-    if (isViewOnly()) return;
-    HMCloud.save(REFLECTION_STORAGE_KEY, appState.reflections);
-}
-
-function getReflectionDraft(chapterId) {
-    if (!appState.reflections[chapterId]) {
-        appState.reflections[chapterId] = { submitted: false, answers: {} };
-    }
-    return appState.reflections[chapterId];
-}
-
-function isReflectionPending(chapterId) {
-    const chapter = getChapterById(chapterId);
-    // Only chapters with real reflection data (currently just chapter 1) can
-    // show this reminder — chapters 2-24 don't have reflection content yet.
-    if (!chapter || !chapter.reflection) return false;
-    return appState.completedChapters.includes(chapterId) && !getReflectionDraft(chapterId).submitted;
-}
-
-function openChapterReflection() {
-    if (isViewOnly()) return;
-    const chapter = getCurrentChapter();
-    if (!chapter.reflection) {
-        // No reflection content for this chapter yet — don't block chapter
-        // completion on a form that doesn't exist; complete it directly,
-        // same as finishChapterPerform() did before Reflection existed.
-        showNotification(`The Chapter Reflection for "${chapter.title}" isn't written yet.`);
-        markChapterComplete(chapter.id);
-        openCelebrationScreen();
-        return;
-    }
-    const draft = getReflectionDraft(chapter.id);
-    const nextChapter = getChapterById(chapter.id + 1);
-
-    document.getElementById('reflectionTitle').textContent = `Chapter Reflection: ${chapter.title}`;
-
-    // Pre-filled values the teacher only confirms, per the brief's table.
-    const minutes = getTimeReport(chapter.id)[chapter.id] || {};
-    const prefills = {
-        session1Minutes: Math.round(((minutes.explore || 0) + (minutes.practice || 0)) * 10) / 10,
-        session2Minutes: Math.round(((minutes.create || 0) + (minutes.perform || 0)) * 10) / 10,
-        nextChapterNote: nextChapter ? `Chapter ${String(nextChapter.id).padStart(2, '0')}: ${nextChapter.title}` : 'This was the final chapter!'
-    };
-
-    document.getElementById('reflectionSections').innerHTML = REFLECTION_TEMPLATE.map(section => {
-        const title = section.title.replace('{grammarFocus}', chapter.reflection.grammarFocus);
-        const fieldsHtml = section.fields.map(field => {
-            const label = field.label.replace('{grammarFocus}', chapter.reflection.grammarFocus);
-            const value = draft.answers[field.key] !== undefined ? draft.answers[field.key] : prefills[field.key];
-            return renderReflectionField(chapter, field, label, value);
-        }).join('');
-
-        return `
-            <div class="prep-section-card">
-                <div class="reflection-section-head">
-                    <h3>Section ${section.id}: ${title}</h3>
-                    <button class="reflection-example-link" onclick="this.parentElement.nextElementSibling.classList.toggle('shown')">See an example</button>
-                </div>
-                <p class="reflection-example-text">${section.example}</p>
-                ${fieldsHtml}
-            </div>`;
-    }).join('');
-
-    document.getElementById('reflectionAutosaveNote').textContent =
-        draft.submitted ? 'Already submitted for this chapter.' : 'Saves automatically as you go.';
-
-    navigateTo('reflection');
-}
-
-function renderReflectionField(chapter, field, label, value) {
-    const onChange = `onReflectionFieldChange('${field.key}', this)`;
-
-    if (field.type === 'number_readonly' || field.type === 'text_readonly') {
-        return `
-            <div class="reflection-field">
-                <label>${label} <span class="reflection-prefilled-tag">pre-filled</span></label>
-                <p class="reflection-readonly-value">${value != null && value !== '' ? value : '—'}</p>
-            </div>`;
-    }
-
-    if (field.type === 'rating5') {
-        const stars = [1, 2, 3, 4, 5].map(n => `
-            <button type="button" class="reflection-star ${value >= n ? 'filled' : ''}" onclick="setReflectionRating('${field.key}', ${n}, this)">★</button>`).join('');
-        return `<div class="reflection-field"><label>${label}</label><div class="reflection-stars">${stars}</div></div>`;
-    }
-
-    if (field.type === 'percent_band') {
-        const bands = ['0-25%', '26-50%', '51-75%', '76-100%'];
-        return `
-            <div class="reflection-field"><label>${label}</label>
-            <div class="reflection-pill-group">${bands.map(b => `
-                <button type="button" class="reflection-pill ${value === b ? 'selected' : ''}" onclick="setReflectionPill('${field.key}', '${b}', this)">${b}</button>`).join('')}</div></div>`;
-    }
-
-    if (field.type === 'yesno') {
-        return `
-            <div class="reflection-field"><label>${label}</label>
-            <div class="reflection-pill-group">
-                <button type="button" class="reflection-pill ${value === 'yes' ? 'selected' : ''}" onclick="setReflectionPill('${field.key}', 'yes', this)">Yes</button>
-                <button type="button" class="reflection-pill ${value === 'no' ? 'selected' : ''}" onclick="setReflectionPill('${field.key}', 'no', this)">No</button>
-            </div></div>`;
-    }
-
-    if (field.type === 'checklist') {
-        const items = chapter.reflection.commonErrors;
-        const checked = value || [];
-        return `
-            <div class="reflection-field"><label>${label}</label>
-            <div class="checklist-items">${items.map((item, i) => `
-                <label class="check-item"><input type="checkbox" ${checked.includes(i) ? 'checked' : ''} onchange="toggleReflectionChecklist('${field.key}', ${i}, this)"> ${item}</label>`).join('')}</div></div>`;
-    }
-
-    if (field.type === 'textarea') {
-        return `
-            <div class="reflection-field"><label>${label}</label>
-            <textarea class="reflection-textarea" oninput="${onChange}">${value || ''}</textarea></div>`;
-    }
-
-    return `
-        <div class="reflection-field"><label>${label}</label>
-        <input type="text" class="reflection-text-input" value="${value || ''}" oninput="${onChange}"></div>`;
-}
-
-function persistReflectionAnswer(key, value) {
-    const draft = getReflectionDraft(getCurrentChapter().id);
-    draft.answers[key] = value;
-    saveReflections();
-}
-
-function onReflectionFieldChange(key, el) {
-    persistReflectionAnswer(key, el.value);
-}
-
-function setReflectionRating(key, n, el) {
-    persistReflectionAnswer(key, n);
-    el.closest('.reflection-stars').querySelectorAll('.reflection-star').forEach((star, i) => {
-        star.classList.toggle('filled', i < n);
-    });
-}
-
-function setReflectionPill(key, val, el) {
-    persistReflectionAnswer(key, val);
-    el.closest('.reflection-pill-group').querySelectorAll('.reflection-pill').forEach(p => p.classList.remove('selected'));
-    el.classList.add('selected');
-}
-
-function toggleReflectionChecklist(key, index, checkboxEl) {
-    const draft = getReflectionDraft(getCurrentChapter().id);
-    const current = draft.answers[key] || [];
-    draft.answers[key] = checkboxEl.checked ? [...current, index] : current.filter(i => i !== index);
-    saveReflections();
-}
-
-function submitReflection() {
-    const chapter = getCurrentChapter();
-    const draft = getReflectionDraft(chapter.id);
-    draft.submitted = true;
-    draft.submittedAt = new Date().toISOString();
-    saveReflections();
-
-    markChapterComplete(chapter.id);
-    renderNotificationCenter();
-    openCelebrationScreen();
 }
 
 // ================= VIEW: Trainer Observation Module =================
@@ -4395,7 +4205,7 @@ function buildTeacherReportHtml() {
     return `
         <div class="admin-header">
             <h2><img src="${teacher.avatar}" alt="" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:10px;">${teacher.name} — Portal Usage</h2>
-            <p>Prep readiness per chapter, real in-class time logged per stage, and the teacher's chapter reflections.</p>
+            <p>Prep readiness per chapter and real in-class time logged per stage${submittedReflections().length ? ', plus the chapter reflections submitted before the form was retired' : ''}.</p>
         </div>
 
         <div class="admin-section-card">
@@ -4409,15 +4219,17 @@ function buildTeacherReportHtml() {
             ${timeRows ? `<div class="admin-chapter-list">${timeRows}</div>` : '<p class="prep-readiness-explain">No time logged yet — time is tracked automatically as the teacher runs each stage.</p>'}
         </div>
 
+        ${submittedReflections().length ? `
         <div class="admin-section-card" id="teacherReflectionsCard">
             <h3><i class="fa-solid fa-clipboard-check"></i> Chapter Reflections</h3>
+            <p class="prep-readiness-explain" style="margin-bottom:10px;">Teachers no longer fill in a reflection after each chapter. These were submitted earlier.</p>
             ${buildReflectionsReportHtml()}
-        </div>`;
+        </div>` : ''}`;
 }
 
 // ================= TRAINER/ADMIN: Chapter Reflections =================
-// The teacher submits a Chapter Reflection after each chapter (saved in the
-// staff-only "reflections" document). Trainers and admins read them here, in
+// Teachers used to submit a Chapter Reflection after each chapter (saved in
+// the staff-only "reflections" document); the ones already submitted stay. Trainers and admins read them here, in
 // the Teacher Usage report, and get a notice in the bell when a new one
 // arrives. Which reflections a trainer has already opened is remembered on
 // that trainer's own device.
@@ -4654,12 +4466,9 @@ function onScanStoryInput() {
     clearStoryFeedback('scan');
 }
 
-// A chapter is marked complete only once its Chapter Reflection is
-// submitted — finishing Perform opens the Reflection form rather than
-// completing the chapter directly; submitReflection() does that instead.
 function finishChapterPerform() {
     if (isViewOnly()) {
-        viewOnlyNotice('the teacher finishes the chapter and fills in its reflection.');
+        viewOnlyNotice('the teacher finishes the chapter.');
         return;
     }
     const chapter = getCurrentChapter();
@@ -4668,7 +4477,8 @@ function finishChapterPerform() {
         openPlannerModal(chapter.id, 'class2');
         return;
     }
-    openChapterReflection();
+    markChapterComplete(chapter.id);
+    openCelebrationScreen();
 }
 
 // ================= Celebration View & Confetti =================
