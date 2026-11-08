@@ -136,6 +136,13 @@ body {
     gap: 16px;
 }
 
+/* Admin and coordinator have six tabs: keep the header on one row on laptops. */
+@media (min-width: 1081px) and (max-width: 1500px) {
+    .main-nav { gap: 2px; }
+    .nav-btn { padding: 10px 13px; }
+    .main-header .search-box { width: 150px; }
+}
+
 .search-box {
     display: flex;
     align-items: center;
@@ -367,6 +374,49 @@ body:not(.can-manage) .manage-only { display: none !important; }
 .staff-login-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
 .staff-login-actions .login-error { flex: 1 1 240px; margin: 0; }
 #staffLoginDone { margin-top: 14px; flex-wrap: wrap; }
+/* ================= Timetable, substitutes, week (Phase 2) ================= */
+body:not(.can-plan) .plan-only { display: none !important; }
+.timetable-warnings { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.timetable-warning { background: #FEF3C7; color: #92400E; border-radius: 12px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+.timetable-warning i { margin-right: 6px; }
+.timetable-wrap { overflow-x: auto; }
+.timetable-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.timetable-table th, .timetable-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #EEF2F7; vertical-align: middle; }
+.timetable-table thead th { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.timetable-table tbody th { font-size: 15px; font-weight: 800; color: var(--text-dark); white-space: nowrap; }
+.timetable-table tbody th span { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-muted); white-space: normal; }
+.timetable-table td { font-size: 14px; font-weight: 600; }
+.timetable-empty { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.timetable-slot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.timetable-slot .custom-select { padding: 8px 10px; font-size: 13px; }
+.timetable-slot input[type="time"], .substitute-form input {
+    padding: 8px 10px; border-radius: 12px; border: 1.5px solid #CBD5E1; background: #F8FAFC;
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--text-dark); outline: none;
+}
+.timetable-slot input[type="time"]:focus, .substitute-form input:focus { border-color: var(--primary-blue); background: white; }
+.substitute-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 14px; align-items: end; margin-top: 12px; }
+.substitute-form input { width: 100%; }
+.substitute-form .custom-select { width: 100%; }
+
+.week-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.week-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-weight: 700; font-size: 13.5px; }
+.week-filter .custom-select { max-width: 100%; }
+.week-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.week-day { background: white; border: 1.5px solid #E2E8F0; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.week-day.is-today { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12); }
+.week-day h3 { font-size: 16px; font-weight: 800; color: var(--text-dark); }
+.week-day h3 span { font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+.week-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; background: #F8FAFC; }
+.week-item.is-covered { opacity: 0.6; }
+.week-time { font-size: 13px; font-weight: 800; color: var(--primary-blue); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.week-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.week-what strong { font-size: 13.5px; font-weight: 800; color: var(--text-dark); }
+.week-what > span { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+.week-flag { display: inline-block; margin-top: 4px; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px; width: fit-content; }
+.week-flag.sub { background: #EDE9FE; color: #6D28D9; }
+.week-flag.covered { background: #FEF3C7; color: #92400E; }
+.week-flag.missing { background: #FEE2E2; color: #B91C1C; }
+.week-empty { grid-column: 1 / -1; }
 #schoolTrainerWarning { background: #FEF3C7; color: #92400E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
 
 /* ================= Notification Center =================

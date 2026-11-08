@@ -63,6 +63,20 @@ const HMCloud = (() => {
         }
     }
 
+    // A table added by a later setup step: an empty list if it doesn't exist
+    // yet, so signing in keeps working before that SQL has been run.
+    async function selectAllIfReady(table, columns, orderBy) {
+        try {
+            return await selectAll(table, columns, orderBy);
+        } catch (err) {
+            if (err && (err.code === '42P01' || err.code === 'PGRST205' || /does not exist|schema cache/i.test(err.message || ''))) {
+                console.warn(`Happy Minds: ${table} is not set up yet`);
+                return [];
+            }
+            throw err;
+        }
+    }
+
     // HappyMindsConfig.STUDENTS is the chosen section's class; every visible
     // student stays in ALL_STUDENTS (e.g. for names in reports).
     function applySectionRoster() {
@@ -92,11 +106,16 @@ const HMCloud = (() => {
         if (error?.code === '23505') {
             friendly = /schools_code/.test(message) ? 'A school with that code already exists.'
                 : /sections_school_id_grade_letter/.test(message) ? 'That class already exists in this school.'
+                : /substitutions_school_id_visit_date_trainer_id/.test(message) ? 'That trainer already has a substitute for this visit.'
                 : 'That already exists.';
+        } else if (error?.code === '23514' && /section_slots_order/.test(message)) {
+            friendly = 'The end time must be after the start time.';
+        } else if (error?.code === '23514' && /substitutions_different/.test(message)) {
+            friendly = 'Choose a different trainer as the substitute.';
         } else if (error?.code === '23514' && /teacher|trainer/i.test(message)) {
             friendly = message;
         } else if (error?.code === '42501' || /row-level security/i.test(message)) {
-            friendly = 'Only an admin or coordinator can make this change.';
+            friendly = "You don't have permission to make this change.";
         } else if (/failed to fetch|network/i.test(message)) {
             friendly = "Couldn't reach Happy Minds. Check the internet connection and try again.";
         }
@@ -110,6 +129,10 @@ const HMCloud = (() => {
     }
 
     const SECTION_COLUMNS = 'id, school_id, grade, letter, teacher_id, trainer_id';
+    const SLOT_COLUMNS = 'section_id, session, weekday, starts_at, ends_at';
+    const SUBSTITUTION_COLUMNS = 'id, school_id, visit_date, trainer_id, substitute_id, note, assigned_by, assigned_at';
+    // Times come back as "10:00:00"; the portal uses "10:00".
+    const toSlot = row => ({ ...row, starts_at: String(row.starts_at).slice(0, 5), ends_at: String(row.ends_at).slice(0, 5) });
 
     async function reloadAccounts() {
         const profiles = await selectAll('profiles', '*', 'username');
@@ -171,7 +194,7 @@ const HMCloud = (() => {
         // RLS limits each of these to what this account may see: admin,
         // coordinator and management get every school; teachers and trainers
         // their own sections; students and parents their own child.
-        const [profiles, students, documents, schools, sections, classDocs, time, prep] = await Promise.all([
+        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
             selectAll('app_documents', 'doc, student_id, data', 'doc'),
@@ -179,8 +202,12 @@ const HMCloud = (() => {
             selectAll('sections', 'id, school_id, grade, letter, teacher_id, trainer_id', 'grade'),
             selectAll('section_documents', 'doc, section_id, data', 'doc'),
             selectAll('time_logs', 'user_id, section_id, chapter_id, stage, day, seconds', 'day'),
-            selectAll('prep_status', 'user_id, chapter_id, data', 'chapter_id')
+            selectAll('prep_status', 'user_id, chapter_id, data', 'chapter_id'),
+            selectAllIfReady('section_slots', SLOT_COLUMNS, 'section_id'),
+            selectAllIfReady('substitutions', SUBSTITUTION_COLUMNS, 'visit_date')
         ]);
+        HappyMindsConfig.SLOTS = slots.map(toSlot);
+        HappyMindsConfig.SUBSTITUTIONS = subs;
 
         HappyMindsConfig.ACCOUNTS.splice(0, Infinity, ...profiles.map(toAccount));
         HappyMindsConfig.ALL_STUDENTS = students;
@@ -370,6 +397,8 @@ const HMCloud = (() => {
             HappyMindsConfig.ALL_STUDENTS = [];
             HappyMindsConfig.SCHOOLS = [];
             HappyMindsConfig.SECTIONS = [];
+            HappyMindsConfig.SLOTS = [];
+            HappyMindsConfig.SUBSTITUTIONS = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
@@ -482,6 +511,34 @@ const HMCloud = (() => {
             Object.assign(HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId), row);
             applySectionRoster();
             return row;
+        },
+
+        // ---- Timetable and substitutes (admin, coordinator, management) ---
+        // A class's weekly slot for Session 1 or 2 (weekday 1 = Mon … 6 = Sat).
+        async saveSlot(sectionId, session, weekday, startsAt, endsAt) {
+            const row = toSlot(await manage(client.from('section_slots')
+                .upsert({ section_id: sectionId, session, weekday, starts_at: startsAt, ends_at: endsAt }, { onConflict: 'section_id,session' })
+                .select(SLOT_COLUMNS).single()));
+            HappyMindsConfig.SLOTS = HappyMindsConfig.SLOTS.filter(s => !(s.section_id === sectionId && s.session === session)).concat(row);
+            return row;
+        },
+
+        async clearSlot(sectionId, session) {
+            await manage(client.from('section_slots').delete().eq('section_id', sectionId).eq('session', session));
+            HappyMindsConfig.SLOTS = HappyMindsConfig.SLOTS.filter(s => !(s.section_id === sectionId && s.session === session));
+        },
+
+        async addSubstitution({ schoolId, visitDate, trainerId, substituteId, note }) {
+            const row = await manage(client.from('substitutions')
+                .insert({ school_id: schoolId, visit_date: visitDate, trainer_id: trainerId, substitute_id: substituteId, note: note || '' })
+                .select(SUBSTITUTION_COLUMNS).single());
+            HappyMindsConfig.SUBSTITUTIONS.push(row);
+            return row;
+        },
+
+        async removeSubstitution(id) {
+            await manage(client.from('substitutions').delete().eq('id', id));
+            HappyMindsConfig.SUBSTITUTIONS = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.id !== id);
         },
 
         // ---- Logins (the `accounts` Edge Function) ------------------------

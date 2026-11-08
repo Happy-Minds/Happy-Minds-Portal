@@ -85,6 +85,9 @@
                 <button class="nav-btn" data-view="reports" data-roles="trainer,admin,coordinator,management" onclick="openReportsHome()" style="display:none;">
                     <i class="fa-solid fa-chart-column"></i> Reports
                 </button>
+                <button class="nav-btn" data-view="week" data-roles="teacher,trainer,admin,coordinator,management" onclick="openWeekView()" style="display:none;">
+                    <i class="fa-solid fa-calendar-week"></i> <span id="weekNavLabel">Week</span>
+                </button>
                 <button class="nav-btn" data-view="schools" data-roles="admin,coordinator,management" onclick="openSchoolsView()" style="display:none;">
                     <i class="fa-solid fa-school"></i> Schools
                 </button>
@@ -1785,6 +1788,44 @@
                         <button type="submit" class="btn-primary-glowing compact" id="addSectionBtn"><i class="fa-solid fa-plus"></i> Add class</button>
                     </form>
                 </div>
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-calendar-week"></i> Timetable</h3>
+                    <p class="admin-card-explain">Each class’s fixed weekly slots from the school timetable. Session 1 is the trainer’s visit; Session 2 is the class teacher’s period.</p>
+                    <div id="schoolTimetableWarnings" class="timetable-warnings"></div>
+                    <div class="timetable-wrap"><table class="timetable-table" id="schoolTimetable"></table></div>
+                </div>
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-user-clock"></i> Substitute trainers</h3>
+                    <p class="admin-card-explain">When a trainer can’t come, choose a substitute for that one visit. Their other visits stay with them.</p>
+                    <div class="admin-chapter-list" id="schoolSubstitutesList"></div>
+                    <form class="substitute-form plan-only" id="addSubstituteForm" onsubmit="addSubstituteFromForm(event)" novalidate>
+                        <label class="manage-field"><span>Visit date</span><input type="date" id="subDate"></label>
+                        <label class="manage-field"><span>Regular trainer</span><select id="subTrainer" class="custom-select" onchange="renderSubstituteChoices()"></select></label>
+                        <label class="manage-field"><span>Substitute</span><select id="subSubstitute" class="custom-select"></select></label>
+                        <label class="manage-field"><span>Note (optional)</span><input type="text" id="subNote" maxlength="300" placeholder="e.g. Mr. Rahul is on leave" autocomplete="off"></label>
+                        <button type="submit" class="btn-primary-glowing compact" id="subSubmit"><i class="fa-solid fa-plus"></i> Assign substitute</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ================= WEEK: my week (trainer, teacher) / week plan (admin, coordinator, management) ================= -->
+            <section id="week-view" class="view-section">
+                <div class="roadmap-header">
+                    <div class="roadmap-title-area">
+                        <h2 id="weekTitle">My week</h2>
+                        <p id="weekSubtitle"></p>
+                    </div>
+                    <div class="week-nav">
+                        <button type="button" class="btn-glass compact" onclick="shiftWeek(-1)" aria-label="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button type="button" class="btn-glass compact" onclick="shiftWeek(0)">This week</button>
+                        <button type="button" class="btn-glass compact" onclick="shiftWeek(1)" aria-label="Next week"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="week-filter plan-only">
+                    <label for="weekSchoolFilter">School</label>
+                    <select id="weekSchoolFilter" class="custom-select" onchange="renderWeekView()"></select>
+                </div>
+                <div id="weekDays" class="week-days"></div>
             </section>
 
             <section id="class-roster-view" class="view-section">

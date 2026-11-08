@@ -451,6 +451,8 @@ function enterApp(account) {
     appState.currentUser = account;
     document.body.classList.toggle('view-only', isViewOnly());
     document.body.classList.toggle('can-manage', canManage());
+    document.body.classList.toggle('can-plan', canPlan());
+    document.getElementById('weekNavLabel').textContent = canPlan() ? 'Week' : 'My week';
     if (account.role !== 'parent') chooseStartingSection(account);
     reloadSavedState();
     renderChaptersRoadmap();
@@ -739,6 +741,9 @@ function renderSchoolDetail() {
     warning.hidden = !overloaded.length;
     warning.textContent = overloaded.map(([id, n]) => `${accountName(id)} has ${n} classes here. A trainer can take up to ${TRAINER_SECTIONS_PER_SCHOOL} on one visit day; give the extra classes a second trainer.`).join(' ');
 
+    renderSchoolTimetable();
+    renderSubstitutes();
+
     const list = document.getElementById('schoolSectionsList');
     if (!sections.length) {
         list.innerHTML = `<p class="prep-readiness-explain">No classes yet.${canManage() ? ' Add the Std 4–8 classes this school has signed up for.' : ''}</p>`;
@@ -971,6 +976,324 @@ async function importStudents() {
     }
 }
 
+// ================= Timetable, substitutes and the week (Phase 2) =================
+// Each class has two fixed weekly slots from the school timetable: Session 1
+// (the trainer's visit) and Session 2 (the class teacher's period). Admin,
+// coordinator and management plan them and assign substitute trainers for
+// single visits; everyone sees their own week. The portal only warns, it
+// never blocks a session.
+const PLAN_ROLES = ['admin', 'coordinator', 'management'];
+const WEEKDAYS = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+let weekOffset = 0;
+
+function canPlan() {
+    return !!appState.currentUser && PLAN_ROLES.includes(appState.currentUser.role);
+}
+
+function slotFor(sectionId, session) {
+    return HappyMindsConfig.SLOTS.find(s => s.section_id === sectionId && s.session === session) || null;
+}
+
+const slotMinutes = slot => slot.weekday * 1440 + Number(slot.starts_at.slice(0, 2)) * 60 + Number(slot.starts_at.slice(3, 5));
+const slotText = slot => `${WEEKDAY_SHORT[slot.weekday]} ${slot.starts_at}–${slot.ends_at}`;
+
+// Things worth a second look in a school's timetable. Only warnings.
+function timetableWarnings(sections) {
+    const warnings = [];
+    const missing = sections.filter(s => !slotFor(s.id, 1) || !slotFor(s.id, 2)).map(s => s.label);
+    if (missing.length) warnings.push(`${missing.join(', ')}: ${missing.length === 1 ? 'has' : 'have'} no Session 1 or Session 2 slot yet.`);
+    sections.forEach(s => {
+        const one = slotFor(s.id, 1), two = slotFor(s.id, 2);
+        if (one && two && slotMinutes(two) < slotMinutes(one)) {
+            warnings.push(`${s.label}: Session 2 (${slotText(two)}) comes before Session 1 (${slotText(one)}) in the week.`);
+        }
+    });
+    // One trainer can't be in two classes at once, and usually visits a school on one day.
+    const byTrainer = new Map();
+    sections.forEach(s => {
+        const one = slotFor(s.id, 1);
+        if (!s.trainer_id || !one) return;
+        if (!byTrainer.has(s.trainer_id)) byTrainer.set(s.trainer_id, []);
+        byTrainer.get(s.trainer_id).push({ section: s, slot: one });
+    });
+    byTrainer.forEach((items, trainerId) => {
+        const name = accountName(trainerId) || 'A trainer';
+        const days = [...new Set(items.map(i => i.slot.weekday))];
+        if (days.length > 1) warnings.push(`${name}'s Session 1 classes here are on ${days.map(d => WEEKDAYS[d]).join(' and ')}; one visit day is usual.`);
+        items.forEach((a, i) => items.slice(i + 1).forEach(b => {
+            if (a.slot.weekday === b.slot.weekday && a.slot.starts_at < b.slot.ends_at && b.slot.starts_at < a.slot.ends_at) {
+                warnings.push(`${name} has ${a.section.label} and ${b.section.label} at the same time (${WEEKDAY_SHORT[a.slot.weekday]} ${a.slot.starts_at}).`);
+            }
+        }));
+    });
+    return warnings;
+}
+
+function renderSchoolTimetable() {
+    const sections = schoolSections(detailSchoolId);
+    const plan = canPlan();
+    const warnings = timetableWarnings(sections);
+    document.getElementById('schoolTimetableWarnings').innerHTML = warnings
+        .map(w => `<p class="timetable-warning"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeReportText(w)}</p>`).join('');
+
+    const dayOptions = selected => `<option value="">Not set</option>` + WEEKDAYS.slice(1)
+        .map((d, i) => `<option value="${i + 1}"${selected === i + 1 ? ' selected' : ''}>${d}</option>`).join('');
+    const cell = (s, session) => {
+        const slot = slotFor(s.id, session);
+        if (!plan) return `<td>${slot ? slotText(slot) : '<span class="timetable-empty">Not set</span>'}</td>`;
+        return `<td><div class="timetable-slot" data-section="${s.id}" data-session="${session}">
+            <select class="custom-select" aria-label="${s.label} Session ${session} day" onchange="saveSlotFromRow(this)">${dayOptions(slot ? slot.weekday : 0)}</select>
+            <input type="time" aria-label="${s.label} Session ${session} start" value="${slot ? slot.starts_at : ''}" onchange="saveSlotFromRow(this)">
+            <span aria-hidden="true">–</span>
+            <input type="time" aria-label="${s.label} Session ${session} end" value="${slot ? slot.ends_at : ''}" onchange="saveSlotFromRow(this)">
+        </div></td>`;
+    };
+    const table = document.getElementById('schoolTimetable');
+    if (!sections.length) {
+        table.innerHTML = '<tbody><tr><td class="timetable-empty">Add classes first.</td></tr></tbody>';
+        return;
+    }
+    table.innerHTML = `
+        <thead><tr><th scope="col">Class</th><th scope="col">Session 1 · trainer</th><th scope="col">Session 2 · class teacher</th></tr></thead>
+        <tbody>${sections.map(s => `
+            <tr>
+                <th scope="row">${s.label}<span>${escapeReportText(accountName(s.trainer_id) || 'No trainer')} · ${escapeReportText(accountName(s.teacher_id) || 'No class teacher')}</span></th>
+                ${cell(s, 1)}${cell(s, 2)}
+            </tr>`).join('')}</tbody>`;
+}
+
+// Saves a slot once its day and both times are filled in; choosing
+// "Not set" for the day removes it.
+async function saveSlotFromRow(el) {
+    const box = el.closest('.timetable-slot');
+    const [daySelect, startInput, endInput] = box.querySelectorAll('select, input');
+    const sectionId = box.dataset.section;
+    const session = Number(box.dataset.session);
+    const label = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId)?.label;
+    const weekday = Number(daySelect.value);
+    try {
+        if (!weekday) {
+            if (!slotFor(sectionId, session)) return;
+            await HMCloud.clearSlot(sectionId, session);
+            showNotification(`${label}: Session ${session} slot removed.`);
+        } else {
+            if (!startInput.value || !endInput.value) return;
+            if (endInput.value <= startInput.value) {
+                showNotification('The end time must be after the start time.');
+                return;
+            }
+            const slot = await HMCloud.saveSlot(sectionId, session, weekday, startInput.value, endInput.value);
+            showNotification(`${label}: Session ${session} on ${slotText(slot)}.`);
+        }
+        renderSchoolTimetable();
+    } catch (err) {
+        showNotification(err.message);
+        renderSchoolTimetable();
+    }
+}
+
+// Trainers who take Session 1 for at least one class of this school.
+function schoolTrainers(schoolId) {
+    const ids = [...new Set(schoolSections(schoolId).map(s => s.trainer_id).filter(Boolean))];
+    return ids.map(id => HappyMindsConfig.ACCOUNTS.find(a => a.id === id)).filter(Boolean);
+}
+
+function renderSubstitutes() {
+    const today = localDateString();
+    const subs = HappyMindsConfig.SUBSTITUTIONS
+        .filter(s => s.school_id === detailSchoolId && s.visit_date >= today)
+        .sort((a, b) => a.visit_date.localeCompare(b.visit_date));
+    const plan = canPlan();
+    const list = document.getElementById('schoolSubstitutesList');
+    list.innerHTML = subs.length ? subs.map(s => `
+        <div class="admin-list-row">
+            <span class="admin-list-num">${formatVisitDate(s.visit_date)}</span>
+            <span class="admin-list-title">${escapeReportText(accountName(s.substitute_id))} covers for ${escapeReportText(accountName(s.trainer_id))}
+                <span class="class-report-meta">${s.note ? `${escapeReportText(s.note)} · ` : ''}assigned by ${escapeReportText(accountName(s.assigned_by) || 'admin')}</span></span>
+            ${plan ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeSubstitute('${s.id}', this)">Remove</button>` : ''}
+        </div>`).join('')
+        : '<p class="prep-readiness-explain">No substitutes planned for upcoming visits.</p>';
+
+    if (!plan) return;
+    const trainers = schoolTrainers(detailSchoolId);
+    document.getElementById('subTrainer').innerHTML = trainers.length
+        ? trainers.map(t => `<option value="${t.id}">${escapeReportText(t.name)}</option>`).join('')
+        : '<option value="">No trainer assigned here yet</option>';
+    document.getElementById('subDate').min = today;
+    renderSubstituteChoices();
+}
+
+function renderSubstituteChoices() {
+    const regular = document.getElementById('subTrainer').value;
+    const others = HappyMindsConfig.ACCOUNTS.filter(a => a.role === 'trainer' && a.id !== regular);
+    document.getElementById('subSubstitute').innerHTML = others.length
+        ? others.map(t => `<option value="${t.id}">${escapeReportText(t.name)}</option>`).join('')
+        : '<option value="">No other trainer accounts yet</option>';
+}
+
+function formatVisitDate(iso) {
+    return new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+async function addSubstituteFromForm(event) {
+    event.preventDefault();
+    const visitDate = document.getElementById('subDate').value;
+    const trainerId = document.getElementById('subTrainer').value;
+    const substituteId = document.getElementById('subSubstitute').value;
+    if (!visitDate) { showNotification('Choose the visit date.'); document.getElementById('subDate').focus(); return; }
+    if (!trainerId || !substituteId) { showNotification('Choose the regular trainer and the substitute.'); return; }
+    // A visit day is a day the regular trainer has Session 1 at this school.
+    const weekday = new Date(`${visitDate}T12:00:00`).getDay();
+    const visitDays = new Set(schoolSections(detailSchoolId).filter(s => s.trainer_id === trainerId)
+        .map(s => slotFor(s.id, 1)).filter(Boolean).map(s => s.weekday));
+    const restore = busyButton(document.getElementById('subSubmit'), 'Assigning…');
+    try {
+        await HMCloud.addSubstitution({
+            schoolId: detailSchoolId, visitDate, trainerId, substituteId,
+            note: document.getElementById('subNote').value.trim()
+        });
+        document.getElementById('subNote').value = '';
+        const offDay = visitDays.size && !visitDays.has(weekday);
+        showNotification(`${accountName(substituteId)} covers ${accountName(trainerId)} on ${formatVisitDate(visitDate)}.`
+            + (offDay ? ` Note: ${accountName(trainerId)} has no Session 1 here on that weekday.` : ''));
+        renderSubstitutes();
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+    }
+}
+
+async function removeSubstitute(id, btn) {
+    if (btn.dataset.confirm !== 'yes') {
+        btn.dataset.confirm = 'yes';
+        btn.textContent = 'Tap again to remove';
+        setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm = ''; btn.textContent = 'Remove'; } }, 4000);
+        return;
+    }
+    const restore = busyButton(btn, 'Removing…');
+    try {
+        await HMCloud.removeSubstitution(id);
+        showNotification('Substitute removed. The regular trainer takes that visit again.');
+        renderSubstitutes();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
+// ---- The week ----
+// Monday of the shown week (local calendar), as a Date at noon. On a
+// Sunday, "this week" is the week starting tomorrow.
+function weekStart() {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + weekOffset * 7);
+    return d;
+}
+
+function openWeekView() {
+    weekOffset = 0;
+    const filter = document.getElementById('weekSchoolFilter');
+    if (canPlan()) {
+        const keep = filter.value;
+        filter.innerHTML = '<option value="">All schools</option>' + HappyMindsConfig.SCHOOLS
+            .map(s => `<option value="${s.id}">${escapeReportText(s.name)} (${escapeReportText(s.code)})</option>`).join('');
+        filter.value = HappyMindsConfig.SCHOOLS.some(s => s.id === keep) ? keep : '';
+    }
+    renderWeekView();
+    navigateTo('week');
+}
+
+function shiftWeek(step) {
+    weekOffset = step === 0 ? 0 : weekOffset + step;
+    renderWeekView();
+}
+
+// Every session in the shown week that this person should see:
+// trainers their Session 1 visits (and visits they cover as a substitute),
+// teachers their Session 2 periods, planners everything (one school or all).
+function weekSessions(monday) {
+    const me = appState.currentUser;
+    const plan = canPlan();
+    const schoolFilter = plan ? document.getElementById('weekSchoolFilter').value : '';
+    const items = [];
+    HappyMindsConfig.SECTIONS.forEach(section => {
+        if (schoolFilter && section.school_id !== schoolFilter) return;
+        [1, 2].forEach(session => {
+            const slot = slotFor(section.id, session);
+            if (!slot) return;
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + slot.weekday - 1);
+            const iso = localDateString(date);
+            let person = session === 1 ? section.trainer_id : section.teacher_id;
+            const sub = session === 1 && section.trainer_id
+                ? HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id)
+                : null;
+            if (sub) person = sub.substitute_id;
+            const mine = plan
+                || (me.role === 'trainer' && session === 1 && (person === me.id || (sub && sub.trainer_id === me.id)))
+                || (me.role === 'teacher' && session === 2 && section.teacher_id === me.id);
+            if (!mine) return;
+            items.push({ section, session, slot, iso, person, sub });
+        });
+    });
+    return items.sort((a, b) => a.iso.localeCompare(b.iso) || a.slot.starts_at.localeCompare(b.slot.starts_at)
+        || (a.section.school?.name || '').localeCompare(b.section.school?.name || ''));
+}
+
+function renderWeekView() {
+    const me = appState.currentUser;
+    const plan = canPlan();
+    const monday = weekStart();
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+    const range = `${monday.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} – ${saturday.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    document.getElementById('weekTitle').textContent = plan ? 'Week plan' : 'My week';
+    document.getElementById('weekSubtitle').textContent = `${range}${weekOffset === 0 ? ' · this week' : ''}`
+        + (plan ? ' · Session 1 by trainers, Session 2 by class teachers' : me.role === 'trainer' ? ' · your school visits (Session 1)' : ' · your Session 2 periods');
+
+    const sessions = weekSessions(monday);
+    const today = localDateString();
+    const days = [1, 2, 3, 4, 5, 6].map(weekday => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + weekday - 1);
+        const iso = localDateString(date);
+        return { weekday, iso, items: sessions.filter(s => s.iso === iso) };
+    });
+
+    const row = it => {
+        const who = it.person ? (accountName(it.person) || (it.session === 1 ? 'A trainer' : 'The class teacher')) : (it.session === 1 ? 'No trainer yet' : 'No class teacher yet');
+        let note = '';
+        if (it.sub && it.sub.trainer_id === me.id && !plan) note = `<span class="week-flag covered">${escapeReportText(accountName(it.sub.substitute_id) || 'Another trainer')} covers this visit</span>`;
+        else if (it.sub) note = `<span class="week-flag sub">Substitute for ${escapeReportText(accountName(it.sub.trainer_id) || 'the regular trainer')}</span>`;
+        if (!it.person) note += '<span class="week-flag missing">Nobody assigned</span>';
+        return `
+            <div class="week-item${it.sub && it.sub.trainer_id === me.id && !plan ? ' is-covered' : ''}">
+                <span class="week-time">${it.slot.starts_at}–${it.slot.ends_at}</span>
+                <span class="week-what">
+                    <strong>${escapeReportText(it.section.school ? it.section.school.name : '')} · ${it.section.label}</strong>
+                    <span>Session ${it.session} · ${escapeReportText(who)}</span>
+                    ${note}
+                </span>
+            </div>`;
+    };
+    const container = document.getElementById('weekDays');
+    if (!sessions.length) {
+        container.innerHTML = `<p class="prep-readiness-explain week-empty">${plan
+            ? 'No sessions in the timetable for this week yet. Set each class’s slots on its school page under Schools.'
+            : 'Nothing in your timetable this week yet. Your coordinator sets the class timetable.'}</p>`;
+        return;
+    }
+    container.innerHTML = days.filter(d => d.items.length || plan).map(d => `
+        <section class="week-day${d.iso === today ? ' is-today' : ''}">
+            <h3>${WEEKDAYS[d.weekday]} <span>${new Date(`${d.iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}${d.iso === today ? ' · today' : ''}</span></h3>
+            ${d.items.length ? d.items.map(row).join('') : '<p class="timetable-empty">No sessions</p>'}
+        </section>`).join('');
+}
+
 // ---- Logins for a class's students and parents ----
 function familyLogins(studentId) {
     const own = HappyMindsConfig.ACCOUNTS.filter(a => a.studentId === studentId);
@@ -1167,7 +1490,7 @@ async function handleLogout(event) {
     updateScriptFab('login');
     await HMCloud.signOut();
     appState.currentUser = null;
-    document.body.classList.remove('view-only', 'lesson-view', 'can-manage');
+    document.body.classList.remove('view-only', 'lesson-view', 'can-manage', 'can-plan');
     reloadSavedState();
     document.getElementById('userMenuDropdown').classList.remove('open');
     document.getElementById('loginForm').reset();

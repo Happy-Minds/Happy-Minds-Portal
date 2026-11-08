@@ -43,6 +43,9 @@ const HappyMindsConfig = {
     ALL_STUDENTS: [],
     SCHOOLS: [],
     SECTIONS: [],
+    // Weekly Session 1 / Session 2 slots per class, and substitute trainers.
+    SLOTS: [],
+    SUBSTITUTIONS: [],
     ACCOUNTS: []
 };
 
