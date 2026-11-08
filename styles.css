@@ -272,6 +272,49 @@ body {
 .user-menu-dropdown button:hover { background: #FEF2F2; }
 .user-menu-dropdown button.user-menu-neutral { color: var(--text-dark); white-space: nowrap; }
 .user-menu-dropdown button.user-menu-neutral:hover { background: #F0F9FF; color: var(--primary-blue); }
+.user-menu-dropdown button[hidden] { display: none; }
+.user-menu-two-line { display: flex; flex-direction: column; min-width: 0; }
+.user-menu-two-line small {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ================= School & class picker ================= */
+.section-picker-card { max-width: 640px; }
+.section-picker-card #sectionPickerSearch { width: 100%; margin-bottom: 14px; }
+.section-picker-list { display: flex; flex-direction: column; gap: 18px; }
+.section-picker-school h4 {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+.section-picker-school h4 span { font-weight: 600; color: var(--text-muted); font-size: 12px; margin-left: 6px; }
+.section-picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.section-picker-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 56px;
+    padding: 10px 12px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: border-color 0.15s, background 0.15s;
+}
+.section-picker-btn strong { font-size: 17px; font-weight: 800; color: var(--text-dark); }
+.section-picker-btn span { font-size: 11.5px; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
+.section-picker-btn:hover { border-color: var(--primary-blue); background: #F0F9FF; }
+.section-picker-btn:focus-visible { outline: 3px solid var(--primary-blue); outline-offset: 2px; }
+.section-picker-btn.is-current { border-color: var(--primary-blue); background: #E0F2FE; }
 
 /* ================= Notification Center =================
    Real dropdown fed by actual app state (pending Chapter Reflections

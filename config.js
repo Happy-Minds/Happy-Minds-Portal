@@ -33,7 +33,12 @@ const HappyMindsConfig = {
     // supabase/seed-accounts.sql). Each account looks like
     // { username, role, name, avatar, studentId }; students and parents carry
     // the studentId of the child they belong to.
+    // STUDENTS is the chosen section's class; ALL_STUDENTS every student this
+    // account may see. SCHOOLS and SECTIONS likewise (see HMCloud.setSection).
     STUDENTS: [],
+    ALL_STUDENTS: [],
+    SCHOOLS: [],
+    SECTIONS: [],
     ACCOUNTS: []
 };
 

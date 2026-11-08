@@ -70,10 +70,10 @@
 
             <nav class="main-nav">
                 <!-- Teacher / Trainer / Admin -->
-                <button class="nav-btn active" data-view="home" data-roles="teacher,trainer,admin" onclick="navigateTo('home')">
+                <button class="nav-btn active" data-view="home" data-roles="teacher,trainer,admin,coordinator,management" onclick="navigateTo('home')">
                     <i class="fa-solid fa-house"></i> Home
                 </button>
-                <button class="nav-btn" data-view="chapters" data-roles="teacher,trainer,admin" onclick="navigateTo('chapters')">
+                <button class="nav-btn" data-view="chapters" data-roles="teacher,trainer,admin,coordinator,management" onclick="navigateTo('chapters')">
                     <i class="fa-solid fa-map"></i> Chapters
                 </button>
                 <button class="nav-btn" data-view="scan" data-roles="teacher" onclick="openScanView()">
@@ -82,7 +82,7 @@
                 <button class="nav-btn" data-view="observe" data-role="trainer" onclick="openObservationPicker()" style="display:none;">
                     <i class="fa-solid fa-user-tie"></i> Observe
                 </button>
-                <button class="nav-btn" data-view="reports" data-roles="trainer,admin" onclick="openReportsHome()" style="display:none;">
+                <button class="nav-btn" data-view="reports" data-roles="trainer,admin,coordinator,management" onclick="openReportsHome()" style="display:none;">
                     <i class="fa-solid fa-chart-column"></i> Reports
                 </button>
                 <button class="nav-btn" data-view="admin" data-role="admin" onclick="renderAdminDashboard(); navigateTo('admin');" style="display:none;">
@@ -100,7 +100,7 @@
                     <i class="fa-solid fa-magnifying-glass"></i>
                     <input type="text" placeholder="Search chapters..." id="searchInput">
                 </div>
-                <div class="notification-center" data-roles="trainer,admin">
+                <div class="notification-center" data-roles="trainer,admin,coordinator,management">
                     <button class="icon-badge-btn" onclick="toggleNotificationMenu(event)">
                         <i class="fa-solid fa-bell"></i>
                         <span class="badge-count" id="notificationBadge" style="display:none;">0</span>
@@ -120,7 +120,11 @@
                     <i class="fa-solid fa-angle-down"></i>
 
                     <div class="user-menu-dropdown" id="userMenuDropdown">
-                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher,trainer,admin" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
+                        <button class="user-menu-neutral" id="switchSectionMenuItem" onclick="event.stopPropagation(); toggleUserMenu(); openSectionPicker()" hidden>
+                            <i class="fa-solid fa-school"></i>
+                            <span class="user-menu-two-line">Switch class<small id="switchSectionLabel"></small></span>
+                        </button>
+                        <button class="user-menu-neutral" id="projectorMenuItem" data-roles="teacher,trainer,admin,coordinator,management" onclick="event.stopPropagation(); toggleUserMenu(); projectorMenuAction()">
                             <i class="fa-solid fa-display"></i> Projector mode
                         </button>
                         <button onclick="handleLogout(event)">
@@ -858,16 +862,16 @@
             <section id="practice-stage-view" class="view-section">
                 <!-- Top Stepper Bar — teacher's own classroom run. -->
                 <div class="stage-stepper-bar">
-                    <button class="back-link-btn compact" data-roles="teacher,trainer,admin" onclick="navigateTo('chapter-detail')">
+                    <button class="back-link-btn compact" data-roles="teacher,trainer,admin,coordinator,management" onclick="navigateTo('chapter-detail')">
                         <i class="fa-solid fa-arrow-left"></i> <span class="chapter-back-label">Chapter 01</span>
                     </button>
-                    <div class="stepper-steps" data-roles="teacher,trainer,admin">
+                    <div class="stepper-steps" data-roles="teacher,trainer,admin,coordinator,management">
                         <button class="step-pill" data-stage="explore" onclick="startChapterStage('explore')">1 Explore</button>
                         <button class="step-pill active" data-stage="practice" onclick="startChapterStage('practice')">2 Practice</button>
                         <button class="step-pill" data-stage="create" onclick="startChapterStage('create')">3 Create</button>
                         <button class="step-pill" data-stage="perform" onclick="startChapterStage('perform')">4 Perform</button>
                     </div>
-                    <div class="stepper-bar-right" data-roles="teacher,trainer,admin">
+                    <div class="stepper-bar-right" data-roles="teacher,trainer,admin,coordinator,management">
                         <div class="stage-timer-badge" title="Time spent on this page (teacher view only)">
                             <i class="fa-solid fa-stopwatch"></i> <span class="stage-timer-value">0:00</span>
                         </div>
@@ -1808,8 +1812,8 @@
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-chalkboard-user"></i> Teacher Usage</h3>
                     <div class="admin-list-row" id="teacherReportRow" style="cursor:pointer;" onclick="openTeacherReport()">
-                        <img src="assets/teacher_avatar.png" alt="" class="admin-list-avatar">
-                        <span class="admin-list-title">Ms. Anita — prep readiness &amp; in-class time</span>
+                        <img src="assets/teacher_avatar.png" alt="" class="admin-list-avatar" id="teacherReportAvatar">
+                        <span class="admin-list-title" id="teacherReportLabel">Class teacher — prep readiness &amp; in-class time</span>
                         <i class="fa-solid fa-chevron-right"></i>
                     </div>
                 </div>
@@ -1925,6 +1929,23 @@
     </aside>
 
     <!-- Admin: reset someone's password -->
+    <!-- Choose the school and class (section) the portal shows -->
+    <div id="sectionPickerModal" class="modal-backdrop" onclick="if (event.target === this) closeSectionPicker()">
+        <div class="modal-card section-picker-card" role="dialog" aria-modal="true" aria-labelledby="sectionPickerTitle">
+            <button class="modal-close-btn" id="sectionPickerClose" onclick="closeSectionPicker()" aria-label="Close">&times;</button>
+            <div class="planner-modal-header">
+                <div class="badge-icon blue"><i class="fa-solid fa-school"></i></div>
+                <div>
+                    <h3 id="sectionPickerTitle">Choose a class</h3>
+                    <p class="modal-sub">Lessons, class progress and the student list follow the class you choose.</p>
+                </div>
+            </div>
+            <label for="sectionPickerSearch" class="visually-hidden">Find a school</label>
+            <input type="search" id="sectionPickerSearch" class="reflection-text-input" placeholder="Find a school by name or code" oninput="renderSectionPicker(this.value)" autocomplete="off">
+            <div id="sectionPickerList" class="section-picker-list"></div>
+        </div>
+    </div>
+
     <div id="resetPasswordModal" class="modal-backdrop" onclick="if (event.target === this) closeResetPasswordModal()">
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
             <button class="modal-close-btn" onclick="closeResetPasswordModal()" aria-label="Close">&times;</button>

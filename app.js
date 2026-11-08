@@ -20,7 +20,6 @@
 // load, and nothing written in a previous session ever came back. Moving
 // every key constant up here, before appState exists, fixes all of them at
 // once.
-const TIME_TRACKING_STORAGE_KEY = 'timeTracking';
 const PREP_STATUS_STORAGE_KEY = 'prepStatus';
 const REFLECTION_STORAGE_KEY = 'reflections';
 const OBSERVE_STORAGE_KEY = 'observations';
@@ -84,8 +83,9 @@ function localDateString(date) {
 // nothing they do there is saved, counts as class time, marks a stage or
 // chapter done, uses the story helper, or controls a projector. They do
 // still save their own work (observations). To give admins full teacher
-// controls again, remove 'admin' here.
-const VIEW_ONLY_ROLES = ['trainer', 'admin'];
+// controls again, remove 'admin' here. Coordinators and management watch
+// over every school, so they preview lessons the same way.
+const VIEW_ONLY_ROLES = ['trainer', 'admin', 'coordinator', 'management'];
 
 function isViewOnly() {
     return !!appState.currentUser && VIEW_ONLY_ROLES.includes(appState.currentUser.role);
@@ -150,17 +150,14 @@ function isChapterUnlocked(id) {
 
 // ================= Silent Time-on-Page Tracking =================
 // No timer is ever shown to the student or teacher — this only answers,
-// later, "did this class actually take about 40 minutes?" (TIME_TRACKING_STORAGE_KEY is declared up top, next to appState.)
+// later, "did this class actually take about 40 minutes?"
 let activeTimerKey = null;
 let activeTimerStartedAt = null;
 
+// The signed-in person's own time in the chosen section, plus their prep.
+// Saved as daily totals in Supabase (time_logs), one entry per stopped timer.
 function loadTimeTracking() {
-    return HMCloud.get(TIME_TRACKING_STORAGE_KEY) || {};
-}
-
-function saveTimeTracking() {
-    if (isViewOnly()) return;
-    HMCloud.save(TIME_TRACKING_STORAGE_KEY, appState.timeTracking);
+    return HMCloud.timeTotals();
 }
 
 function startTimer(chapterId, stage) {
@@ -247,7 +244,8 @@ function stopTimer(endAt = Date.now()) {
     const { chapterId, stage } = activeTimerKey;
     if (!appState.timeTracking[chapterId]) appState.timeTracking[chapterId] = {};
     appState.timeTracking[chapterId][stage] = (appState.timeTracking[chapterId][stage] || 0) + seconds;
-    saveTimeTracking();
+    // Prep is done once per chapter for all of a person's sections.
+    if (!isViewOnly()) HMCloud.logTime(stage === 'prep' ? null : HMCloud.getSection(), chapterId, stage, seconds);
     activeTimerKey = null;
     activeTimerStartedAt = null;
 }
@@ -450,6 +448,7 @@ function enterApp(account) {
 
     appState.currentUser = account;
     document.body.classList.toggle('view-only', isViewOnly());
+    if (account.role !== 'parent') chooseStartingSection(account);
     reloadSavedState();
     renderChaptersRoadmap();
     renderChapterHub();
@@ -460,8 +459,7 @@ function enterApp(account) {
 
     document.getElementById('headerUserAvatar').src = account.avatar;
     document.getElementById('headerUserName').textContent = `Hi, ${account.name}!`;
-    const roleLabels = { admin: 'Admin', trainer: 'Trainer', teacher: 'Teacher', student: 'Student', parent: 'Parent' };
-    document.getElementById('headerUserRole').textContent = roleLabels[account.role] || 'Teacher';
+    updateSectionBadge();
 
     // Any nav item tagged data-role="X" only shows for that role. A few
     // elements (like the Fix It Zone hub banner) need to show for several
@@ -481,7 +479,129 @@ function enterApp(account) {
         navigateTo('parent-dashboard');
     } else {
         navigateTo('home');
+        // Several classes and none remembered on this device: ask which one.
+        if (!HMCloud.getSection() && HappyMindsConfig.SECTIONS.length) openSectionPicker();
+        else if (!HappyMindsConfig.SECTIONS.length && ['teacher', 'trainer'].includes(account.role)) {
+            showNotification("You haven't been given a class yet. Ask your programme coordinator.");
+        }
     }
+}
+
+// ================= School & class (section) =================
+// Teachers and trainers work in the sections assigned to them; admin,
+// coordinator and management can open any section. Class progress, the
+// Lumora Wall, class time and the student list all follow the chosen
+// section (HMCloud.setSection). The choice is remembered per account on
+// this device.
+const ROLE_LABELS = {
+    admin: 'Admin', coordinator: 'Coordinator', management: 'Management',
+    trainer: 'Trainer', teacher: 'Teacher', student: 'Student', parent: 'Parent'
+};
+const SECTION_CHOICE_KEY = 'happyMindsSection';
+
+function currentSection() {
+    return HappyMindsConfig.SECTIONS.find(s => s.id === HMCloud.getSection()) || null;
+}
+
+function sectionFullName(section) {
+    return section ? `${section.school ? section.school.name : 'School'} · ${section.label}` : '';
+}
+
+// The class teacher of the chosen section — whose prep and class time the
+// trainer and admin reports show.
+function sectionTeacher() {
+    const section = currentSection();
+    return section && section.teacher_id ? HappyMindsConfig.ACCOUNTS.find(a => a.id === section.teacher_id) || null : null;
+}
+
+function chooseStartingSection(account) {
+    const sections = HappyMindsConfig.SECTIONS;
+    let remembered = null;
+    try { remembered = localStorage.getItem(`${SECTION_CHOICE_KEY}:${account.id}`); } catch (err) { /* private mode */ }
+    if (remembered && sections.some(s => s.id === remembered)) return HMCloud.setSection(remembered);
+    if (sections.length === 1) return HMCloud.setSection(sections[0].id);
+    return HMCloud.setSection(null);
+}
+
+function updateSectionBadge() {
+    const account = appState.currentUser;
+    if (!account) return;
+    const section = currentSection();
+    const role = ROLE_LABELS[account.role] || 'Teacher';
+    const badge = document.getElementById('headerUserRole');
+    badge.textContent = section && account.role !== 'parent' ? `${role} · ${section.label}` : role;
+    badge.title = sectionFullName(section);
+
+    const item = document.getElementById('switchSectionMenuItem');
+    const canSwitch = account.role !== 'parent' && HappyMindsConfig.SECTIONS.length > 1;
+    item.hidden = !canSwitch;
+    document.getElementById('switchSectionLabel').textContent = section ? sectionFullName(section) : 'Choose a class';
+}
+
+function openSectionPicker() {
+    const search = document.getElementById('sectionPickerSearch');
+    const schools = new Set(HappyMindsConfig.SECTIONS.map(s => s.school_id));
+    search.value = '';
+    search.hidden = schools.size < 2;
+    // The first choice can't be skipped: lessons need a class.
+    document.getElementById('sectionPickerClose').hidden = !HMCloud.getSection();
+    renderSectionPicker('');
+    document.getElementById('sectionPickerModal').classList.add('active-modal');
+    (search.hidden ? document.querySelector('#sectionPickerList button') : search)?.focus();
+}
+
+function closeSectionPicker() {
+    if (!HMCloud.getSection()) return;
+    document.getElementById('sectionPickerModal').classList.remove('active-modal');
+}
+
+function renderSectionPicker(query) {
+    const q = (query || '').trim().toLowerCase();
+    const current = HMCloud.getSection();
+    const bySchool = new Map();
+    HappyMindsConfig.SECTIONS.forEach(s => {
+        const name = s.school ? s.school.name : 'School';
+        if (q && !name.toLowerCase().includes(q) && !(s.school && s.school.code.toLowerCase().includes(q))) return;
+        if (!bySchool.has(name)) bySchool.set(name, { school: s.school, sections: [] });
+        bySchool.get(name).sections.push(s);
+    });
+
+    const list = document.getElementById('sectionPickerList');
+    if (!bySchool.size) {
+        list.innerHTML = `<p class="prep-readiness-explain">No school matches "${escapeReportText(query)}".</p>`;
+        return;
+    }
+    list.innerHTML = [...bySchool.values()].map(({ school, sections }) => `
+        <section class="section-picker-school">
+            <h4>${escapeReportText(school ? school.name : 'School')}${school ? ` <span>${escapeReportText(school.code)}</span>` : ''}</h4>
+            <div class="section-picker-grid">
+                ${sections.map(s => {
+                    const teacher = s.teacher_id ? HappyMindsConfig.ACCOUNTS.find(a => a.id === s.teacher_id) : null;
+                    return `
+                    <button type="button" class="section-picker-btn${s.id === current ? ' is-current' : ''}" onclick="selectSection('${s.id}')" aria-pressed="${s.id === current}">
+                        <strong>${s.label}</strong>
+                        <span>${teacher ? escapeReportText(teacher.name) : 'No class teacher yet'}</span>
+                    </button>`;
+                }).join('')}
+            </div>
+        </section>`).join('');
+}
+
+function selectSection(sectionId) {
+    if (sectionId === HMCloud.getSection()) {
+        closeSectionPicker();
+        return;
+    }
+    endTimer();
+    HMCloud.setSection(sectionId);
+    try { localStorage.setItem(`${SECTION_CHOICE_KEY}:${appState.currentUser.id}`, sectionId); } catch (err) { /* private mode */ }
+    document.getElementById('sectionPickerModal').classList.remove('active-modal');
+    reloadSavedState();
+    renderChaptersRoadmap();
+    renderChapterHub();
+    updateSectionBadge();
+    navigateTo('home');
+    showNotification(`Now showing ${sectionFullName(currentSection())}.`);
 }
 
 function toggleUserMenu() {
@@ -518,8 +638,8 @@ async function handleLogout(event) {
     document.getElementById('login-view').style.display = 'flex';
 }
 
-const ADMIN_ROLE_LABELS = { admin: 'Admin', trainer: 'Trainer', teacher: 'Teacher', student: 'Student', parent: 'Parent' };
-const ADMIN_STAFF_ROLES = ['teacher', 'trainer', 'admin'];
+const ADMIN_ROLE_LABELS = ROLE_LABELS;
+const ADMIN_STAFF_ROLES = ['teacher', 'trainer', 'admin', 'coordinator', 'management'];
 
 function renderAdminDashboard() {
     document.getElementById('adminChapterCount').textContent = CHAPTERS.length;
@@ -557,7 +677,7 @@ function renderAdminDashboard() {
 // Every account (staff, students, parents), filtered by the search box.
 // The reset itself runs in the database (admin_reset_password), which
 // re-checks that the signed-in account really is an admin.
-const ADMIN_ROLE_ORDER = ['teacher', 'trainer', 'admin', 'student', 'parent'];
+const ADMIN_ROLE_ORDER = ['teacher', 'trainer', 'coordinator', 'management', 'admin', 'student', 'parent'];
 let resetPasswordUsername = null;
 
 function renderAdminPasswordList(query) {
@@ -935,7 +1055,7 @@ function continuePlanner() {
 // prompts, which stay in chapter.prep on the teacher's device.
 // Trainers and admins can run it too (e.g. to demo a lesson): each account
 // has its own channel, so their projector never shows a teacher's class.
-const PROJECTOR_ROLES = ['teacher', 'trainer', 'admin'];
+const PROJECTOR_ROLES = ['teacher', 'trainer', 'admin', 'coordinator', 'management'];
 let remoteChannel = null;
 let projectorConnected = false;
 
@@ -2425,7 +2545,7 @@ async function refreshSavedStories(chapterId) {
     const reportBtn = document.getElementById('classReportBtn');
     try {
         const today = classDayKey(new Date().toISOString());
-        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher' }))
+        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher', sectionId: HMCloud.getSection() }))
             .filter(s => classDayKey(s.created_at) === today);
         if (chapterId !== appState.currentChapterId) return;
         const names = [...new Set(stories.map(s => s.student_id))].map(studentName);
@@ -2440,7 +2560,7 @@ async function refreshSavedStories(chapterId) {
 }
 
 function studentName(studentId) {
-    return HappyMindsConfig.STUDENTS.find(s => s.id === studentId)?.name || studentId;
+    return HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId)?.name || studentId;
 }
 
 // A class is one chapter taught on one day (in the teacher's time zone).
@@ -2608,7 +2728,7 @@ async function openClassReport(chapterId, dayKey) {
     w.document.close();
 
     try {
-        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher' }))
+        const stories = (await HMCloud.listStories({ chapterId, source: 'teacher', sectionId: HMCloud.getSection() }))
             .filter(s => classDayKey(s.created_at) === dayKey)
             .reverse(); // in the order they were scanned
         const photoUrls = await HMCloud.storyPhotoUrls(stories.map(s => s.photo_path).filter(Boolean));
@@ -2712,7 +2832,7 @@ async function renderClassReportsList() {
     list.innerHTML = '<p class="prep-readiness-explain">Loading class stories…</p>';
     let stories;
     try {
-        stories = await HMCloud.listStories({ source: 'teacher' });
+        stories = await HMCloud.listStories({ source: 'teacher', sectionId: HMCloud.getSection() });
     } catch (err) {
         list.innerHTML = '<p class="prep-readiness-explain">Couldn\'t load class stories. Check the internet connection and open Reports again.</p>';
         return;
@@ -3228,9 +3348,14 @@ function renderObserveToday() {
     if (!chapterSelect || !chapterSelect.value || !card) return;
 
     const chapterId = Number(chapterSelect.value);
-    const teacher = HappyMindsConfig.ACCOUNTS.find(a => a.role === 'teacher');
-    const status = computeReadinessStatus(chapterId);
-    const prepMinutes = Math.round(((appState.timeTracking[chapterId] && appState.timeTracking[chapterId].prep) || 0) / 60);
+    const teacher = sectionTeacher();
+    if (!teacher) {
+        card.innerHTML = '<p class="prep-readiness-explain">This class has no class teacher yet.</p>';
+        return;
+    }
+    const status = computeReadinessStatus(chapterId, teacher.id);
+    const teacherTime = HMCloud.timeTotals(teacher.id);
+    const prepMinutes = Math.round(((teacherTime[chapterId] && teacherTime[chapterId].prep) || 0) / 60);
     const labels = { green: 'Ready for class', amber: 'Getting there', red: 'Not opened yet' };
     const lastObs = appState.observations.slice().reverse()[0];
 
@@ -3782,7 +3907,7 @@ function renderPrepStepHead(step, extra = '') {
 // Script button. Opening it changes nothing else: the video keeps playing
 // and the projector keeps showing what it was showing.
 const LESSON_VIEWS = ['explore-stage', 'practice-stage', 'create-stage', 'perform-stage'];
-const SCRIPT_ROLES = ['teacher', 'trainer', 'admin'];
+const SCRIPT_ROLES = ['teacher', 'trainer', 'admin', 'coordinator', 'management'];
 let scriptPanelPosition = null;
 
 function scriptPromptLines(step) {
@@ -3929,12 +4054,14 @@ function togglePrepReady(key) {
 
 // Green: opened in the last 48h, >=10 min spent, all 3 "I'm ready" taps done.
 // Amber: opened, but under 10 min or not fully ready. Red: never opened.
-function computeReadinessStatus(chapterId) {
-    const status = getPrepStatus(chapterId);
-    if (!status.firstOpenedAt) return 'red';
+function computeReadinessStatus(chapterId, userId = appState.currentUser && appState.currentUser.id) {
+    const own = appState.currentUser && userId === appState.currentUser.id;
+    const status = own ? getPrepStatus(chapterId) : HMCloud.prepFor(userId)[chapterId];
+    if (!status || !status.firstOpenedAt) return 'red';
 
+    const time = own ? appState.timeTracking : HMCloud.timeTotals(userId);
     const hoursSinceOpened = (Date.now() - new Date(status.firstOpenedAt).getTime()) / 3600000;
-    const minutesSpent = ((appState.timeTracking[chapterId] && appState.timeTracking[chapterId].prep) || 0) / 60;
+    const minutesSpent = ((time[chapterId] && time[chapterId].prep) || 0) / 60;
     const allReady = Object.values(status.readyChecks).every(Boolean);
 
     if (hoursSinceOpened <= 48 && minutesSpent >= 10 && allReady) return 'green';
@@ -3977,6 +4104,11 @@ function renderParentDashboard(account) {
 }
 
 function openReportsHome() {
+    const teacher = sectionTeacher();
+    document.getElementById('teacherReportLabel').textContent = teacher
+        ? `${teacher.name} (${currentSection().label}) — prep readiness & in-class time`
+        : `${currentSection() ? currentSection().label : 'This class'} — no class teacher yet`;
+    document.getElementById('teacherReportAvatar').src = teacher ? teacher.avatar : 'assets/teacher_avatar.png';
     const list = document.getElementById('reportsStudentList');
     list.innerHTML = HappyMindsConfig.STUDENTS.map(s => `
         <div class="admin-list-row" style="cursor:pointer;" onclick="openStudentReport('${s.id}')">
@@ -4166,11 +4298,16 @@ function openTeacherReport() {
 }
 
 function buildTeacherReportHtml() {
-    const teacher = HappyMindsConfig.ACCOUNTS.find(a => a.role === 'teacher');
+    const teacher = sectionTeacher();
+    if (!teacher) {
+        return `<div class="admin-header"><h2>${escapeReportText(sectionFullName(currentSection()))}</h2>
+            <p>This class has no class teacher yet. A coordinator assigns one under Admin.</p></div>`;
+    }
+    const teacherTime = HMCloud.timeTotals(teacher.id);
     const chaptersWithPrep = CHAPTERS.filter(c => c.prep);
 
     const readinessRows = chaptersWithPrep.map(chapter => {
-        const status = computeReadinessStatus(chapter.id);
+        const status = computeReadinessStatus(chapter.id, teacher.id);
         return `
             <div class="admin-list-row">
                 <span class="admin-list-num">Ch${String(chapter.id).padStart(2, '0')}</span>
@@ -4184,7 +4321,7 @@ function buildTeacherReportHtml() {
     // the lesson, so they are listed on their own and not added to it.
     const CLASS_STAGES = ['explore', 'practice', 'create', 'perform'];
     const fmtMin = seconds => `${Math.round(seconds / 60)} min`;
-    const timeRows = Object.entries(appState.timeTracking).map(([chapterId, stages]) => {
+    const timeRows = Object.entries(teacherTime).map(([chapterId, stages]) => {
         const chapter = getChapterById(parseInt(chapterId, 10));
         if (!chapter) return '';
         const st = stages || {};
@@ -4233,7 +4370,7 @@ function buildTeacherReportHtml() {
 // the Teacher Usage report, and get a notice in the bell when a new one
 // arrives. Which reflections a trainer has already opened is remembered on
 // that trainer's own device.
-const REFLECTION_REVIEWER_ROLES = ['trainer', 'admin'];
+const REFLECTION_REVIEWER_ROLES = ['trainer', 'admin', 'coordinator', 'management'];
 const REFLECTIONS_SEEN_KEY = 'happyMindsReflectionsSeen';
 
 function submittedReflections() {

@@ -26,17 +26,51 @@ const HMCloud = (() => {
         global: { fetch: (url, options) => fetch(url, keepaliveFetch ? { ...options, keepalive: true } : options) }
     });
 
-    const docs = new Map();      // "doc|studentId" -> data
-    const unsaved = new Set();   // keys changed locally and not yet written
+    // Saved records come in three kinds:
+    //   app_documents      "doc|studentId"  — student records (and older class-wide staff records)
+    //   section_documents  "doc|sectionId"  — class progress and the Lumora Wall, one per section
+    //   prep_status        one row per chapter for the signed-in person (the 'prepStatus' record)
+    const SECTION_DOCS = new Set(['classProgress', 'lumoraWall']);
+    const PREP_DOC = 'prepStatus';
+
+    const docs = new Map();         // "doc|studentId" -> data
+    const sectionDocs = new Map();  // "doc|sectionId" -> data
+    const prepByUser = new Map();   // userId -> { chapterId: data }
+    let timeRows = [];              // time_logs rows this account may see
+    const unsaved = new Set();      // "a|doc|studentId", "s|doc|sectionId" or "p|chapterId"
+    const pendingTime = [];         // log_time calls not yet sent
     let saveTimer = null;
     let saving = null;
     let failing = false;
     const statusListeners = [];
 
     let signedInUserId = null;
+    let currentSectionId = null;
 
     const keyOf = (doc, studentId) => `${doc}|${studentId || ''}`;
     const clone = value => (value == null ? null : JSON.parse(JSON.stringify(value)));
+
+    // PostgREST returns at most 1000 rows per request; a whole programme has
+    // a few thousand students, so read in pages.
+    const PAGE_SIZE = 1000;
+    async function selectAll(table, columns, orderBy) {
+        const rows = [];
+        for (let from = 0; ; from += PAGE_SIZE) {
+            const { data, error } = await client.from(table).select(columns).order(orderBy).range(from, from + PAGE_SIZE - 1);
+            if (error) throw error;
+            rows.push(...data);
+            if (data.length < PAGE_SIZE) return rows;
+        }
+    }
+
+    // HappyMindsConfig.STUDENTS is the chosen section's class; every visible
+    // student stays in ALL_STUDENTS (e.g. for names in reports).
+    function applySectionRoster() {
+        const roster = HappyMindsConfig.ALL_STUDENTS.filter(s => s.section_id === currentSectionId);
+        HappyMindsConfig.STUDENTS.splice(0, Infinity, ...roster);
+    }
+
+    const todayInIndia = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
     // Supabase Auth signs in with an email, the portal with a username.
     const emailFor = username => `${username.trim().toLowerCase()}@${HappyMindsConfig.AUTH_EMAIL_DOMAIN}`;
@@ -67,23 +101,46 @@ const HMCloud = (() => {
             throw err;
         }
 
-        // RLS limits each of these to what this account may see: staff get
-        // everything, students and parents get their own child only.
-        const [profiles, students, documents] = await Promise.all([
-            client.from('profiles').select('*').order('username'),
-            client.from('students').select('*').order('name'),
-            client.from('app_documents').select('doc, student_id, data')
+        // RLS limits each of these to what this account may see: admin,
+        // coordinator and management get every school; teachers and trainers
+        // their own sections; students and parents their own child.
+        const [profiles, students, documents, schools, sections, classDocs, time, prep] = await Promise.all([
+            selectAll('profiles', '*', 'username'),
+            selectAll('students', '*', 'name'),
+            selectAll('app_documents', 'doc, student_id, data', 'doc'),
+            selectAll('schools', 'id, code, name, package', 'name'),
+            selectAll('sections', 'id, school_id, grade, letter, teacher_id, trainer_id', 'grade'),
+            selectAll('section_documents', 'doc, section_id, data', 'doc'),
+            selectAll('time_logs', 'user_id, section_id, chapter_id, stage, day, seconds', 'day'),
+            selectAll('prep_status', 'user_id, chapter_id, data', 'chapter_id')
         ]);
-        const failed = [profiles, students, documents].find(r => r.error);
-        if (failed) throw failed.error;
 
-        HappyMindsConfig.ACCOUNTS.splice(0, Infinity, ...profiles.data.map(toAccount));
-        HappyMindsConfig.STUDENTS.splice(0, Infinity, ...students.data);
+        HappyMindsConfig.ACCOUNTS.splice(0, Infinity, ...profiles.map(toAccount));
+        HappyMindsConfig.ALL_STUDENTS = students;
+        HappyMindsConfig.SCHOOLS = schools;
+        HappyMindsConfig.SECTIONS = sections
+            .map(s => ({ ...s, label: `${s.grade}${s.letter}`, school: schools.find(sc => sc.id === s.school_id) || null }))
+            .sort((a, b) => (a.school?.name || '').localeCompare(b.school?.name || '') || a.grade - b.grade || a.letter.localeCompare(b.letter));
+
         docs.clear();
+        sectionDocs.clear();
+        prepByUser.clear();
         unsaved.clear();
-        documents.data.forEach(row => docs.set(keyOf(row.doc, row.student_id), row.data));
+        pendingTime.length = 0;
+        documents.forEach(row => docs.set(keyOf(row.doc, row.student_id), row.data));
+        classDocs.forEach(row => sectionDocs.set(keyOf(row.doc, row.section_id), row.data));
+        prep.forEach(row => {
+            if (!prepByUser.has(row.user_id)) prepByUser.set(row.user_id, {});
+            prepByUser.get(row.user_id)[row.chapter_id] = row.data;
+        });
+        timeRows = time;
 
         signedInUserId = userId;
+        // Students and parents always see their own child's section; staff
+        // choose one (see HMCloud.setSection).
+        const child = me.student_id ? students.find(s => s.id === me.student_id) : null;
+        currentSectionId = child ? child.section_id : null;
+        applySectionRoster();
         return toAccount(me);
     }
 
@@ -91,22 +148,35 @@ const HMCloud = (() => {
         clearTimeout(saveTimer);
         saveTimer = null;
         if (saving) await saving;
-        if (!unsaved.size) return;
+        if (!unsaved.size && !pendingTime.length) return;
 
         const keys = [...unsaved];
         unsaved.clear();
-        const rows = keys.map(key => {
-            const [doc, studentId] = key.split('|');
-            return { doc, student_id: studentId, data: docs.get(key) };
+        const times = pendingTime.splice(0, Infinity);
+        const appRows = [], classRows = [], prepRows = [];
+        keys.forEach(key => {
+            const [kind, a, b] = key.split('|');
+            if (kind === 'a') appRows.push({ doc: a, student_id: b, data: docs.get(keyOf(a, b)) });
+            else if (kind === 's') classRows.push({ doc: a, section_id: b, data: sectionDocs.get(keyOf(a, b)) });
+            else prepRows.push({ user_id: signedInUserId, chapter_id: Number(a), data: prepByUser.get(signedInUserId)[a] });
         });
 
-        saving = client.from('app_documents').upsert(rows, { onConflict: 'doc,student_id' });
-        const { error } = await saving;
+        saving = Promise.all([
+            appRows.length ? client.from('app_documents').upsert(appRows, { onConflict: 'doc,student_id' }) : { error: null },
+            classRows.length ? client.from('section_documents').upsert(classRows, { onConflict: 'doc,section_id' }) : { error: null },
+            prepRows.length ? client.from('prep_status').upsert(prepRows, { onConflict: 'user_id,chapter_id' }) : { error: null },
+            ...times.map(t => client.rpc('log_time', { p_section: t.sectionId, p_chapter: t.chapterId, p_stage: t.stage, p_seconds: t.seconds }))
+        ]);
+        const results = await saving;
         saving = null;
+        const error = results.map(r => r.error).find(Boolean);
 
         if (error) {
-            // Keep the changes and try again; anything saved meanwhile rides along.
+            // Keep the changes and try again; anything saved meanwhile rides
+            // along. Time entries that failed are sent again; the rest are
+            // already added on the server.
             keys.forEach(key => unsaved.add(key));
+            results.slice(3).forEach((r, i) => { if (r.error) pendingTime.push(times[i]); });
             console.warn('Happy Minds: save failed, retrying', error);
             if (!failing) { failing = true; notify('error'); }
             saveTimer = setTimeout(writeUnsaved, RETRY_DELAY_MS);
@@ -115,8 +185,11 @@ const HMCloud = (() => {
         if (failing) { failing = false; notify('recovered'); }
     }
 
+    const hasUnsaved = () => unsaved.size > 0 || pendingTime.length > 0;
+    const scheduleSave = () => { if (!saveTimer && !failing) saveTimer = setTimeout(writeUnsaved, SAVE_DELAY_MS); };
+
     function flushOnClose() {
-        if (!unsaved.size) return;
+        if (!hasUnsaved()) return;
         keepaliveFetch = true;
         writeUnsaved().finally(() => { keepaliveFetch = false; });
     }
@@ -124,7 +197,7 @@ const HMCloud = (() => {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') flushOnClose();
     });
-    window.addEventListener('online', () => { if (unsaved.size) writeUnsaved(); });
+    window.addEventListener('online', () => { if (hasUnsaved()) writeUnsaved(); });
 
     // ---- Student stories --------------------------------------------------
     class StoryError extends Error {
@@ -221,22 +294,94 @@ const HMCloud = (() => {
             signedInUserId = null;
             await client.auth.signOut();
             docs.clear();
+            sectionDocs.clear();
+            prepByUser.clear();
+            timeRows = [];
             unsaved.clear();
+            pendingTime.length = 0;
+            currentSectionId = null;
             HappyMindsConfig.ACCOUNTS.length = 0;
             HappyMindsConfig.STUDENTS.length = 0;
+            HappyMindsConfig.ALL_STUDENTS = [];
+            HappyMindsConfig.SCHOOLS = [];
+            HappyMindsConfig.SECTIONS = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
+        // Class progress and the Lumora Wall are the chosen section's; the
+        // 'prepStatus' record is the signed-in person's own prep.
         get(doc, studentId) {
+            if (SECTION_DOCS.has(doc)) return currentSectionId ? clone(sectionDocs.get(keyOf(doc, currentSectionId))) : null;
+            if (doc === PREP_DOC) return clone(prepByUser.get(signedInUserId) || {});
             return clone(docs.get(keyOf(doc, studentId)));
         },
 
         // Saves the document. Several quick saves are combined into one write.
         save(doc, data, studentId) {
-            const key = keyOf(doc, studentId);
-            docs.set(key, clone(data));
-            unsaved.add(key);
-            if (!saveTimer && !failing) saveTimer = setTimeout(writeUnsaved, SAVE_DELAY_MS);
+            if (SECTION_DOCS.has(doc)) {
+                if (!currentSectionId) return;
+                sectionDocs.set(keyOf(doc, currentSectionId), clone(data));
+                unsaved.add(`s|${doc}|${currentSectionId}`);
+            } else if (doc === PREP_DOC) {
+                // Only the chapters that changed are written.
+                const before = prepByUser.get(signedInUserId) || {};
+                const after = clone(data) || {};
+                Object.keys(after).forEach(ch => {
+                    if (JSON.stringify(after[ch]) !== JSON.stringify(before[ch])) unsaved.add(`p|${ch}`);
+                });
+                prepByUser.set(signedInUserId, after);
+            } else {
+                docs.set(keyOf(doc, studentId), clone(data));
+                unsaved.add(`a|${doc}|${studentId || ''}`);
+            }
+            scheduleSave();
+        },
+
+        // ---- Schools and sections --------------------------------------
+        // The section the portal is showing (class progress, Lumora Wall and
+        // HappyMindsConfig.STUDENTS all follow it).
+        getSection() {
+            return currentSectionId;
+        },
+
+        setSection(sectionId) {
+            currentSectionId = HappyMindsConfig.SECTIONS.some(s => s.id === sectionId) ? sectionId : null;
+            applySectionRoster();
+            return currentSectionId;
+        },
+
+        // ---- Time ---------------------------------------------------------
+        // Adds seconds to today's total for this person (sectionId null for
+        // prep). Sent in the background with the other saves.
+        logTime(sectionId, chapterId, stage, seconds) {
+            const whole = Math.round(seconds);
+            if (whole < 1 || !signedInUserId) return;
+            const day = todayInIndia();
+            const row = timeRows.find(r => r.user_id === signedInUserId && r.section_id === sectionId
+                && r.chapter_id === chapterId && r.stage === stage && r.day === day);
+            if (row) row.seconds += whole;
+            else timeRows.push({ user_id: signedInUserId, section_id: sectionId, chapter_id: chapterId, stage, day, seconds: whole });
+            pendingTime.push({ sectionId, chapterId, stage, seconds: whole });
+            scheduleSave();
+        },
+
+        // { chapterId: { stage: seconds } } for one person in one section,
+        // with their prep (which has no section) included.
+        // Defaults to the signed-in person and the chosen section.
+        timeTotals(userId = signedInUserId, sectionId = currentSectionId) {
+            const totals = {};
+            timeRows.forEach(r => {
+                if (r.user_id !== userId || (r.section_id !== null && r.section_id !== sectionId)) return;
+                totals[r.chapter_id] = totals[r.chapter_id] || {};
+                totals[r.chapter_id][r.stage] = (totals[r.chapter_id][r.stage] || 0) + r.seconds;
+            });
+            return totals;
+        },
+
+        // Someone's Teacher Prep record, { chapterId: data } (their own, or
+        // a teacher's when the signed-in account may see it).
+        prepFor(userId) {
+            return clone(prepByUser.get(userId) || {});
         },
 
         // ---- Student stories (the `stories` Edge Function) ----------------
@@ -314,12 +459,13 @@ const HMCloud = (() => {
 
         // Stories this account may see (Row Level Security decides), newest
         // first. Filter by { chapterId, source } if given.
-        async listStories({ chapterId, source } = {}) {
+        async listStories({ chapterId, source, sectionId } = {}) {
             let query = client.from('story_submissions')
-                .select('id, student_id, chapter_id, source, attempt, story_text, feedback, photo_path, created_by, created_at')
+                .select('id, student_id, section_id, chapter_id, source, attempt, story_text, feedback, photo_path, created_by, created_at')
                 .order('created_at', { ascending: false });
             if (chapterId) query = query.eq('chapter_id', chapterId);
             if (source) query = query.eq('source', source);
+            if (sectionId) query = query.eq('section_id', sectionId);
             const { data, error } = await query;
             if (error) {
                 console.warn('Happy Minds: could not load stories', error);
