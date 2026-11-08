@@ -72,6 +72,45 @@ const HMCloud = (() => {
 
     const todayInIndia = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
+    // Sections with their label ("4A") and school, sorted school → grade → letter.
+    function setSections(rows) {
+        HappyMindsConfig.SECTIONS = rows
+            .map(s => ({
+                id: s.id, school_id: s.school_id, grade: s.grade, letter: s.letter,
+                teacher_id: s.teacher_id, trainer_id: s.trainer_id,
+                label: `${s.grade}${s.letter}`,
+                school: HappyMindsConfig.SCHOOLS.find(sc => sc.id === s.school_id) || null
+            }))
+            .sort((a, b) => (a.school?.name || '').localeCompare(b.school?.name || '') || a.grade - b.grade || a.letter.localeCompare(b.letter));
+    }
+
+    // A change to schools, classes or student lists that the person can act on.
+    function manageError(error) {
+        console.warn('Happy Minds: change not saved', error);
+        const message = String(error?.message || '');
+        let friendly = "Couldn't save the change. Please try again.";
+        if (error?.code === '23505') {
+            friendly = /schools_code/.test(message) ? 'A school with that code already exists.'
+                : /sections_school_id_grade_letter/.test(message) ? 'That class already exists in this school.'
+                : 'That already exists.';
+        } else if (error?.code === '23514' && /teacher|trainer/i.test(message)) {
+            friendly = message;
+        } else if (error?.code === '42501' || /row-level security/i.test(message)) {
+            friendly = 'Only an admin or coordinator can make this change.';
+        } else if (/failed to fetch|network/i.test(message)) {
+            friendly = "Couldn't reach Happy Minds. Check the internet connection and try again.";
+        }
+        return new Error(friendly);
+    }
+
+    async function manage(request) {
+        const { data, error } = await request;
+        if (error) throw manageError(error);
+        return data;
+    }
+
+    const SECTION_COLUMNS = 'id, school_id, grade, letter, teacher_id, trainer_id';
+
     // Supabase Auth signs in with an email, the portal with a username.
     const emailFor = username => `${username.trim().toLowerCase()}@${HappyMindsConfig.AUTH_EMAIL_DOMAIN}`;
 
@@ -118,9 +157,7 @@ const HMCloud = (() => {
         HappyMindsConfig.ACCOUNTS.splice(0, Infinity, ...profiles.map(toAccount));
         HappyMindsConfig.ALL_STUDENTS = students;
         HappyMindsConfig.SCHOOLS = schools;
-        HappyMindsConfig.SECTIONS = sections
-            .map(s => ({ ...s, label: `${s.grade}${s.letter}`, school: schools.find(sc => sc.id === s.school_id) || null }))
-            .sort((a, b) => (a.school?.name || '').localeCompare(b.school?.name || '') || a.grade - b.grade || a.letter.localeCompare(b.letter));
+        setSections(sections);
 
         docs.clear();
         sectionDocs.clear();
@@ -348,6 +385,75 @@ const HMCloud = (() => {
             currentSectionId = HappyMindsConfig.SECTIONS.some(s => s.id === sectionId) ? sectionId : null;
             applySectionRoster();
             return currentSectionId;
+        },
+
+        // ---- Managing schools, classes and student lists -------------------
+        // Admin and coordinator only (enforced by the database). Each throws
+        // an Error whose message is safe to show, and updates
+        // HappyMindsConfig.SCHOOLS / SECTIONS / ALL_STUDENTS when it succeeds.
+        async createSchool({ name, code, pkg }) {
+            const row = await manage(client.from('schools').insert({ name, code, package: pkg }).select('id, code, name, package').single());
+            HappyMindsConfig.SCHOOLS.push(row);
+            HappyMindsConfig.SCHOOLS.sort((a, b) => a.name.localeCompare(b.name));
+            return row;
+        },
+
+        async updateSchool(id, fields) {
+            const row = await manage(client.from('schools').update(fields).eq('id', id).select('id, code, name, package').single());
+            Object.assign(HappyMindsConfig.SCHOOLS.find(s => s.id === id), row);
+            return row;
+        },
+
+        async createSection(schoolId, grade, letter) {
+            const row = await manage(client.from('sections').insert({ school_id: schoolId, grade, letter }).select(SECTION_COLUMNS).single());
+            setSections([...HappyMindsConfig.SECTIONS, row]);
+            return row;
+        },
+
+        // fields: any of teacher_id, trainer_id, letter.
+        async updateSection(id, fields) {
+            const row = await manage(client.from('sections').update(fields).eq('id', id).select(SECTION_COLUMNS).single());
+            setSections(HappyMindsConfig.SECTIONS.map(s => (s.id === id ? row : s)));
+            return row;
+        },
+
+        async deleteSection(id) {
+            await manage(client.from('sections').delete().eq('id', id));
+            setSections(HappyMindsConfig.SECTIONS.filter(s => s.id !== id));
+            HappyMindsConfig.ALL_STUDENTS.forEach(st => { if (st.section_id === id) st.section_id = null; });
+            if (currentSectionId === id) currentSectionId = null;
+            applySectionRoster();
+        },
+
+        // Adds names to a class. Ids follow the school and class, e.g.
+        // "hm-001-4a-36", continuing after the class's highest number.
+        async addStudents(sectionId, names) {
+            const section = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId);
+            const prefix = `${section.school.code.toLowerCase()}-${section.grade}${section.letter.toLowerCase()}-`;
+            let next = HappyMindsConfig.ALL_STUDENTS
+                .filter(s => s.id.startsWith(prefix))
+                .reduce((max, s) => Math.max(max, parseInt(s.id.slice(prefix.length), 10) || 0), 0);
+            const rows = names.map((name, i) => ({
+                id: prefix + String(next + i + 1).padStart(2, '0'),
+                name,
+                grade: `Grade ${section.grade}`,
+                avatar: i % 2 ? 'assets/boy_arjun.png' : 'assets/girl_aanya.png',
+                section_id: sectionId
+            }));
+            const saved = await manage(client.from('students').insert(rows).select('*'));
+            HappyMindsConfig.ALL_STUDENTS.push(...saved);
+            HappyMindsConfig.ALL_STUDENTS.sort((a, b) => a.name.localeCompare(b.name));
+            applySectionRoster();
+            return saved;
+        },
+
+        // Moves a student to another class, or out of every class (null).
+        // Their stories and progress stay with them.
+        async moveStudent(studentId, sectionId) {
+            const row = await manage(client.from('students').update({ section_id: sectionId }).eq('id', studentId).select('*').single());
+            Object.assign(HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId), row);
+            applySectionRoster();
+            return row;
         },
 
         // ---- Time ---------------------------------------------------------

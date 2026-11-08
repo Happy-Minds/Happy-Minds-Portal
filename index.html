@@ -85,6 +85,9 @@
                 <button class="nav-btn" data-view="reports" data-roles="trainer,admin,coordinator,management" onclick="openReportsHome()" style="display:none;">
                     <i class="fa-solid fa-chart-column"></i> Reports
                 </button>
+                <button class="nav-btn" data-view="schools" data-roles="admin,coordinator,management" onclick="openSchoolsView()" style="display:none;">
+                    <i class="fa-solid fa-school"></i> Schools
+                </button>
                 <button class="nav-btn" data-view="admin" data-role="admin" onclick="renderAdminDashboard(); navigateTo('admin');" style="display:none;">
                     <i class="fa-solid fa-user-shield"></i> Admin
                 </button>
@@ -1726,6 +1729,92 @@
                  Admin-role-only. Shows real data (chapters, accounts) where we
                  have it; the rest is an honest placeholder for the Phase 5
                  content-CMS build, not a working feature yet. -->
+            <!-- ================= SCHOOLS & CLASSES (admin, coordinator; management views) ================= -->
+            <section id="schools-view" class="view-section">
+                <div class="roadmap-header">
+                    <div class="roadmap-title-area">
+                        <h2>Schools &amp; classes</h2>
+                        <p>Each school’s Std 4–8 classes, who teaches them, and their student lists.</p>
+                    </div>
+                    <button type="button" class="btn-primary-glowing compact manage-only" onclick="openSchoolForm()">
+                        <i class="fa-solid fa-plus"></i> Add school
+                    </button>
+                </div>
+                <div class="admin-section-card">
+                    <label for="schoolsSearch" class="visually-hidden">Find a school</label>
+                    <input type="search" id="schoolsSearch" class="reflection-text-input manage-search" placeholder="Find a school by name or code" oninput="renderSchoolsList(this.value)" autocomplete="off">
+                    <div class="admin-chapter-list" id="schoolsList"></div>
+                </div>
+            </section>
+
+            <section id="school-detail-view" class="view-section">
+                <button type="button" class="back-link-btn compact" onclick="openSchoolsView()">
+                    <i class="fa-solid fa-arrow-left"></i> Schools
+                </button>
+                <div class="admin-header" style="margin-top:16px;">
+                    <h2 id="schoolDetailName">School</h2>
+                    <p id="schoolDetailMeta"></p>
+                </div>
+                <div class="admin-section-card manage-only">
+                    <h3><i class="fa-solid fa-box-open"></i> Package</h3>
+                    <div class="manage-inline-row">
+                        <label for="schoolPackageSelect">Package for this school</label>
+                        <select id="schoolPackageSelect" class="custom-select" onchange="changeSchoolPackage(this)">
+                            <option value="standard">Standard: the class teacher takes both sessions</option>
+                            <option value="premium">Premium: our trainer takes Session 1, the class teacher Session 2</option>
+                            <option value="advance">Advance: our staff take both sessions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-people-group"></i> Classes</h3>
+                    <p class="prep-readiness-explain" id="schoolTrainerWarning" hidden></p>
+                    <div class="admin-chapter-list" id="schoolSectionsList"></div>
+                    <form class="manage-inline-row manage-only" id="addSectionForm" onsubmit="addSectionFromForm(event)" novalidate>
+                        <label for="addSectionGrade">Add a class</label>
+                        <select id="addSectionGrade" class="custom-select" aria-label="Standard">
+                            <option value="4">Std 4</option><option value="5">Std 5</option><option value="6">Std 6</option>
+                            <option value="7">Std 7</option><option value="8">Std 8</option>
+                        </select>
+                        <input type="text" id="addSectionLetter" class="reflection-text-input manage-letter" maxlength="3" placeholder="A" aria-label="Section letter" autocomplete="off">
+                        <button type="submit" class="btn-primary-glowing compact" id="addSectionBtn"><i class="fa-solid fa-plus"></i> Add class</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="class-roster-view" class="view-section">
+                <button type="button" class="back-link-btn compact" onclick="openSchoolDetail(rosterSchoolId)">
+                    <i class="fa-solid fa-arrow-left"></i> <span id="rosterBackLabel">School</span>
+                </button>
+                <div class="admin-header" style="margin-top:16px;">
+                    <h2 id="rosterTitle">Class</h2>
+                    <p id="rosterMeta"></p>
+                </div>
+                <div class="admin-section-card manage-only">
+                    <h3><i class="fa-solid fa-user-plus"></i> Add students</h3>
+                    <form class="manage-inline-row" onsubmit="addStudentFromForm(event)" novalidate>
+                        <label for="addStudentName">One student</label>
+                        <input type="text" id="addStudentName" class="reflection-text-input" maxlength="60" placeholder="e.g. Arun K." autocomplete="off">
+                        <button type="submit" class="btn-primary-glowing compact" id="addStudentBtn"><i class="fa-solid fa-plus"></i> Add</button>
+                    </form>
+                    <div class="manage-import">
+                        <label for="importStudentNames">Several students: paste one name per line, or choose a CSV or Excel-saved CSV file</label>
+                        <textarea id="importStudentNames" class="reflection-textarea" rows="5" placeholder="Arun K.&#10;Divya S.&#10;Mohammed F." oninput="previewStudentImport()"></textarea>
+                        <div class="manage-inline-row">
+                            <input type="file" id="importStudentFile" accept=".csv,.txt,text/csv,text/plain" onchange="loadStudentImportFile(this)">
+                            <span class="prep-readiness-explain" id="importStudentPreview">No names yet.</span>
+                            <button type="button" class="btn-primary-glowing compact" id="importStudentBtn" onclick="importStudents()" disabled>
+                                <i class="fa-solid fa-file-import"></i> Add names
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-children"></i> Students</h3>
+                    <div class="admin-chapter-list" id="rosterList"></div>
+                </div>
+            </section>
+
             <section id="admin-view" class="view-section">
                 <div class="admin-header">
                     <h2>Admin Dashboard</h2>
@@ -1943,6 +2032,44 @@
             <label for="sectionPickerSearch" class="visually-hidden">Find a school</label>
             <input type="search" id="sectionPickerSearch" class="reflection-text-input" placeholder="Find a school by name or code" oninput="renderSectionPicker(this.value)" autocomplete="off">
             <div id="sectionPickerList" class="section-picker-list"></div>
+        </div>
+    </div>
+
+    <!-- Add a school -->
+    <div id="schoolFormModal" class="modal-backdrop" onclick="if (event.target === this) closeSchoolForm()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="schoolFormTitle">
+            <button class="modal-close-btn" onclick="closeSchoolForm()" aria-label="Close">&times;</button>
+            <div class="planner-modal-header">
+                <div class="badge-icon blue"><i class="fa-solid fa-school"></i></div>
+                <div>
+                    <h3 id="schoolFormTitle">Add a school</h3>
+                    <p class="modal-sub">You can add its classes next.</p>
+                </div>
+            </div>
+            <form id="schoolForm" onsubmit="submitSchoolForm(event)" novalidate>
+                <div class="reflection-field">
+                    <label for="schoolFormName">School name</label>
+                    <input type="text" id="schoolFormName" class="reflection-text-input" maxlength="120" required autocomplete="off">
+                </div>
+                <div class="reflection-field">
+                    <label for="schoolFormCode">School code</label>
+                    <input type="text" id="schoolFormCode" class="reflection-text-input" maxlength="20" required autocomplete="off" placeholder="HM-011" aria-describedby="schoolFormCodeHelp">
+                    <p class="reset-password-help" id="schoolFormCodeHelp">Capital letters, numbers and dashes, e.g. HM-011.</p>
+                </div>
+                <div class="reflection-field">
+                    <label for="schoolFormPackage">Package</label>
+                    <select id="schoolFormPackage" class="custom-select">
+                        <option value="premium">Premium</option>
+                        <option value="standard">Standard</option>
+                        <option value="advance">Advance</option>
+                    </select>
+                </div>
+                <p class="login-error" id="schoolFormError" role="alert"></p>
+                <div class="modal-actions-row">
+                    <button type="button" class="btn-glass" onclick="closeSchoolForm()">Cancel</button>
+                    <button type="submit" class="btn-primary-glowing" id="schoolFormSubmit">Add school</button>
+                </div>
+            </form>
         </div>
     </div>
 

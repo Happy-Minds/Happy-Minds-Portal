@@ -448,6 +448,7 @@ function enterApp(account) {
 
     appState.currentUser = account;
     document.body.classList.toggle('view-only', isViewOnly());
+    document.body.classList.toggle('can-manage', canManage());
     if (account.role !== 'parent') chooseStartingSection(account);
     reloadSavedState();
     renderChaptersRoadmap();
@@ -604,6 +605,382 @@ function selectSection(sectionId) {
     showNotification(`Now showing ${sectionFullName(currentSection())}.`);
 }
 
+// ================= Schools & classes (admin, coordinator) =================
+// Admin and coordinator add schools and classes, choose each class's
+// teacher and trainer, and keep student lists up to date. Management sees
+// the same pages without the editing controls (body.can-manage). The
+// database checks every change again (Row Level Security).
+const MANAGE_ROLES = ['admin', 'coordinator'];
+const PACKAGE_LABELS = { standard: 'Standard', premium: 'Premium', advance: 'Advance' };
+const TRAINER_SECTIONS_PER_SCHOOL = 8;
+let detailSchoolId = null;
+let rosterSectionId = null;
+let rosterSchoolId = null;
+let pendingImportNames = [];
+
+function canManage() {
+    return !!appState.currentUser && MANAGE_ROLES.includes(appState.currentUser.role);
+}
+
+function schoolSections(schoolId) {
+    return HappyMindsConfig.SECTIONS.filter(s => s.school_id === schoolId);
+}
+
+function studentsInSection(sectionId) {
+    return HappyMindsConfig.ALL_STUDENTS.filter(s => s.section_id === sectionId);
+}
+
+function accountName(id) {
+    const account = id ? HappyMindsConfig.ACCOUNTS.find(a => a.id === id) : null;
+    return account ? account.name : '';
+}
+
+// Shows a button as busy while a change saves; returns a function that restores it.
+function busyButton(btn, label) {
+    const before = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${label}`;
+    return () => { btn.disabled = false; btn.innerHTML = before; };
+}
+
+function openSchoolsView() {
+    document.getElementById('schoolsSearch').value = '';
+    renderSchoolsList('');
+    navigateTo('schools');
+}
+
+function renderSchoolsList(query) {
+    const q = (query || '').trim().toLowerCase();
+    const schools = HappyMindsConfig.SCHOOLS.filter(s => !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q));
+    const list = document.getElementById('schoolsList');
+    if (!HappyMindsConfig.SCHOOLS.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No schools yet.${canManage() ? ' Add the first school to start setting up its classes.' : ''}</p>`;
+        return;
+    }
+    if (!schools.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No school matches "${escapeReportText(query)}".</p>`;
+        return;
+    }
+    list.innerHTML = schools.map(school => {
+        const sections = schoolSections(school.id);
+        const students = sections.reduce((n, s) => n + studentsInSection(s.id).length, 0);
+        const unassigned = sections.filter(s => !s.teacher_id).length;
+        return `
+            <button type="button" class="admin-list-row manage-row-btn" onclick="openSchoolDetail('${school.id}')">
+                <span class="admin-list-num">${escapeReportText(school.code)}</span>
+                <span class="admin-list-title">${escapeReportText(school.name)}
+                    <span class="class-report-meta">${sections.length} ${sections.length === 1 ? 'class' : 'classes'} · ${students} students${unassigned ? ` · ${unassigned} without a class teacher` : ''}</span>
+                </span>
+                <span class="admin-list-tag package-${school.package}">${PACKAGE_LABELS[school.package]}</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>`;
+    }).join('');
+}
+
+function openSchoolForm() {
+    if (!canManage()) return;
+    document.getElementById('schoolForm').reset();
+    document.getElementById('schoolFormError').textContent = '';
+    document.getElementById('schoolFormModal').classList.add('active-modal');
+    document.getElementById('schoolFormName').focus();
+}
+
+function closeSchoolForm() {
+    document.getElementById('schoolFormModal').classList.remove('active-modal');
+}
+
+async function submitSchoolForm(event) {
+    event.preventDefault();
+    const name = document.getElementById('schoolFormName').value.trim();
+    const code = document.getElementById('schoolFormCode').value.trim().toUpperCase();
+    const error = document.getElementById('schoolFormError');
+    if (name.length < 2) { error.textContent = 'Type the school name.'; document.getElementById('schoolFormName').focus(); return; }
+    if (!/^[A-Z0-9-]{2,20}$/.test(code)) { error.textContent = 'The code can use capital letters, numbers and dashes, e.g. HM-011.'; document.getElementById('schoolFormCode').focus(); return; }
+    error.textContent = '';
+    const restore = busyButton(document.getElementById('schoolFormSubmit'), 'Adding…');
+    try {
+        const school = await HMCloud.createSchool({ name, code, pkg: document.getElementById('schoolFormPackage').value });
+        closeSchoolForm();
+        showNotification(`Added ${school.name}.`);
+        openSchoolDetail(school.id);
+    } catch (err) {
+        error.textContent = err.message;
+    } finally {
+        restore();
+    }
+}
+
+function openSchoolDetail(schoolId) {
+    detailSchoolId = schoolId;
+    renderSchoolDetail();
+    navigateTo('school-detail');
+}
+
+function renderSchoolDetail() {
+    const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    if (!school) return;
+    const sections = schoolSections(school.id);
+    document.getElementById('schoolDetailName').textContent = school.name;
+    document.getElementById('schoolDetailMeta').textContent = `${school.code} · ${PACKAGE_LABELS[school.package]} package · ${sections.length} ${sections.length === 1 ? 'class' : 'classes'}`;
+    document.getElementById('schoolPackageSelect').value = school.package;
+
+    const teachers = HappyMindsConfig.ACCOUNTS.filter(a => a.role === 'teacher');
+    const trainers = HappyMindsConfig.ACCOUNTS.filter(a => a.role === 'trainer');
+    const options = (people, selected, empty) => `<option value="">${empty}</option>` + people
+        .map(p => `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${escapeReportText(p.name)}</option>`).join('');
+
+    // One trainer teaches up to 8 classes in a school on their visit day.
+    const load = new Map();
+    sections.forEach(s => { if (s.trainer_id) load.set(s.trainer_id, (load.get(s.trainer_id) || 0) + 1); });
+    const overloaded = [...load].filter(([, n]) => n > TRAINER_SECTIONS_PER_SCHOOL);
+    const warning = document.getElementById('schoolTrainerWarning');
+    warning.hidden = !overloaded.length;
+    warning.textContent = overloaded.map(([id, n]) => `${accountName(id)} has ${n} classes here. A trainer can take up to ${TRAINER_SECTIONS_PER_SCHOOL} on one visit day; give the extra classes a second trainer.`).join(' ');
+
+    const list = document.getElementById('schoolSectionsList');
+    if (!sections.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No classes yet.${canManage() ? ' Add the Std 4–8 classes this school has signed up for.' : ''}</p>`;
+        return;
+    }
+    const manage = canManage();
+    list.innerHTML = sections.map(s => {
+        const count = studentsInSection(s.id).length;
+        const staff = manage ? `
+                <label class="manage-field"><span>Class teacher</span>
+                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'teacher_id', this)">${options(teachers, s.teacher_id, 'No class teacher yet')}</select></label>
+                <label class="manage-field"><span>Trainer</span>
+                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'trainer_id', this)">${options(trainers, s.trainer_id, 'No trainer yet')}</select></label>`
+            : `<span class="admin-list-username">${escapeReportText(accountName(s.teacher_id) || 'No class teacher yet')} · trainer: ${escapeReportText(accountName(s.trainer_id) || 'none yet')}</span>`;
+        const remove = manage && !count
+            ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeSection('${s.id}', this)">Remove class</button>` : '';
+        return `
+            <div class="admin-list-row manage-section-row">
+                <span class="admin-list-num manage-section-label">${s.label}</span>
+                ${staff}
+                <button type="button" class="btn-glass compact" onclick="openClassRoster('${s.id}')">
+                    <i class="fa-solid fa-children"></i> ${count} ${count === 1 ? 'student' : 'students'}
+                </button>
+                ${remove}
+            </div>`;
+    }).join('');
+}
+
+async function changeSchoolPackage(select) {
+    const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    const previous = school.package;
+    select.disabled = true;
+    try {
+        await HMCloud.updateSchool(school.id, { package: select.value });
+        showNotification(`${school.name} is now on the ${PACKAGE_LABELS[select.value]} package.`);
+        renderSchoolDetail();
+    } catch (err) {
+        select.value = previous;
+        showNotification(err.message);
+    } finally {
+        select.disabled = false;
+    }
+}
+
+async function addSectionFromForm(event) {
+    event.preventDefault();
+    const grade = Number(document.getElementById('addSectionGrade').value);
+    const letterInput = document.getElementById('addSectionLetter');
+    const letter = letterInput.value.trim().toUpperCase();
+    if (!/^[A-Z]{1,3}$/.test(letter)) {
+        showNotification('Type the section letter, e.g. A.');
+        letterInput.focus();
+        return;
+    }
+    const restore = busyButton(document.getElementById('addSectionBtn'), 'Adding…');
+    try {
+        await HMCloud.createSection(detailSchoolId, grade, letter);
+        letterInput.value = '';
+        showNotification(`Added class ${grade}${letter}.`);
+        renderSchoolDetail();
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+    }
+}
+
+async function assignSectionStaff(sectionId, field, select) {
+    const before = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId)[field];
+    select.disabled = true;
+    try {
+        await HMCloud.updateSection(sectionId, { [field]: select.value || null });
+        const s = HappyMindsConfig.SECTIONS.find(x => x.id === sectionId);
+        const who = select.value ? accountName(select.value) : 'nobody';
+        showNotification(`${s.label}: ${field === 'teacher_id' ? 'class teacher' : 'trainer'} is ${who}.`);
+        renderSchoolDetail();
+        updateSectionBadge();
+    } catch (err) {
+        select.value = before || '';
+        select.disabled = false;
+        showNotification(err.message);
+    }
+}
+
+// Only an empty class can be removed, after a second tap to confirm.
+async function removeSection(sectionId, btn) {
+    if (btn.dataset.confirm !== 'yes') {
+        btn.dataset.confirm = 'yes';
+        btn.textContent = 'Tap again to remove';
+        setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm = ''; btn.textContent = 'Remove class'; } }, 4000);
+        return;
+    }
+    const label = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId)?.label;
+    const restore = busyButton(btn, 'Removing…');
+    try {
+        await HMCloud.deleteSection(sectionId);
+        showNotification(`Removed class ${label}.`);
+        renderSchoolDetail();
+        updateSectionBadge();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
+function openClassRoster(sectionId) {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId);
+    if (!section) return;
+    rosterSectionId = sectionId;
+    rosterSchoolId = section.school_id;
+    document.getElementById('addStudentName').value = '';
+    document.getElementById('importStudentNames').value = '';
+    document.getElementById('importStudentFile').value = '';
+    previewStudentImport();
+    renderClassRoster();
+    navigateTo('class-roster');
+}
+
+function renderClassRoster() {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === rosterSectionId);
+    const students = studentsInSection(rosterSectionId);
+    document.getElementById('rosterBackLabel').textContent = section.school ? section.school.name : 'School';
+    document.getElementById('rosterTitle').textContent = `${section.school ? section.school.name : ''} · ${section.label}`;
+    document.getElementById('rosterMeta').textContent = `${students.length} ${students.length === 1 ? 'student' : 'students'} · class teacher: ${accountName(section.teacher_id) || 'not chosen yet'}`;
+    const list = document.getElementById('rosterList');
+    if (!students.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No students in this class yet.${canManage() ? ' Add them above, one by one or as a list.' : ''}</p>`;
+        return;
+    }
+    const manage = canManage();
+    list.innerHTML = students.map(st => `
+        <div class="admin-list-row">
+            <img src="${escapeReportText(st.avatar)}" alt="" class="admin-list-avatar">
+            <span class="admin-list-title">${escapeReportText(st.name)} <span class="admin-list-username">${escapeReportText(st.id)}</span></span>
+            ${manage ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeStudentFromClass('${escapeReportText(st.id)}', this)">Remove from class</button>` : ''}
+        </div>`).join('');
+}
+
+async function addStudentFromForm(event) {
+    event.preventDefault();
+    const input = document.getElementById('addStudentName');
+    const name = input.value.trim().replace(/\s+/g, ' ');
+    if (name.length < 2) {
+        showNotification("Type the student's name.");
+        input.focus();
+        return;
+    }
+    const restore = busyButton(document.getElementById('addStudentBtn'), 'Adding…');
+    try {
+        await HMCloud.addStudents(rosterSectionId, [name]);
+        input.value = '';
+        showNotification(`Added ${name}.`);
+        renderClassRoster();
+        input.focus();
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+    }
+}
+
+// Names from pasted text or a CSV: one per line. In a CSV, the "name"
+// column is used if there is one, otherwise the first column.
+function parseStudentNames(text) {
+    const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return [];
+    const cells = line => line.split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1').trim());
+    const header = cells(lines[0]).map(c => c.toLowerCase());
+    let column = 0;
+    let rows = lines;
+    const nameColumn = header.findIndex(h => /^(student )?name$/.test(h));
+    if (nameColumn >= 0) { column = nameColumn; rows = lines.slice(1); }
+    const existing = new Set(studentsInSection(rosterSectionId).map(s => s.name.toLowerCase()));
+    const seen = new Set();
+    return rows
+        .map(line => (cells(line)[column] || '').replace(/\s+/g, ' '))
+        .filter(name => name.length >= 2 && name.length <= 60)
+        .filter(name => {
+            const key = name.toLowerCase();
+            if (seen.has(key) || existing.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+}
+
+function previewStudentImport() {
+    pendingImportNames = parseStudentNames(document.getElementById('importStudentNames').value);
+    const preview = document.getElementById('importStudentPreview');
+    preview.textContent = pendingImportNames.length
+        ? `${pendingImportNames.length} new ${pendingImportNames.length === 1 ? 'name' : 'names'} ready to add (names already in this class are skipped).`
+        : 'No new names yet.';
+    document.getElementById('importStudentBtn').disabled = !pendingImportNames.length;
+}
+
+function loadStudentImportFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        document.getElementById('importStudentNames').value = String(reader.result || '');
+        previewStudentImport();
+    };
+    reader.onerror = () => showNotification("Couldn't read that file. Save it as CSV and try again.");
+    reader.readAsText(file);
+}
+
+async function importStudents() {
+    if (!pendingImportNames.length) return;
+    const names = pendingImportNames.slice();
+    const restore = busyButton(document.getElementById('importStudentBtn'), 'Adding…');
+    try {
+        await HMCloud.addStudents(rosterSectionId, names);
+        document.getElementById('importStudentNames').value = '';
+        document.getElementById('importStudentFile').value = '';
+        showNotification(`Added ${names.length} ${names.length === 1 ? 'student' : 'students'}.`);
+        renderClassRoster();
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+        previewStudentImport();
+    }
+}
+
+// Takes the student out of this class. Their stories and progress are kept.
+async function removeStudentFromClass(studentId, btn) {
+    if (btn.dataset.confirm !== 'yes') {
+        btn.dataset.confirm = 'yes';
+        btn.textContent = 'Tap again to remove';
+        setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm = ''; btn.textContent = 'Remove from class'; } }, 4000);
+        return;
+    }
+    const name = HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId)?.name || 'Student';
+    const restore = busyButton(btn, 'Removing…');
+    try {
+        await HMCloud.moveStudent(studentId, null);
+        showNotification(`${name} is no longer in this class. Their work is kept.`);
+        renderClassRoster();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
 function toggleUserMenu() {
     document.getElementById('userMenuDropdown').classList.toggle('open');
 }
@@ -630,7 +1007,7 @@ async function handleLogout(event) {
     updateScriptFab('login');
     await HMCloud.signOut();
     appState.currentUser = null;
-    document.body.classList.remove('view-only', 'lesson-view');
+    document.body.classList.remove('view-only', 'lesson-view', 'can-manage');
     reloadSavedState();
     document.getElementById('userMenuDropdown').classList.remove('open');
     document.getElementById('loginForm').reset();
