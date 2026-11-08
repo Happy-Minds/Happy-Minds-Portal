@@ -17,6 +17,10 @@ const HappyMindsConfig = {
     // (supabase/functions/stories); cloud.js calls it.
     STORIES_ENDPOINT: 'https://odjrafygmednsooyiicd.supabase.co/functions/v1/stories',
 
+    // Creates staff, student and parent logins (admin, coordinator): the
+    // `accounts` Supabase Edge Function (supabase/functions/accounts).
+    ACCOUNTS_ENDPOINT: 'https://odjrafygmednsooyiicd.supabase.co/functions/v1/accounts',
+
     // --- Supabase: sign-in + saved data ---------------------------------------
     // Project address and publishable key. The publishable key is meant to be
     // in browser code; what each account can read or write is enforced by

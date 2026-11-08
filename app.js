@@ -862,17 +862,25 @@ function renderClassRoster() {
     document.getElementById('rosterTitle').textContent = `${section.school ? section.school.name : ''} · ${section.label}`;
     document.getElementById('rosterMeta').textContent = `${students.length} ${students.length === 1 ? 'student' : 'students'} · class teacher: ${accountName(section.teacher_id) || 'not chosen yet'}`;
     const list = document.getElementById('rosterList');
+    renderRosterLoginSummary();
     if (!students.length) {
         list.innerHTML = `<p class="prep-readiness-explain">No students in this class yet.${canManage() ? ' Add them above, one by one or as a list.' : ''}</p>`;
         return;
     }
     const manage = canManage();
-    list.innerHTML = students.map(st => `
+    list.innerHTML = students.map(st => {
+        const logins = familyLogins(st.id);
+        const tag = logins.student && logins.parent ? '<span class="admin-list-tag full">Logins ready</span>'
+            : logins.student || logins.parent ? '<span class="admin-list-tag partial">One login missing</span>'
+            : '<span class="admin-list-tag partial">No login yet</span>';
+        return `
         <div class="admin-list-row">
             <img src="${escapeReportText(st.avatar)}" alt="" class="admin-list-avatar">
             <span class="admin-list-title">${escapeReportText(st.name)} <span class="admin-list-username">${escapeReportText(st.id)}</span></span>
+            ${tag}
             ${manage ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeStudentFromClass('${escapeReportText(st.id)}', this)">Remove from class</button>` : ''}
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 async function addStudentFromForm(event) {
@@ -958,6 +966,156 @@ async function importStudents() {
     } finally {
         restore();
         previewStudentImport();
+    }
+}
+
+// ---- Logins for a class's students and parents ----
+function familyLogins(studentId) {
+    const own = HappyMindsConfig.ACCOUNTS.filter(a => a.studentId === studentId);
+    return { student: own.find(a => a.role === 'student') || null, parent: own.find(a => a.role === 'parent') || null };
+}
+
+function renderRosterLoginSummary() {
+    const students = studentsInSection(rosterSectionId);
+    const missing = students.filter(st => { const l = familyLogins(st.id); return !l.student || !l.parent; }).length;
+    document.getElementById('rosterLoginSummary').textContent = !students.length
+        ? 'Add students first, then create their logins here.'
+        : missing
+            ? `${missing} of ${students.length} students still need a student or parent login. Creating them makes a printable slip for each child, with both logins.`
+            : `Every student in this class has a student login and a parent login.`;
+    document.getElementById('rosterLoginBtn').disabled = !missing;
+}
+
+// The slip page opens now, while this is still the click (browsers block
+// pop-ups opened after waiting for the network), then fills in.
+async function createClassLogins() {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === rosterSectionId);
+    const w = window.open('', '_blank');
+    if (!w) {
+        showNotification('Allow pop-ups for this site to print the login slips.');
+        return;
+    }
+    w.document.write('<!DOCTYPE html><html><head><title>Creating logins…</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">Creating logins for the class… This can take a minute for a big class.</body></html>');
+    w.document.close();
+    const restore = busyButton(document.getElementById('rosterLoginBtn'), 'Creating logins…');
+    try {
+        const result = await HMCloud.createClassLogins(rosterSectionId);
+        const fresh = result.created || [];
+        if (!fresh.length) {
+            w.close();
+            showNotification(result.failed && result.failed.length
+                ? `Couldn't create logins for ${result.failed.map(f => f.name).join(', ')}. Please try again.`
+                : 'Everyone in this class already has logins.');
+        } else {
+            w.document.open();
+            w.document.write(buildLoginSlipsHtml(section, fresh));
+            w.document.close();
+            w.focus();
+            w.print();
+            showNotification(`Created logins for ${fresh.length} ${fresh.length === 1 ? 'student' : 'students'}.`
+                + (result.failed && result.failed.length ? ` ${result.failed.length} could not be created; try again.` : ''));
+        }
+    } catch (err) {
+        w.document.open();
+        w.document.write(`<!DOCTYPE html><html><head><title>Logins not created</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">${escapeReportText(err.message)} Close this tab and try again.</body></html>`);
+        w.document.close();
+        showNotification(err.message);
+    } finally {
+        restore();
+        renderClassRoster();
+    }
+}
+
+function buildLoginSlipsHtml(section, entries) {
+    const site = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+    const className = `${section.school ? section.school.name : ''} · ${section.label}`;
+    const login = (who, account) => account
+        ? `<div class="who">${who}</div>
+           <div class="row"><span>Username</span><code>${escapeReportText(account.username)}</code></div>
+           <div class="row"><span>Password</span>${account.password ? `<code>${escapeReportText(account.password)}</code>` : '<em>Given earlier</em>'}</div>`
+        : '';
+    const slips = entries.map(e => `
+        <section class="slip">
+            <h2>${escapeReportText(e.name)}</h2>
+            <p class="class">${escapeReportText(className)}</p>
+            <div class="pair">
+                <div>${login('Student · Learning Space', e.student)}<p class="where">${escapeReportText(site)}student-portal.html</p></div>
+                <div>${login('Parent · My Child’s Report', e.parent)}<p class="where">${escapeReportText(site)}</p></div>
+            </div>
+        </section>`).join('');
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Login slips - ${escapeReportText(className)}</title>
+        <style>
+            @page { size: A4; margin: 12mm; }
+            body { font-family: Arial, sans-serif; color: #1F2937; margin: 0; padding: 16px; }
+            header { margin-bottom: 12px; }
+            header h1 { font-size: 18px; margin: 0 0 4px; }
+            header p { font-size: 12px; color: #4B5563; margin: 0; }
+            .slips { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+            .slip { border: 1px dashed #9CA3AF; padding: 12px 14px; break-inside: avoid; }
+            .slip h2 { font-size: 16px; margin: 0; }
+            .class { font-size: 11px; color: #6B7280; margin: 2px 0 8px; }
+            .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .who { font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: .03em; color: #0369A1; margin-bottom: 4px; }
+            .row { display: flex; flex-direction: column; margin-bottom: 4px; }
+            .row span { font-size: 10px; color: #6B7280; }
+            .row code { font-size: 13px; font-weight: bold; font-family: "Courier New", monospace; word-break: break-all; }
+            .where { font-size: 9px; color: #6B7280; margin: 2px 0 0; word-break: break-all; }
+            @media (max-width: 600px) { .slips, .pair { grid-template-columns: 1fr; } }
+        </style></head><body>
+        <header>
+            <h1>Happy Minds login slips · ${escapeReportText(className)}</h1>
+            <p>Cut along the dashed lines and give each child their slip. Keep passwords private. A lost password can be reset by the admin.</p>
+        </header>
+        <div class="slips">${slips}</div>
+    </body></html>`;
+}
+
+// ---- Staff logins (admin) ----
+async function submitStaffLogin(event) {
+    event.preventDefault();
+    const name = document.getElementById('staffLoginName').value.trim().replace(/\s+/g, ' ');
+    const username = document.getElementById('staffLoginUsername').value.trim().toLowerCase();
+    const error = document.getElementById('staffLoginError');
+    if (name.length < 2) { error.textContent = 'Type their name.'; document.getElementById('staffLoginName').focus(); return; }
+    if (!/^[a-z][a-z0-9._-]{2,31}$/.test(username)) {
+        error.textContent = 'Usernames start with a letter and use only small letters, numbers, dots or dashes (3–32 characters).';
+        document.getElementById('staffLoginUsername').focus();
+        return;
+    }
+    error.textContent = '';
+    document.getElementById('staffLoginDone').hidden = true;
+    const restore = busyButton(document.getElementById('staffLoginSubmit'), 'Creating…');
+    try {
+        const result = await HMCloud.createStaffAccount({
+            username, name,
+            role: document.getElementById('staffLoginRole').value,
+            phone: document.getElementById('staffLoginPhone').value.trim(),
+            email: document.getElementById('staffLoginEmail').value.trim()
+        });
+        document.getElementById('staffLoginDoneName').textContent = name;
+        document.getElementById('staffLoginDoneUser').textContent = result.username;
+        document.getElementById('staffLoginDonePassword').textContent = result.password;
+        document.getElementById('staffLoginDone').hidden = false;
+        document.getElementById('staffLoginForm').reset();
+        renderAdminDashboard();
+        showNotification(`Created a login for ${name}. Copy the password now; it won't be shown again.`);
+    } catch (err) {
+        error.textContent = err.message;
+    } finally {
+        restore();
+    }
+}
+
+async function copyStaffLogin() {
+    const user = document.getElementById('staffLoginDoneUser').textContent;
+    const pass = document.getElementById('staffLoginDonePassword').textContent;
+    try {
+        await navigator.clipboard.writeText(`Username: ${user}\nPassword: ${pass}`);
+        showNotification('Login copied.');
+    } catch (err) {
+        showNotification("Couldn't copy. Select the password and copy it yourself.");
     }
 }
 

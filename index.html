@@ -1809,6 +1809,16 @@
                         </div>
                     </div>
                 </div>
+                <div class="admin-section-card manage-only">
+                    <h3><i class="fa-solid fa-id-card"></i> Logins for students and parents</h3>
+                    <p class="admin-card-explain" id="rosterLoginSummary"></p>
+                    <div class="manage-inline-row">
+                        <button type="button" class="btn-primary-glowing compact" id="rosterLoginBtn" onclick="createClassLogins()">
+                            <i class="fa-solid fa-id-card"></i> Create logins &amp; print slips
+                        </button>
+                    </div>
+                    <p class="reset-password-help">Each new login slip shows the password once. Print or save the slips before closing them; a lost password can be reset under Admin.</p>
+                </div>
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-children"></i> Students</h3>
                     <div class="admin-chapter-list" id="rosterList"></div>
@@ -1848,6 +1858,37 @@
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-users"></i> Teacher, Trainer &amp; Admin Accounts</h3>
                     <div class="admin-account-list" id="adminAccountList"></div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-user-plus"></i> Add a Staff Login</h3>
+                    <p class="admin-card-explain">For a new teacher, trainer, coordinator or management member. Students and parents get their logins from their class under Schools.</p>
+                    <form id="staffLoginForm" class="staff-login-form" onsubmit="submitStaffLogin(event)" novalidate>
+                        <label class="manage-field"><span>Name</span>
+                            <input type="text" id="staffLoginName" maxlength="80" placeholder="e.g. Mrs. Anitha R" autocomplete="off"></label>
+                        <label class="manage-field"><span>Username</span>
+                            <input type="text" id="staffLoginUsername" maxlength="32" placeholder="e.g. anitha.r" autocomplete="off" spellcheck="false"></label>
+                        <label class="manage-field"><span>Role</span>
+                            <select id="staffLoginRole" class="custom-select">
+                                <option value="teacher">Teacher</option>
+                                <option value="trainer">Trainer</option>
+                                <option value="coordinator">Coordinator</option>
+                                <option value="management">Management</option>
+                            </select></label>
+                        <label class="manage-field"><span>Phone (optional)</span>
+                            <input type="text" id="staffLoginPhone" maxlength="30" autocomplete="off" inputmode="tel"></label>
+                        <label class="manage-field"><span>Email (optional)</span>
+                            <input type="text" id="staffLoginEmail" maxlength="120" autocomplete="off" inputmode="email"></label>
+                        <div class="staff-login-actions">
+                            <p class="login-error" id="staffLoginError" role="alert"></p>
+                            <button type="submit" class="btn-primary-glowing compact" id="staffLoginSubmit"><i class="fa-solid fa-user-plus"></i> Create login</button>
+                        </div>
+                    </form>
+                    <div class="reset-password-result" id="staffLoginDone" hidden>
+                        <span>Login for <strong id="staffLoginDoneName"></strong>: username <code id="staffLoginDoneUser"></code>, password</span>
+                        <code id="staffLoginDonePassword"></code>
+                        <button type="button" class="btn-glass compact" onclick="copyStaffLogin()"><i class="fa-regular fa-copy"></i> Copy</button>
+                    </div>
                 </div>
 
                 <div class="admin-section-card">

@@ -111,6 +111,34 @@ const HMCloud = (() => {
 
     const SECTION_COLUMNS = 'id, school_id, grade, letter, teacher_id, trainer_id';
 
+    async function reloadAccounts() {
+        const profiles = await selectAll('profiles', '*', 'username');
+        HappyMindsConfig.ACCOUNTS.splice(0, Infinity, ...profiles.map(toAccount));
+    }
+
+    // The accounts Edge Function. Throws an Error whose message is safe to show.
+    async function callAccounts(body) {
+        const { data } = await client.auth.getSession();
+        const headers = { apikey: HappyMindsConfig.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' };
+        if (data.session) headers.Authorization = `Bearer ${data.session.access_token}`;
+        let res;
+        try {
+            res = await fetch(HappyMindsConfig.ACCOUNTS_ENDPOINT, { method: 'POST', headers, body: JSON.stringify(body) });
+        } catch (err) {
+            throw new Error("Couldn't reach Happy Minds. Check the internet connection and try again.");
+        }
+        const result = await res.json().catch(() => ({}));
+        if (res.ok) return result;
+        console.warn('Happy Minds: accounts request failed', res.status, result.error);
+        const messages = {
+            username_taken: 'That username is already in use. Choose another.',
+            not_allowed: 'Only an admin can add staff logins, and only an admin or coordinator can add student logins.',
+            bad_request: 'Check the details and try again. Usernames start with a letter and use only small letters, numbers, dots or dashes.',
+            too_many: 'This class has too many students without logins for one go. Please contact support.'
+        };
+        throw new Error(messages[result.error] || "Couldn't create the login right now. Please try again.");
+    }
+
     // Supabase Auth signs in with an email, the portal with a username.
     const emailFor = username => `${username.trim().toLowerCase()}@${HappyMindsConfig.AUTH_EMAIL_DOMAIN}`;
 
@@ -454,6 +482,23 @@ const HMCloud = (() => {
             Object.assign(HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId), row);
             applySectionRoster();
             return row;
+        },
+
+        // ---- Logins (the `accounts` Edge Function) ------------------------
+        // Admin: a new teacher, trainer, coordinator or management login.
+        // Resolves to { username, password }; the password is shown once.
+        async createStaffAccount({ username, name, role, phone, email }) {
+            const result = await callAccounts({ action: 'create_staff', username, name, role, phone, email });
+            await reloadAccounts();
+            return result;
+        },
+
+        // Admin or coordinator: student and parent logins for everyone in a
+        // class who has none yet. Resolves to { created, existing, failed }.
+        async createClassLogins(sectionId) {
+            const result = await callAccounts({ action: 'create_family', sectionId });
+            await reloadAccounts();
+            return result;
         },
 
         // ---- Time ---------------------------------------------------------

@@ -358,6 +358,15 @@ body:not(.can-manage) .manage-only { display: none !important; }
 .manage-import { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
 .manage-import > label { font-weight: 700; font-size: 13.5px; color: var(--text-dark); }
 .manage-import textarea { width: 100%; }
+.staff-login-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 14px; margin-top: 10px; }
+.staff-login-form input[type="text"] {
+    padding: 10px 14px; border-radius: 14px; border: 1.5px solid #CBD5E1; background: #F8FAFC;
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--text-dark); outline: none; width: 100%;
+}
+.staff-login-form input[type="text"]:focus { border-color: var(--primary-blue); background: white; }
+.staff-login-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+.staff-login-actions .login-error { flex: 1 1 240px; margin: 0; }
+#staffLoginDone { margin-top: 14px; flex-wrap: wrap; }
 #schoolTrainerWarning { background: #FEF3C7; color: #92400E; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
 
 /* ================= Notification Center =================

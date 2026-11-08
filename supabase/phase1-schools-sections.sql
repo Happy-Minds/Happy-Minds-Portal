@@ -379,6 +379,8 @@ grant update (name, avatar, phone, contact_email) on public.profiles to authenti
 grant select, insert, update on public.section_documents, public.prep_status to authenticated;
 grant select, insert, update on public.time_logs to authenticated;
 grant select on public.sections, public.students to service_role;
+-- The accounts Edge Function creates profiles for new logins.
+grant select, insert on public.profiles to service_role;
 
 revoke all on function public.log_time(uuid, integer, text, integer) from public, anon;
 grant execute on function public.log_time(uuid, integer, text, integer) to authenticated;
