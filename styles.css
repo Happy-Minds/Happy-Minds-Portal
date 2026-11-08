@@ -918,6 +918,31 @@ body:not(.can-manage) .manage-only { display: none !important; }
     color: white;
 }
 
+/* ================= Chapter colour groups (from the printed book) =================
+   Only colours change. The map's chapter circles use their group's colour
+   (locked chapters stay grey); chapter screens (body.lesson-view) take the
+   current chapter's group: the portal's main colour becomes the group's
+   deeper shade, and a few fixed colours follow the group too. */
+.chapter-node .node-badge { border-color: var(--node-main, var(--primary-blue)); color: var(--node-deep, var(--primary-blue)); }
+.chapter-node.completed .node-badge { background: var(--node-deep, var(--accent-green)); border-color: white; color: white; }
+.chapter-node.active-node .node-badge { background: var(--node-deep, var(--primary-blue)); border-color: #FCD34D; color: white; }
+.chapter-node.locked .node-badge { background: #94A3B8; border-color: white; color: white; }
+
+body.lesson-view .content-container { --primary-blue: var(--ch-deep, #0EA5E9); }
+body.lesson-view .step-pill.active { box-shadow: 0 4px 10px color-mix(in srgb, var(--ch-main, #0EA5E9) 35%, transparent); }
+body.lesson-view .settle-card {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--ch-main, #0EA5E9) 45%, var(--ch-deep, #0284C7)), var(--ch-deep, #0284C7));
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--ch-main, #0EA5E9) 30%, transparent);
+}
+body.lesson-view .settle-card .btn-primary-glowing { background: white; color: var(--ch-deep, #0284C7); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18); }
+body.lesson-view .btn-primary-glowing {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--ch-main, #10B981) 45%, var(--ch-deep, #059669)) 0%, var(--ch-deep, #059669) 100%);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--ch-main, #10B981) 35%, transparent);
+}
+body.lesson-view .btn-primary-glowing:disabled { background: #CBD5E1; color: #64748B; box-shadow: none; }
+body.lesson-view .badge-icon,
+body.lesson-view .chat-badge-icon { background: var(--ch-soft, #E0F2FE); color: var(--ch-deep, var(--primary-blue)); }
+
 .map-encouragement-banner {
     display: flex;
     align-items: center;
@@ -1916,6 +1941,18 @@ body.remote-mode .explorer-spotlight { display: none; }
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
 }
+
+.settle-quote { margin: 0; max-width: 680px; display: flex; flex-direction: column; gap: 8px; }
+.settle-quote:has(blockquote:empty) { display: none; }
+.settle-quote blockquote {
+    margin: 0;
+    font-family: 'Fredoka', var(--font-main);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-wrap: balance;
+}
+.settle-quote figcaption { font-size: 15px; font-weight: 700; opacity: 0.9; }
 
 .settle-line {
     font-family: 'Fredoka', var(--font-main);

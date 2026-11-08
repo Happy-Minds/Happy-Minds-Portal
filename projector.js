@@ -22,6 +22,8 @@ const projectorNarration = HMNarration.createReader({
 
 const params = new URLSearchParams(location.search);
 let chapter = getChapterById(parseInt(params.get('chapter'), 10) || 1);
+// The projector takes the chapter's colour group from the book.
+applyChapterColours(chapter.id);
 
 // Duplicated intentionally from app.js's STORYBOOK_CHARACTERS — this page
 // never loads app.js, by design (no path for teacher-only data to leak in).
@@ -86,7 +88,6 @@ function renderC1Hotspots(sceneEl, ids, foundIds, namedIds, selectedId) {
     });
 }
 
-let breatheInterval = null;
 let timerInterval = null;
 let ytPlayer = null;
 let ytApiReady = false;
@@ -98,7 +99,6 @@ function showProjScreen(id) {
     if (id !== 'proj-video') pauseProjVideo();
     document.querySelectorAll('.proj-screen').forEach(el => el.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    if (id !== 'proj-settle' && breatheInterval) { clearInterval(breatheInterval); breatheInterval = null; }
     if (id !== 'proj-draw' && timerInterval) { clearInterval(timerInterval); timerInterval = null; document.getElementById('proj-draw-timer').style.display = 'none'; }
 }
 
@@ -107,13 +107,10 @@ function renderSettle() {
     showProjScreen('proj-settle');
     // A lesson starting fresh: its video starts from the beginning again.
     loadedVideoKey = null;
-    const label = document.getElementById('proj-breathe-text');
-    let breatheIn = true;
-    label.textContent = 'Breathe in...';
-    breatheInterval = setInterval(() => {
-        breatheIn = !breatheIn;
-        label.textContent = breatheIn ? 'Breathe in...' : '...and out';
-    }, 4000);
+    // The chapter's quote from the printed book opens the lesson.
+    const quote = chapter.bookQuote;
+    document.getElementById('proj-quote-text').textContent = quote ? `“${quote.text}”` : 'Breathe in...';
+    document.getElementById('proj-quote-by').textContent = quote ? `— ${quote.by}` : '';
 }
 
 // ---------- 2. Video ----------
@@ -680,7 +677,10 @@ function renderPerformClose() {
 function handleProjectorMessage(msg) {
     if (msg.chapterId && msg.chapterId !== chapter.id) {
         const next = getChapterById(msg.chapterId);
-        if (next) chapter = next;
+        if (next) {
+            chapter = next;
+            applyChapterColours(chapter.id);
+        }
     }
     switch (msg.type) {
         case 'settle': renderSettle(); break;

@@ -673,7 +673,7 @@ function openChapterDetail(id) {
     const pct = Math.round((stagesDone.length / STAGES.length) * 100);
 
     document.getElementById('spChapterModalContent').innerHTML = `
-        <h2 style="font-size:24px; font-weight:900; color:#6366F1; margin-bottom:10px;">Chapter ${ch.id}</h2>
+        <h2 style="font-size:24px; font-weight:900; color:${getChapterGroup(ch.id).deep}; margin-bottom:10px;">Chapter ${ch.id}</h2>
         <h3 style="font-size:18px; font-weight:800; margin-bottom:20px;">${ch.title}</h3>
         <p style="font-size:14px; color:#64748B; font-weight:600; margin-bottom:24px; line-height:1.5;">
             ${ch.quote || 'Ready to learn something new?'}

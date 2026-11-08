@@ -310,6 +310,8 @@ function navigateTo(viewId) {
         btn.classList.toggle('active', btn.getAttribute('data-view') === viewId);
     });
     document.body.classList.toggle('lesson-view', PREVIEW_BANNER_VIEWS.includes(viewId));
+    // Chapter screens take the chapter's colour group from the book.
+    if (PREVIEW_BANNER_VIEWS.includes(viewId)) applyChapterColours(appState.currentChapterId);
 
     if (viewId === 'home') renderHomeHeroStats();
     if (viewId !== 'explore-stage') {
@@ -1426,8 +1428,9 @@ function renderChaptersRoadmap() {
             ? `<i class="fa-solid fa-lock"></i> ${String(chapter.id).padStart(2, '0')}`
             : (completed ? `<i class="fa-solid fa-check"></i>` : String(chapter.id).padStart(2, '0'));
 
+        const group = getChapterGroup(chapter.id);
         return `
-            <div class="${classes.join(' ')}" style="top:${pos.top}%; left:${pos.left}%;" onclick="openChapterDetail(${chapter.id})">
+            <div class="${classes.join(' ')}" style="top:${pos.top}%; left:${pos.left}%; --node-main:${group.main}; --node-deep:${group.deep};" onclick="openChapterDetail(${chapter.id})">
                 <div class="node-badge">${badge}</div>
                 <span class="node-title">${chapter.title}</span>
                 ${chapter.id === 1 ? '<div class="start-tag">START</div>' : ''}
@@ -1952,6 +1955,8 @@ let storybookIndex = 0;
 
 function renderExploreStage(chapter) {
     document.getElementById('exploreTitle').textContent = `Explore: ${chapter.title}`;
+    document.getElementById('settleQuoteText').textContent = chapter.bookQuote ? `“${chapter.bookQuote.text}”` : '';
+    document.getElementById('settleQuoteBy').textContent = chapter.bookQuote ? `— ${chapter.bookQuote.by}` : '';
 
     const video = document.getElementById('chapterVideo');
     const youtubeContainer = document.getElementById('chapterYoutubePlayer');

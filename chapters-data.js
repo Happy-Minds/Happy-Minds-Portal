@@ -12,6 +12,9 @@ const CHAPTERS = [
         id: 1,
         title: 'My Imaginary World',
         quote: 'Let your ideas fly beyond the sky.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "By education I mean an all-round drawing out of the best in the child and man; body, mind and spirit.", by: "Mahatma Gandhi" },
         video: 'chapter-01.mp4',
         // Uploaded to YouTube — set this to that video's ID to embed it
         // instead of the (missing) local chapter-01.mp4 file.
@@ -379,6 +382,9 @@ const CHAPTERS = [
         id: 2,
         title: 'My Journey Begins',
         quote: 'Every journey starts with one step.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Learning is experience. Everything else is just information.", by: "Albert Einstein" },
         video: 'chapter-02.mp4',
         thinkTalk: [
             'What was the very first step in the journey you watched?',
@@ -607,6 +613,9 @@ const CHAPTERS = [
         id: 3,
         title: 'Who Am I?',
         quote: 'Discover the you inside you.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "I cannot teach anybody anything; I can only make them think.", by: "Socrates" },
         video: 'chapter-03.mp4',
         thinkTalk: [
             'What three words did the character use to describe themselves?',
@@ -834,6 +843,9 @@ const CHAPTERS = [
         id: 4,
         title: 'Friends & Feelings',
         quote: 'Good friends make good stories.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Education is simply the soul of a society as it passes from one generation to another.", by: "G. K. Chesterton" },
         video: 'chapter-04.mp4',
         thinkTalk: [
             'How did the characters help each other in the video?',
@@ -1059,6 +1071,9 @@ const CHAPTERS = [
         id: 5,
         title: 'Home Sweet Home',
         quote: "There's no place like home.",
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Education is the most powerful weapon which you can use to change the world.", by: "Nelson Mandela" },
         video: 'chapter-05.mp4',
         thinkTalk: [
             'What did the character love most about their home?',
@@ -1280,6 +1295,9 @@ const CHAPTERS = [
         id: 6,
         title: 'A Day in My Life',
         quote: 'Small moments make a big life.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Formal education will make you a living; self-education will make you a fortune.", by: "Jim Rohn" },
         video: 'chapter-06.mp4',
         thinkTalk: [
             'What was the first thing the character did in their day?',
@@ -1503,6 +1521,9 @@ const CHAPTERS = [
         id: 7,
         title: "Let's Celebrate!",
         quote: 'Every celebration has a story to tell.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Intelligence plus character - that is the goal of true education.", by: "Dr. Martin Luther King Jr." },
         video: 'chapter-07.mp4',
         thinkTalk: [
             'What is your favourite festival or celebration?',
@@ -1725,6 +1746,9 @@ const CHAPTERS = [
         id: 8,
         title: 'Animal Planet',
         quote: 'Every creature has a story worth discovering.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "One child, one teacher, one book, one pen can change the world.", by: "Malala Yousafzai" },
         video: 'chapter-08.mp4',
         thinkTalk: [
             'What is your favourite animal, and where does it live?',
@@ -1951,6 +1975,9 @@ const CHAPTERS = [
         id: 9,
         title: 'Time Travellers',
         quote: 'The past shapes us, but today is where we grow.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The mind is not a vessel to be filled but a fire to be kindled.", by: "Often attributed to Plutarch" },
         video: 'chapter-09.mp4',
         thinkTalk: [
             'What did the Clock Tree show the friends about old Lumora?',
@@ -2173,6 +2200,9 @@ const CHAPTERS = [
         id: 10,
         title: 'Weather Wonders',
         quote: 'After every storm, something wonderful appears.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The goal of education is the advancement of knowledge and the dissemination of truth.", by: "John F. Kennedy" },
         video: 'chapter-10.mp4',
         thinkTalk: [
             'What weather did the friends see turn into a storm?',
@@ -2407,6 +2437,9 @@ const CHAPTERS = [
         id: 11,
         title: 'My Dream School',
         quote: 'A dream always needs one more thing: friends willing to build it together.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Learning never exhausts the mind.", by: "Leonardo da Vinci" },
         video: 'chapter-11.mp4',
         thinkTalk: [
             'What did the friends want to build for all of Lumora?',
@@ -2642,6 +2675,9 @@ const CHAPTERS = [
         id: 12,
         title: "Let's Go Shopping!",
         quote: 'Some things you count, and some things you simply cannot.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Education is the key to unlocking the world, a passport to freedom.", by: "Oprah Winfrey" },
         video: 'chapter-12.mp4',
         thinkTalk: [
             'What did Pip and Aanya need to buy at the market?',
@@ -2868,6 +2904,9 @@ const CHAPTERS = [
         id: 13,
         title: 'Healthy Habits',
         quote: 'Healthy habits are more fun with friends.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Education is not preparation for life; education is life itself.", by: "John Dewey" },
         video: 'chapter-13.mp4',
         thinkTalk: [
             'What healthy habit was each friend practicing?',
@@ -3097,6 +3136,9 @@ const CHAPTERS = [
         id: 14,
         title: 'The World Around Us',
         quote: 'I will remember it forever, especially the exact moment it happened.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Education is not the filling of a pail, but the lighting of a fire.", by: "William Butler Yeats" },
         video: 'chapter-14.mp4',
         thinkTalk: [
             'What special event happened once in a hundred years?',
@@ -3331,6 +3373,9 @@ const CHAPTERS = [
         id: 15,
         title: 'Magic Words',
         quote: 'The right word can make a story brighter, funnier, or kinder.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The purpose of education is to replace an empty mind with an open one.", by: "Malcolm Forbes" },
         video: 'chapter-15.mp4',
         thinkTalk: [
             'What did the Book of Magic Words show for each word spoken?',
@@ -3558,6 +3603,9 @@ const CHAPTERS = [
         id: 16,
         title: "Let's Describe!",
         quote: 'The real prize is noticing the small, beautiful details all around us.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The roots of education are bitter, but the fruit is sweet.", by: "Aristotle" },
         video: 'chapter-16.mp4',
         thinkTalk: [
             'What did Flame, Pip, and Sela bring to the Color Contest?',
@@ -3784,6 +3832,9 @@ const CHAPTERS = [
         id: 17,
         title: 'Sounds Around Me',
         quote: 'You are learning to hear punctuation, not just see it.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The illiterate of the 21st century will not be those who cannot read and write, but those who cannot learn, unlearn, and relearn.", by: "Alvin Toffler" },
         video: 'chapter-17.mp4',
         thinkTalk: [
             'What sounds did the friends hear on their sound walk?',
@@ -4028,6 +4079,9 @@ const CHAPTERS = [
         id: 18,
         title: 'Story Builders',
         quote: 'Sequence words are like stepping stones, guiding the reader from start to end.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The future belongs to those who learn more skills and combine them in creative ways.", by: "Robert Greene" },
         video: 'chapter-18.mp4',
         thinkTalk: [
             'What was out of order on the scrolls Pip found?',
@@ -4261,6 +4315,9 @@ const CHAPTERS = [
         id: 19,
         title: 'Rhyme Time',
         quote: 'Rhyming words share the same ending sound, like sun and fun.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Knowledge has to be improved, challenged, and increased constantly, or it vanishes.", by: "Peter Drucker" },
         video: 'chapter-19.mp4',
         thinkTalk: [
             'What rhymes did Pip, Flame, and Sela say at the Rhyming River?',
@@ -4489,6 +4546,9 @@ const CHAPTERS = [
         id: 20,
         title: 'News Room',
         quote: 'This just in: your voice matters.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Learning is a treasure that will follow its owner everywhere.", by: "Chinese proverb" },
         video: 'chapter-20.mp4',
         thinkTalk: [
             'What news story did the young reporter share in the video?',
@@ -4722,6 +4782,9 @@ const CHAPTERS = [
         id: 21,
         title: 'I Can Explain',
         quote: 'Curiosity explained, one question at a time.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Learning is not attained by chance; it must be sought for with ardor and attended to with diligence.", by: "Abigail Adams" },
         video: 'chapter-21.mp4',
         thinkTalk: [
             'What did the character explain in the video?',
@@ -4953,6 +5016,9 @@ const CHAPTERS = [
         id: 22,
         title: 'People Who Inspire Me',
         quote: 'Everyone needs a hero.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "Develop a passion for learning. If you do, you will never cease to grow.", by: "Anthony J. D'Angelo" },
         video: 'chapter-22.mp4',
         thinkTalk: [
             'Who inspired the character in the video?',
@@ -5183,6 +5249,9 @@ const CHAPTERS = [
         id: 23,
         title: 'I Saw It!',
         quote: 'Look closely, tell clearly.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "An investment in knowledge pays the best interest.", by: "Benjamin Franklin" },
         video: 'chapter-23.mp4',
         thinkTalk: [
             'What did the character see and describe in the video?',
@@ -5413,6 +5482,9 @@ const CHAPTERS = [
         id: 24,
         title: 'My Year in Review',
         quote: 'One year, countless stories.',
+        // The quote on this chapter's page in the printed HappyMinds book;
+        // it opens the lesson on the teacher's Settle card and the projector.
+        bookQuote: { text: "The learning process is something you can incite, literally incite, like a riot.", by: "Audre Lorde" },
         video: 'chapter-24.mp4',
         thinkTalk: [
             'What moments did the character look back on in the video?',
@@ -5627,6 +5699,34 @@ const CHAPTERS = [
         }
     }
 ];
+
+// ================= Chapter colour groups (from the printed book) =================
+// The HappyMinds book gives every five chapters their own colour: 1-5 teal,
+// 6-10 lime, 11-15 lilac, 16-20 blue, 21-24 orange (measured from the
+// book's quote pages and side tabs). The portal uses them on chapter
+// screens, the projector and the chapter map; layouts don't change.
+//   main  — the book's colour        deep — a darker shade for readable text and buttons
+//   soft  — a light tint             on   — text colour on top of `main`
+//   tab, tab2 — the book's side-tab colours
+const CHAPTER_GROUPS = [
+    { from: 1,  to: 5,  name: 'Teal',       main: '#0097B2', deep: '#00788C', soft: '#E0F4F7', on: '#FFFFFF', tab: '#3839B5', tab2: '#9595C7' },
+    { from: 6,  to: 10, name: 'Lime green', main: '#81B622', deep: '#4E7A12', soft: '#EEF6DF', on: '#1E2B07', tab: '#569F1D', tab2: '#B9DE6A' },
+    { from: 11, to: 15, name: 'Lilac',      main: '#E2A9F1', deep: '#8A3FA6', soft: '#F7EAFB', on: '#3B1349', tab: '#944E8B', tab2: '#D8AE6A' },
+    { from: 16, to: 20, name: 'Blue',       main: '#227FC1', deep: '#1A64A0', soft: '#E3F0FA', on: '#FFFFFF', tab: '#1366B8', tab2: '#3CA5CD' },
+    { from: 21, to: 24, name: 'Orange',     main: '#FFA650', deep: '#B35C00', soft: '#FFF1E0', on: '#4A2500', tab: '#FBA251', tab2: '#FDBD5D' }
+];
+
+function getChapterGroup(id) {
+    return CHAPTER_GROUPS.find(g => id >= g.from && id <= g.to) || CHAPTER_GROUPS[0];
+}
+
+// Sets the chapter's colours as CSS variables (--ch-main, --ch-deep, …)
+// on `el` (default: the whole page), for the screens that use them.
+function applyChapterColours(id, el = document.documentElement) {
+    const g = getChapterGroup(id);
+    ['main', 'deep', 'soft', 'on', 'tab', 'tab2'].forEach(k => el.style.setProperty(`--ch-${k}`, g[k]));
+    return g;
+}
 
 function getChapterById(id) {
     return CHAPTERS.find(c => c.id === Number(id)) || CHAPTERS[0];
