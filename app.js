@@ -1703,11 +1703,16 @@ function renderHomeDueCard() {
             const retry = pending.lastTry && pending.lastTry.status === 'not_done' && pending.lastTry.next_date
                 ? ` You planned it for ${formatVisitDate(pending.lastTry.next_date)}.` : '';
             const done = sessionRecord(section.id, 2, today);
+            // What the trainer covered, from their Handbook notes for that Session 1.
+            const note = HappyMindsConfig.CLASS_NOTES.find(n => n.section_id === section.id && n.note_date === pending.sessionOne.held_on && n.session === 1);
+            const covered = note ? [['lesson', 'Lesson and activities'], ['stars', 'Star performers'], ['support', 'Students who need support'], ['remarks', 'Remarks']]
+                .filter(([k]) => note.fields && note.fields[k]).map(([k, label]) => `<dt>${label}</dt><dd>${escapeReportText(note.fields[k])}</dd>`).join('') : '';
             rows.push(`
                 <div class="due-row">
                     <div class="due-text">
                         <strong>${escapeReportText(sectionFullName(section))} · Session 2 of ${escapeReportText(chapterLabel(pending.chapterId))}</strong>
                         <span>Session 1 was taken by ${escapeReportText(taughtBy)} on ${formatVisitDate(pending.sessionOne.held_on)}.${slot ? ` Your period: ${slotText(slot)}.` : ''}${retry}</span>
+                        ${covered ? `<details class="due-covered"><summary>What ${escapeReportText(taughtBy)} covered</summary><dl>${covered}</dl></details>` : ''}
                     </div>
                     ${done ? '' : `<div class="session-actions">
                         <button type="button" class="btn-glass compact session-done" onclick="markSession('${section.id}', 2, '${today}', 'done', this)"><i class="fa-solid fa-check"></i> Done</button>
