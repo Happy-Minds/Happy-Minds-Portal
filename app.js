@@ -1665,11 +1665,16 @@ async function submitEodReport() {
 }
 
 function printEodReport() {
-    const iso = document.getElementById('dayReportDate').value;
-    const report = eodReportFor(iso);
-    const body = report && (report.final || report.draft);
+    const report = eodReportFor(document.getElementById('dayReportDate').value);
+    if (report) printEodReportFor(report, appState.currentUser.name);
+}
+
+// The PDF of one person's day report (their own, or anyone's for oversight).
+function printEodReportFor(report, writerName) {
+    const iso = report.report_date;
+    const body = report.final || report.draft;
     if (!body) return;
-    const me = appState.currentUser;
+    const me = { name: writerName };
     const day = new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const schools = [...new Set(body.classes.map(c => (c.label || '').split(' · ')[0]).filter(Boolean))].join(', ');
     const sections = body.classes.map(c => `
@@ -1685,6 +1690,240 @@ function printEodReport() {
         </header>
         ${sections}
         <section class="summary"><h2>Summary of the day</h2><p>${escapeReportText(body.summary)}</p></section>`);
+}
+
+// ================= Programme monitoring (Phase 5) =================
+// For admin, coordinator and management, at the top of Reports: what needs
+// attention, facts per trainer and class teacher for a month (no ranking),
+// and everyone's day reports. Everything is worked out from the timetable,
+// substitutes, session records and day reports already loaded.
+const MONITOR_LOOKBACK_DAYS = 21;
+const QUIET_DAYS = 14;
+
+function setupMonitor() {
+    const school = document.getElementById('monitorSchool');
+    const keep = school.value;
+    school.innerHTML = '<option value="">All schools</option>' + HappyMindsConfig.SCHOOLS
+        .map(s => `<option value="${s.id}">${escapeReportText(s.name)} (${escapeReportText(s.code)})</option>`).join('');
+    school.value = HappyMindsConfig.SCHOOLS.some(s => s.id === keep) ? keep : '';
+    const month = document.getElementById('monitorMonth');
+    if (!month.value) month.value = localDateString().slice(0, 7);
+    month.max = localDateString().slice(0, 7);
+    renderMonitor();
+}
+
+function monitorSections() {
+    const schoolId = document.getElementById('monitorSchool').value;
+    return HappyMindsConfig.SECTIONS.filter(s => !schoolId || s.school_id === schoolId);
+}
+
+// Every date (YYYY-MM-DD) from `from` to `to` that falls on a weekday (1 = Mon … 6 = Sat).
+function datesOnWeekday(from, to, weekday) {
+    const out = [];
+    const d = new Date(`${from}T12:00:00`);
+    while (((d.getDay() + 6) % 7) + 1 !== weekday) d.setDate(d.getDate() + 1);
+    for (; localDateString(d) <= to; d.setDate(d.getDate() + 7)) out.push(localDateString(d));
+    return out;
+}
+
+// Who takes a class's session on a date: the class teacher for Session 2,
+// the trainer (or their substitute that day) for Session 1.
+function sessionPerson(section, session, iso) {
+    if (session === 2) return section.teacher_id;
+    const sub = HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id);
+    return sub ? sub.substitute_id : section.trainer_id;
+}
+
+// Every planned session from `from` to `to` (inclusive) for the given classes.
+// A slot counts from the day it was put in the timetable; an earlier date
+// counts only if a session was recorded on it.
+function plannedSessions(sections, from, to) {
+    const out = [];
+    sections.forEach(section => [1, 2].forEach(session => {
+        const slot = slotFor(section.id, session);
+        if (!slot) return;
+        const since = slot.updated_at ? new Date(slot.updated_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : from;
+        datesOnWeekday(from, to, slot.weekday)
+            .filter(iso => iso >= since || sessionRecord(section.id, session, iso))
+            .forEach(iso => out.push({ section, session, iso, person: sessionPerson(section, session, iso) }));
+    }));
+    return out;
+}
+
+const submittedOn = r => r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : null;
+
+function monitorAlerts(sections) {
+    const today = localDateString();
+    const yesterday = localDateString(new Date(Date.now() - 86400000));
+    const from = localDateString(new Date(Date.now() - MONITOR_LOOKBACK_DAYS * 86400000));
+    const alerts = [];
+    const add = (level, text) => alerts.push({ level, text });
+
+    // Set-up gaps, one line per school and kind.
+    const bySchool = new Map();
+    sections.forEach(s => {
+        if (!bySchool.has(s.school_id)) bySchool.set(s.school_id, { name: s.school ? s.school.name : 'School', teacher: [], trainer: [], timetable: [] });
+        const g = bySchool.get(s.school_id);
+        if (!s.teacher_id) g.teacher.push(s.label);
+        if (!s.trainer_id) g.trainer.push(s.label);
+        if (!slotFor(s.id, 1) || !slotFor(s.id, 2)) g.timetable.push(s.label);
+    });
+    bySchool.forEach(g => {
+        if (g.teacher.length) add('setup', `${g.name}: no class teacher for ${g.teacher.join(', ')}.`);
+        if (g.trainer.length) add('setup', `${g.name}: no trainer for ${g.trainer.join(', ')}.`);
+        if (g.timetable.length) add('setup', `${g.name}: timetable not complete for ${g.timetable.join(', ')}.`);
+    });
+
+    // Sessions not marked (up to yesterday, last three weeks), one line per class.
+    const unmarked = new Map();
+    plannedSessions(sections, from, yesterday).forEach(p => {
+        if (sessionRecord(p.section.id, p.session, p.iso)) return;
+        if (!unmarked.has(p.section.id)) unmarked.set(p.section.id, { section: p.section, items: [] });
+        unmarked.get(p.section.id).items.push(p);
+    });
+    unmarked.forEach(({ section, items }) => {
+        const parts = [1, 2].map(n => {
+            const list = items.filter(p => p.session === n).sort((a, b) => a.iso.localeCompare(b.iso));
+            if (!list.length) return '';
+            const who = accountName(list[list.length - 1].person);
+            const short = d => new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+            return `Session ${n} on ${list.map(p => short(p.iso)).join(', ')}${who ? ` (${who})` : ''}`;
+        }).filter(Boolean);
+        add('missing', `${sectionFullName(section)}: ${items.length} ${items.length === 1 ? 'session' : 'sessions'} not marked: ${parts.join('; ')}.`);
+    });
+
+    // Session 2 still pending after Session 1.
+    sections.forEach(s => {
+        const pending = pendingSession2(s.id);
+        if (!pending) return;
+        const days = Math.round((new Date(`${today}T12:00:00`) - new Date(`${pending.sessionOne.held_on}T12:00:00`)) / 86400000);
+        const planned = pending.lastTry && pending.lastTry.status === 'not_done' && pending.lastTry.next_date ? `, planned for ${formatVisitDate(pending.lastTry.next_date)}` : '';
+        if (days >= 3) add(days > 7 ? 'missing' : 'watch', `${sectionFullName(s)}: Session 2 of Chapter ${pending.chapterId} pending for ${days} days${planned}.`);
+    });
+
+    // Day reports missing for trainer visit days (up to yesterday).
+    const visitDays = new Map();
+    plannedSessions(sections, from, yesterday).filter(p => p.session === 1 && p.person).forEach(p => {
+        visitDays.set(`${p.person}|${p.iso}`, { person: p.person, iso: p.iso });
+    });
+    visitDays.forEach(({ person, iso }) => {
+        const report = HappyMindsConfig.EOD_REPORTS.find(r => r.user_id === person && r.report_date === iso && r.submitted_at);
+        if (!report) add('missing', `${accountName(person) || 'A trainer'}: no day report for ${formatVisitDate(iso)}.`);
+    });
+
+    // Classes with no session at all for two weeks (that have a timetable).
+    const quietSince = localDateString(new Date(Date.now() - QUIET_DAYS * 86400000));
+    sections.forEach(s => {
+        const slot = slotFor(s.id, 1);
+        if (!slot) return;
+        // Only once the class has had its timetable for that long.
+        if (slot.updated_at && new Date(slot.updated_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) > quietSince) return;
+        const recent =HappyMindsConfig.SESSIONS.some(r => r.section_id === s.id && r.status === 'done' && r.held_on >= quietSince);
+        if (!recent) add('watch', `${sectionFullName(s)}: no session done in the last ${QUIET_DAYS} days.`);
+    });
+    return alerts;
+}
+
+function renderMonitor() {
+    const sections = monitorSections();
+    const schoolFilter = document.getElementById('monitorSchool').value;
+    const month = document.getElementById('monitorMonth').value || localDateString().slice(0, 7);
+    const today = localDateString();
+    const monthStart = `${month}-01`;
+    const monthEndDate = new Date(`${monthStart}T12:00:00`);
+    monthEndDate.setMonth(monthEndDate.getMonth() + 1, 0);
+    const monthLast = localDateString(monthEndDate);
+    const monthEnd = monthLast < today ? monthLast : today;
+
+    // Needs attention
+    const alerts = monitorAlerts(sections);
+    const order = { missing: 0, watch: 1, setup: 2 };
+    alerts.sort((a, b) => order[a.level] - order[b.level]);
+    const shown = alerts.slice(0, 40);
+    document.getElementById('monitorAlerts').innerHTML = alerts.length
+        ? shown.map(a => `<p class="monitor-alert ${a.level}">${escapeReportText(a.text)}</p>`).join('')
+            + (alerts.length > shown.length ? `<p class="prep-readiness-explain">…and ${alerts.length - shown.length} more. Choose one school to see them all.</p>` : '')
+        : '<p class="prep-readiness-explain">Nothing needs attention: every session up to yesterday is marked, no Session 2 is waiting, and every day report is in.</p>';
+
+    const planned = monthStart <= monthEnd ? plannedSessions(sections, monthStart, monthEnd) : [];
+    const sectionIds = new Set(sections.map(s => s.id));
+    const recordsInMonth = HappyMindsConfig.SESSIONS.filter(r => r.held_on >= monthStart && r.held_on <= monthEnd && sectionIds.has(r.section_id));
+
+    // Trainers
+    const trainerIds = [...new Set([...sections.map(s => s.trainer_id), ...planned.filter(p => p.session === 1).map(p => p.person)].filter(Boolean))];
+    const monthSubs = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.visit_date >= monthStart && s.visit_date <= monthLast);
+    const trainerRows = trainerIds.map(id => {
+        const mine = planned.filter(p => p.session === 1 && p.person === id);
+        const marked = mine.map(p => sessionRecord(p.section.id, 1, p.iso)).filter(Boolean);
+        const done = marked.filter(r => r.status === 'done').length;
+        const notHeld = marked.filter(r => r.status === 'not_held').length;
+        const extraS2 = recordsInMonth.filter(r => r.session === 2 && r.recorded_by === id && r.status === 'done').length;
+        const days = [...new Set(mine.map(p => p.iso))].filter(d => d < today);
+        const reports = days.map(d => HappyMindsConfig.EOD_REPORTS.find(r => r.user_id === id && r.report_date === d && r.submitted_at));
+        const onTime = reports.filter(r => r && submittedOn(r) === r.report_date).length;
+        const late = reports.filter(r => r && submittedOn(r) !== r.report_date).length;
+        const missing = days.length - onTime - late;
+        const covered = monthSubs.filter(s => s.substitute_id === id).length;
+        const coveredFor = monthSubs.filter(s => s.trainer_id === id).length;
+        const schools = [...new Set(sections.filter(s => s.trainer_id === id).map(s => (s.school ? s.school.name : '')))].join(', ');
+        return `<tr>
+            <th scope="row">${escapeReportText(accountName(id) || 'Unknown trainer')}<span>${escapeReportText(schools || 'Substitute visits only')}</span></th>
+            <td>${done} / ${mine.length}${notHeld ? `<span class="monitor-sub">${notHeld} not held</span>` : ''}${mine.length - marked.length ? `<span class="monitor-sub warn">${mine.length - marked.length} not marked</span>` : ''}</td>
+            <td>${extraS2}</td>
+            <td>${onTime} on time${late ? ` · ${late} late` : ''}${missing ? `<span class="monitor-sub warn">${missing} missing</span>` : ''}</td>
+            <td>${covered} covered · ${coveredFor} covered for</td>
+        </tr>`;
+    });
+    document.getElementById('monitorTrainers').innerHTML = trainerRows.length
+        ? `<thead><tr><th scope="col">Trainer</th><th scope="col">Session 1 done / planned</th><th scope="col">Session 2 taken over</th><th scope="col">Day reports</th><th scope="col">Substitutes</th></tr></thead><tbody>${trainerRows.join('')}</tbody>`
+        : '<tbody><tr><td class="timetable-empty">No trainer assigned to these classes yet.</td></tr></tbody>';
+
+    // Class teachers
+    const teacherIds = [...new Set(sections.map(s => s.teacher_id).filter(Boolean))];
+    const teacherRows = teacherIds.map(id => {
+        const theirSections = sections.filter(s => s.teacher_id === id);
+        const mine = planned.filter(p => p.session === 2 && p.person === id);
+        const marked = mine.map(p => sessionRecord(p.section.id, 2, p.iso)).filter(Boolean);
+        const done = recordsInMonth.filter(r => r.session === 2 && r.status === 'done' && theirSections.some(s => s.id === r.section_id)).length;
+        const notDone = marked.filter(r => r.status === 'not_done').length;
+        const pendingNow = theirSections.filter(s => pendingSession2(s.id)).length;
+        return `<tr>
+            <th scope="row">${escapeReportText(accountName(id) || 'Unknown teacher')}<span>${theirSections.map(s => s.label).join(', ')}</span></th>
+            <td>${done} / ${mine.length}${mine.length - marked.length ? `<span class="monitor-sub warn">${mine.length - marked.length} not marked</span>` : ''}</td>
+            <td>${notDone}</td>
+            <td>${pendingNow ? `<span class="monitor-sub warn">${pendingNow} pending now</span>` : '0'}</td>
+        </tr>`;
+    });
+    document.getElementById('monitorTeachers').innerHTML = teacherRows.length
+        ? `<thead><tr><th scope="col">Class teacher</th><th scope="col">Session 2 done / periods</th><th scope="col">Not done</th><th scope="col">Session 2 waiting</th></tr></thead><tbody>${teacherRows.join('')}</tbody>`
+        : '<tbody><tr><td class="timetable-empty">No class teacher assigned to these classes yet.</td></tr></tbody>';
+
+    // Day reports this month
+    const sectionLabels = new Set(sections.map(s => sectionFullName(s)));
+    const reports = HappyMindsConfig.EOD_REPORTS
+        .filter(r => r.submitted_at && r.report_date >= monthStart && r.report_date <= monthLast)
+        .filter(r => !schoolFilter || ((r.final || r.draft || {}).classes || []).some(c => sectionLabels.has(c.label)))
+        .sort((a, b) => b.report_date.localeCompare(a.report_date));
+    document.getElementById('monitorReports').innerHTML = reports.length ? reports.map(r => {
+        const body = r.final || r.draft || { classes: [] };
+        const schools = [...new Set(body.classes.map(c => (c.label || '').split(' · ')[0]).filter(Boolean))].join(', ');
+        const late = submittedOn(r) !== r.report_date;
+        return `
+            <div class="admin-list-row">
+                <span class="admin-list-num">${new Date(`${r.report_date}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+                <span class="admin-list-title">${escapeReportText(accountName(r.user_id) || 'Trainer')}
+                    <span class="class-report-meta">${escapeReportText(schools)} · ${body.classes.length} ${body.classes.length === 1 ? 'class' : 'classes'}${late ? ' · submitted late' : ''}</span></span>
+                <button type="button" class="btn-glass compact" onclick="openMonitorReport('${r.id}')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+            </div>`;
+    }).join('') : '<p class="prep-readiness-explain">No day reports submitted for this month yet.</p>';
+
+    const section = currentSection();
+    document.getElementById('reportsClassHeading').textContent = section ? `This class: ${sectionFullName(section)}` : '';
+}
+
+function openMonitorReport(id) {
+    const report = HappyMindsConfig.EOD_REPORTS.find(r => r.id === id);
+    if (report) printEodReportFor(report, accountName(report.user_id) || 'Trainer');
 }
 
 // ---- Home: what's due for this teacher or trainer ----
@@ -5416,6 +5655,7 @@ function renderParentDashboard(account) {
 }
 
 function openReportsHome() {
+    if (canPlan()) setupMonitor();
     const teacher = sectionTeacher();
     document.getElementById('teacherReportLabel').textContent = teacher
         ? `${teacher.name} (${currentSection().label}) — prep readiness & in-class time`

@@ -2023,6 +2023,36 @@
                     </div>
                 </div>
 
+                <!-- Programme monitoring (admin, coordinator, management; Phase 5) -->
+                <div class="monitor plan-only" id="monitor">
+                    <div class="monitor-filters">
+                        <label>School
+                            <select id="monitorSchool" class="custom-select" onchange="renderMonitor()"></select>
+                        </label>
+                        <label>Month
+                            <input type="month" id="monitorMonth" onchange="renderMonitor()">
+                        </label>
+                    </div>
+                    <div class="admin-section-card">
+                        <h3><i class="fa-solid fa-triangle-exclamation"></i> Needs attention</h3>
+                        <div id="monitorAlerts" class="monitor-alerts"></div>
+                    </div>
+                    <div class="admin-section-card">
+                        <h3><i class="fa-solid fa-person-chalkboard"></i> Trainers</h3>
+                        <p class="admin-card-explain">Facts for the month so far. Sessions count only days up to today.</p>
+                        <div class="timetable-wrap"><table class="timetable-table monitor-table" id="monitorTrainers"></table></div>
+                    </div>
+                    <div class="admin-section-card">
+                        <h3><i class="fa-solid fa-chalkboard-user"></i> Class teachers</h3>
+                        <div class="timetable-wrap"><table class="timetable-table monitor-table" id="monitorTeachers"></table></div>
+                    </div>
+                    <div class="admin-section-card">
+                        <h3><i class="fa-solid fa-file-lines"></i> Day reports</h3>
+                        <div class="admin-chapter-list" id="monitorReports"></div>
+                    </div>
+                    <h3 class="reports-class-heading" id="reportsClassHeading"></h3>
+                </div>
+
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-chalkboard-user"></i> Teacher Usage</h3>
                     <div class="admin-list-row" id="teacherReportRow" style="cursor:pointer;" onclick="openTeacherReport()">

@@ -129,7 +129,8 @@ const HMCloud = (() => {
     }
 
     const SECTION_COLUMNS = 'id, school_id, grade, letter, teacher_id, trainer_id';
-    const SLOT_COLUMNS = 'section_id, session, weekday, starts_at, ends_at';
+    // updated_at: when the slot was entered or last changed (sessions before it aren't "missed").
+    const SLOT_COLUMNS = 'section_id, session, weekday, starts_at, ends_at, updated_at';
     const SESSION_COLUMNS = 'id, section_id, chapter_id, session, held_on, status, reason, next_date, recorded_by, recorded_at';
     const NOTE_COLUMNS = 'id, section_id, user_id, note_date, chapter_id, session, fields, updated_at';
     const EOD_COLUMNS = 'id, user_id, report_date, draft, final, submitted_at, updated_at';
