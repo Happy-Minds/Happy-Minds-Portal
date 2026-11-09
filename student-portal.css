@@ -1366,3 +1366,111 @@ body {
     .sp-main { padding: 72px 12px 20px; }
     .sp-progress-milestones { font-size: 9px; gap: 2px; }
 }
+
+/* ==========================================================================
+   DAILY TIME LIMIT (1 hour a day)
+   ========================================================================== */
+.sp-time-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    background: #E0F2FE;
+    color: #0369A1;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    transition: background 0.3s, color 0.3s;
+}
+.sp-time-pill[hidden] { display: none; }
+.sp-time-pill.compact { margin-top: 0; font-size: 13px; padding: 5px 12px; }
+.sp-time-pill.low { background: #FEF3C7; color: #B45309; }
+.sp-time-pill.very-low { background: #FEE2E2; color: #B91C1C; }
+
+.sp-timeup {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--sp-bg);
+}
+.sp-timeup[hidden] { display: none; }
+.sp-timeup-card {
+    background: white;
+    border-radius: var(--sp-r-xl);
+    box-shadow: var(--sp-shadow);
+    padding: 36px 32px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    animation: sp-modal-in 0.3s ease;
+}
+.sp-timeup-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 12px; }
+.sp-timeup-card h2 { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
+.sp-timeup-card p { font-size: 15px; font-weight: 600; color: var(--sp-muted); line-height: 1.6; }
+.sp-timeup-note { min-height: 1.6em; margin-top: 10px; font-size: 13px !important; }
+.sp-timeup-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; align-items: stretch; }
+.sp-timeup-actions .sp-btn-glass { justify-content: center; }
+
+/* ==========================================================================
+   WORKBOOK QR LANDING
+   ========================================================================== */
+.sp-login-deeplink {
+    margin: -18px 0 22px;
+    padding: 10px 14px;
+    border-radius: var(--sp-r-md);
+    background: #EEF2FF;
+    color: #4338CA;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+.sp-login-deeplink i { margin-right: 4px; }
+
+.sp-qr-landing { text-align: center; }
+.sp-qr-landing h2 { font-size: 22px; font-weight: 900; margin: 4px 0 8px; }
+.sp-qr-landing > p { font-size: 14px; font-weight: 600; color: var(--sp-muted); line-height: 1.6; margin-bottom: 20px; }
+.sp-qr-chapter { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.sp-qr-lock {
+    width: 64px; height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    color: #64748B;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+}
+.sp-qr-options { display: grid; gap: 10px; text-align: left; }
+.sp-qr-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 64px;
+    padding: 14px 18px;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--sp-r-lg);
+    background: white;
+    cursor: pointer;
+    font: inherit;
+    color: var(--sp-text);
+    text-align: left;
+    transition: border-color 0.2s, transform 0.2s;
+}
+.sp-qr-option > i { font-size: 20px; color: #6366F1; width: 24px; text-align: center; }
+.sp-qr-option span { display: flex; flex-direction: column; gap: 2px; }
+.sp-qr-option strong { font-size: 15px; font-weight: 800; }
+.sp-qr-option small { font-size: 12px; font-weight: 600; color: var(--sp-muted); }
+.sp-qr-option:hover:not(:disabled) { border-color: #6366F1; transform: translateY(-1px); }
+.sp-qr-option:focus-visible { outline: 3px solid #A5B4FC; outline-offset: 2px; }
+.sp-qr-option:disabled, .sp-qr-option.is-soon { cursor: default; opacity: 0.6; }
+.sp-qr-option:disabled > i, .sp-qr-option.is-soon > i { color: #94A3B8; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sp-timeup-card { animation: none; }
+    .sp-qr-option { transition: none; }
+}

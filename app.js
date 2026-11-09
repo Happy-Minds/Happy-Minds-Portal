@@ -2229,6 +2229,187 @@ function renderAdminDashboard() {
     renderAdminTrainerCard();
     document.getElementById('adminPasswordSearch').value = '';
     renderAdminPasswordList('');
+    document.getElementById('adminStudentTimeSearch').value = '';
+    renderAdminStudentTime('');
+    document.getElementById('qrSheetChapter').innerHTML = '<option value="">All 24 chapters (48 codes)</option>' +
+        CHAPTERS.map(ch => `<option value="${ch.id}">Chapter ${ch.id}: ${escapeReportText(ch.title)}</option>`).join('');
+    // Loaded ahead so printing opens its window straight from the click.
+    loadQrLibrary().catch(() => {});
+}
+
+// ================= ADMIN: Student learning time (Phase 6) =================
+// The student portal allows 1 hour a day (supabase/phase6-student-time.sql).
+// With no search: the students who used most of their hour today. With a
+// search: matching students and their time today. Extra time is for today
+// only and is set in the database, which re-checks that this is an admin.
+const STUDENT_DAILY_MINUTES = 60;
+let studentTimeRequest = 0;
+
+function studentClassLabel(student) {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === student.section_id);
+    return section ? `${section.school ? section.school.name : 'School'} · ${section.label}` : 'No class';
+}
+
+async function renderAdminStudentTime(query) {
+    const q = (query || '').trim().toLowerCase();
+    const list = document.getElementById('adminStudentTimeList');
+    const status = document.getElementById('adminStudentTimeStatus');
+    const request = ++studentTimeRequest;
+    let students, usage;
+
+    try {
+        if (!q) {
+            const busy = await HMCloud.studentsBusyToday(40 * 60);
+            if (request !== studentTimeRequest) return;
+            if (busy === null) {
+                status.textContent = 'The daily limit is not switched on yet: run supabase/phase6-student-time.sql in Supabase.';
+                list.innerHTML = '';
+                return;
+            }
+            usage = Object.fromEntries(busy.map(r => [r.student_id, r]));
+            students = busy.map(r => HappyMindsConfig.ALL_STUDENTS.find(s => s.id === r.student_id)).filter(Boolean);
+            status.textContent = students.length
+                ? 'Students who have used 40 minutes or more today:'
+                : 'No student has used 40 minutes yet today. Search to find anyone else.';
+        } else {
+            students = HappyMindsConfig.ALL_STUDENTS
+                .filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q) || studentClassLabel(s).toLowerCase().includes(q))
+                .slice(0, 12);
+            if (!students.length) {
+                status.textContent = `No student matches "${query.trim()}".`;
+                list.innerHTML = '';
+                return;
+            }
+            status.textContent = 'Checking today’s time…';
+            usage = await HMCloud.studentUsageToday(students.map(s => s.id));
+            if (request !== studentTimeRequest) return;
+            if (usage === null) {
+                status.textContent = 'The daily limit is not switched on yet: run supabase/phase6-student-time.sql in Supabase.';
+                list.innerHTML = '';
+                return;
+            }
+            status.textContent = students.length === 12 ? 'Showing the first 12 matches. Type more to narrow it down.' : '';
+        }
+    } catch (err) {
+        if (request !== studentTimeRequest) return;
+        console.warn('Happy Minds: could not load student time', err);
+        status.textContent = "Couldn't load today's time. Check your connection and try again.";
+        list.innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = students.map(s => studentTimeRowHtml(s, usage[s.id])).join('');
+}
+
+function studentTimeRowHtml(student, row) {
+    const used = Math.round((row ? row.seconds : 0) / 60);
+    const extra = row ? row.extra_minutes : 0;
+    const allowed = STUDENT_DAILY_MINUTES + extra;
+    const over = used >= allowed;
+    const id = escapeReportText(student.id);
+    return `
+        <div class="admin-list-row student-time-row" data-student="${id}">
+            <span class="admin-list-title">${escapeReportText(student.name)} <span class="admin-list-username">@${id} · ${escapeReportText(studentClassLabel(student))}</span></span>
+            <span class="admin-list-tag ${over ? 'time-over' : 'time-ok'}">${Math.min(used, allowed)} of ${allowed} min today${extra ? ` (+${extra} extra)` : ''}</span>
+            <span class="student-time-actions">
+                ${[15, 30, 60].map(m => `<button type="button" class="btn-glass compact" ${extra + m > 240 ? 'disabled' : ''} onclick="giveExtraTime('${id}', ${extra + m}, this)">+${m} min</button>`).join('')}
+                ${extra ? `<button type="button" class="btn-glass compact" onclick="giveExtraTime('${id}', 0, this)">Remove extra</button>` : ''}
+            </span>
+        </div>`;
+}
+
+async function giveExtraTime(studentId, totalExtra, button) {
+    const row = button.closest('.student-time-row');
+    const student = HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId);
+    row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    try {
+        const result = await HMCloud.grantExtraTime(studentId, totalExtra);
+        row.outerHTML = studentTimeRowHtml(student, { seconds: result.used, extra_minutes: result.extra });
+        showNotification(totalExtra
+            ? `${student.name} has ${STUDENT_DAILY_MINUTES + totalExtra} minutes today. They can tap "Check for extra time" to carry on.`
+            : `${student.name} is back to ${STUDENT_DAILY_MINUTES} minutes today.`);
+    } catch (err) {
+        showNotification(err.message);
+        row.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    }
+}
+
+// ================= ADMIN: Workbook QR codes (Phase 6) =================
+// Two per chapter: Practice page -> ?ch=N&go=practice, Create page ->
+// ?ch=N&go=create on the student portal. The QR library is only loaded
+// when a sheet is printed.
+const QR_LIBRARY_URL = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+let qrLibraryLoading = null;
+
+function loadQrLibrary() {
+    if (window.qrcode) return Promise.resolve();
+    if (!qrLibraryLoading) {
+        qrLibraryLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = QR_LIBRARY_URL;
+            script.onload = resolve;
+            script.onerror = () => { qrLibraryLoading = null; reject(new Error('QR library failed to load')); };
+            document.head.appendChild(script);
+        });
+    }
+    return qrLibraryLoading;
+}
+
+function workbookQrUrl(chapterId, go) {
+    const url = new URL('student-portal.html', window.location.href);
+    url.search = `?ch=${chapterId}&go=${go}`;
+    return url.href;
+}
+
+function qrSvg(text) {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+}
+
+async function printWorkbookQrSheet() {
+    const button = document.getElementById('qrSheetButton');
+    const only = parseInt(document.getElementById('qrSheetChapter').value, 10);
+    const chapters = only ? CHAPTERS.filter(ch => ch.id === only) : CHAPTERS;
+    button.disabled = true;
+    try {
+        await loadQrLibrary();
+    } catch (err) {
+        showNotification("Couldn't load the QR code maker. Check your internet connection and try again.");
+        button.disabled = false;
+        return;
+    }
+    button.disabled = false;
+    const cards = chapters.map(ch => `
+        <section class="qr-chapter">
+            <h2>Chapter ${ch.id}: ${escapeReportText(ch.title)}</h2>
+            <div class="qr-pair">
+                ${[['practice', 'Practice page', 'Practice + Fix It Zone'], ['create', 'Create page', 'Create Studio']].map(([go, page, opens]) => `
+                    <figure>
+                        ${qrSvg(workbookQrUrl(ch.id, go))}
+                        <figcaption><strong>${page}</strong><span>Opens ${opens}</span></figcaption>
+                    </figure>`).join('')}
+            </div>
+        </section>`).join('');
+    openPrintPage(only ? `Workbook QR codes - Chapter ${only}` : 'Workbook QR codes - all chapters', `
+        <style>
+            .qr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+            .qr-chapter { border: 1px solid #D1D5DB; border-radius: 8px; padding: 10px 12px; }
+            .qr-chapter h2 { font-size: 13px; margin: 0 0 8px; }
+            .qr-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .qr-pair figure { margin: 0; text-align: center; }
+            .qr-pair svg { width: 34mm; height: 34mm; display: block; margin: 0 auto 4px; }
+            .qr-pair figcaption { font-size: 11px; line-height: 1.35; }
+            .qr-pair figcaption strong, .qr-pair figcaption span { display: block; }
+            .qr-pair figcaption span { color: #6B7280; }
+        </style>
+        <header>
+            <div class="brand">Happy Minds · Workbook QR codes</div>
+            <h1>${only ? `Chapter ${only}` : 'All chapters'}</h1>
+            <p class="meta">Each code opens the student portal. Students log in first, then go straight to that chapter.</p>
+        </header>
+        <div class="qr-grid">${cards}</div>`);
 }
 
 // ================= ADMIN: Reset a Password =================

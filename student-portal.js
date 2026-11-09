@@ -70,6 +70,7 @@ const BADGE_DEFS = [
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    spShowDeepLinkNote();
     checkLogin();
 });
 
@@ -85,12 +86,233 @@ HMCloud.onSaveStatus(status => {
 // Students sign in with the same Supabase accounts as the main app, and the
 // session is shared across the site — so logging in on index.html lands
 // here, and logging out here returns to index.html signed out.
-function enterPortal(account) {
+async function enterPortal(account) {
     currentUser = account;
     loadState();
     document.getElementById('sp-login').classList.add('sp-hidden');
     document.getElementById('sp-app').classList.remove('sp-hidden');
     initApp();
+    await spStartTimeLimit();
+    if (!spTime.up) spOpenDeepLink();
+}
+
+// ==========================================================================
+// DAILY TIME LIMIT — 1 hour a day, counted by the database
+// (supabase/phase6-student-time.sql). Time counts only while this page is
+// on screen and the student has touched it in the last 5 minutes; it is
+// reported about once a minute. If the limit isn't set up yet, nothing shows.
+// ==========================================================================
+const SP_IDLE_MS = 5 * 60 * 1000;
+const SP_STEP_MS = 5000;
+const SP_REPORT_EVERY_S = 60;
+const SP_WARNINGS = [
+    { at: 600, text: '10 minutes of learning time left today. Finish what you are doing!' },
+    { at: 120, text: 'Only 2 minutes left today. Time to wrap up!' }
+];
+const spTime = { allowed: null, used: 0, pending: 0, lastInput: Date.now(), lastStep: 0, warned: new Set(), up: false, sending: false, timer: null, listening: false };
+
+function spTimeLeft() {
+    return spTime.allowed == null ? Infinity : spTime.allowed - spTime.used - spTime.pending;
+}
+
+async function spStartTimeLimit() {
+    if (!spTime.listening) {
+        spTime.listening = true;
+        ['pointerdown', 'keydown', 'touchstart', 'wheel', 'mousemove'].forEach(type =>
+            document.addEventListener(type, () => { spTime.lastInput = Date.now(); }, { passive: true, capture: true }));
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') spReportTime();
+            else spTime.lastInput = Date.now();
+        });
+    }
+    let today;
+    try {
+        today = await HMCloud.studentTimeTick(0);
+    } catch (err) {
+        // Offline for now: try again shortly, and don't lock anyone out.
+        console.warn('Happy Minds: could not read today\'s time', err);
+        setTimeout(() => { if (currentUser && spTime.allowed == null) spStartTimeLimit(); }, 30000);
+        return;
+    }
+    if (!today) return;   // the time limit isn't set up yet
+    spApplyTime(today, true);
+    clearInterval(spTime.timer);
+    spTime.lastStep = Date.now();
+    spTime.timer = setInterval(spTimeStep, SP_STEP_MS);
+}
+
+function spTimeStep() {
+    const now = Date.now();
+    const step = Math.min((now - spTime.lastStep) / 1000, (SP_STEP_MS / 1000) * 2);   // a sleeping device doesn't count
+    spTime.lastStep = now;
+    if (spTime.up) return;
+    if (document.visibilityState === 'visible' && now - spTime.lastInput < SP_IDLE_MS) spTime.pending += step;
+    spRenderTime();
+    if (spTime.pending >= SP_REPORT_EVERY_S || spTimeLeft() <= 0) spReportTime();
+}
+
+async function spReportTime() {
+    if (spTime.allowed == null || spTime.sending) return;
+    const seconds = Math.floor(spTime.pending);
+    if (seconds <= 0) return;
+    spTime.sending = true;
+    spTime.pending -= seconds;
+    try {
+        const today = await HMCloud.studentTimeTick(seconds);
+        if (today) spApplyTime(today);
+    } catch (err) {
+        spTime.pending += seconds;   // send it with the next report
+    } finally {
+        spTime.sending = false;
+    }
+}
+
+function spApplyTime(today, firstRead) {
+    spTime.allowed = today.allowed;
+    spTime.used = today.used;
+    // Warnings already passed when the page opens are shown once, not twice.
+    if (firstRead) SP_WARNINGS.forEach(w => { if (spTimeLeft() <= w.at && spTimeLeft() > 0) { spTime.warned.add(w.at); } });
+    if (firstRead && spTimeLeft() > 0 && spTimeLeft() <= 600) showToast(`${Math.ceil(spTimeLeft() / 60)} minutes of learning time left today.`);
+    if (spTime.up && spTimeLeft() > 0) spHideTimeUp();
+    spRenderTime();
+}
+
+function spRenderTime() {
+    const left = spTimeLeft();
+    const pills = [document.getElementById('spSideTime'), document.getElementById('spTopTime')];
+    if (left === Infinity) { pills.forEach(p => { p.hidden = true; }); return; }
+
+    const minutes = Math.max(0, Math.ceil(left / 60));
+    pills.forEach(p => {
+        p.hidden = false;
+        p.querySelector('span').textContent = p.id === 'spTopTime' ? `${minutes} min` : `${minutes} min left today`;
+        p.classList.toggle('low', left <= 600);
+        p.classList.toggle('very-low', left <= 120);
+        p.title = `${minutes} minutes of learning time left today`;
+    });
+
+    SP_WARNINGS.forEach(w => {
+        if (left <= w.at && left > 0 && !spTime.warned.has(w.at)) {
+            spTime.warned.add(w.at);
+            showToast(w.text);
+        }
+    });
+    if (left <= 0 && !spTime.up) spShowTimeUp();
+}
+
+function spShowTimeUp() {
+    spTime.up = true;
+    spReportTime();
+    const practice = document.getElementById('chapter1PracticeMount');
+    if (practice && practice.style.display === 'block') closeChapter1Practice();
+    document.querySelectorAll('.sp-modal-backdrop.open').forEach(m => m.classList.remove('open'));
+    document.getElementById('sp-app').inert = true;
+    document.getElementById('spTimeUpNote').textContent = '';
+    document.getElementById('spTimeUp').hidden = false;
+    document.querySelector('#spTimeUp .sp-btn-primary').focus();
+}
+
+function spHideTimeUp() {
+    spTime.up = false;
+    spTime.warned = new Set(SP_WARNINGS.filter(w => spTimeLeft() <= w.at).map(w => w.at));
+    document.getElementById('spTimeUp').hidden = true;
+    document.getElementById('sp-app').inert = false;
+    showToast(`You have ${Math.ceil(spTimeLeft() / 60)} more minutes today. Enjoy!`);
+}
+
+async function spCheckTimeAgain() {
+    const button = document.getElementById('spTimeUpCheck');
+    const note = document.getElementById('spTimeUpNote');
+    button.disabled = true;
+    note.textContent = 'Checking…';
+    try {
+        const today = await HMCloud.studentTimeTick(0);
+        if (today) spApplyTime(today);
+        if (spTime.up) note.textContent = 'No extra time today. If you need more, ask your teacher.';
+    } catch (err) {
+        note.textContent = "Couldn't check just now. Check your internet and try again.";
+    } finally {
+        button.disabled = false;
+    }
+}
+
+// ==========================================================================
+// WORKBOOK QR CODES — each chapter's Practice and Create pages in the book
+// have a QR code that opens student-portal.html?ch=<n>&go=practice|create.
+// The student logs in first (the link waits), then lands on that chapter.
+// ==========================================================================
+let spDeepLink = (() => {
+    const params = new URLSearchParams(window.location.search);
+    const ch = parseInt(params.get('ch'), 10);
+    const go = params.get('go');
+    if (!CHAPTERS.some(c => c.id === ch) || !['practice', 'create'].includes(go)) return null;
+    return { ch, go };
+})();
+
+function spShowDeepLinkNote() {
+    const note = document.getElementById('spLoginDeepLink');
+    if (!spDeepLink || !note) return;
+    const ch = CHAPTERS.find(c => c.id === spDeepLink.ch);
+    note.innerHTML = `<i class="fa-solid fa-qrcode"></i> Log in to open <strong>Chapter ${ch.id}: ${escapeText(ch.title)}</strong> · ${spDeepLink.go === 'practice' ? 'Practice' : 'Create Studio'}`;
+    note.hidden = false;
+}
+
+function spOpenDeepLink() {
+    if (!spDeepLink) return;
+    const { ch: id, go } = spDeepLink;
+    spDeepLink = null;
+    window.history.replaceState(null, '', window.location.pathname);   // a reload goes to Home
+    const ch = CHAPTERS.find(c => c.id === id);
+    const group = getChapterGroup(ch.id);
+
+    if (!getUnlockedChapters(getClassProgress()).some(c => c.id === id)) {
+        document.getElementById('spChapterModalContent').innerHTML = `
+            <div class="sp-qr-landing">
+                <div class="sp-qr-lock"><i class="fa-solid fa-lock"></i></div>
+                <h2>Chapter ${ch.id} isn't open yet</h2>
+                <p>Your class hasn't reached <strong>${escapeText(ch.title)}</strong> yet. When your class gets there in school, this QR code will open it.</p>
+                <button type="button" class="sp-btn-primary" onclick="closeChapterModal(); spNav('journey')"><i class="fa-solid fa-map-location-dot"></i> See my journey</button>
+            </div>`;
+        document.getElementById('spChapterModal').classList.add('open');
+        return;
+    }
+
+    if (go === 'create') {
+        spNav('studio');
+        const sel = document.getElementById('spStudioChapterSel');
+        sel.value = String(id);
+        spStudioChapterChanged();
+        showToast(`Chapter ${id} Create Studio is ready!`);
+        return;
+    }
+
+    spNav('practice');
+    const games = (ch.practiceList || []).map(p => {
+        const ready = p.id === 'ch1-practice';
+        return `<button type="button" class="sp-qr-option" ${ready ? `onclick="closeChapterModal(); startPractice('${p.id}')"` : 'disabled'}>
+                <i class="fa-solid fa-puzzle-piece"></i>
+                <span><strong>${escapeText(p.title)}</strong><small>${ready ? 'Practice games' : 'Coming soon'}</small></span>
+            </button>`;
+    }).join('') || `<div class="sp-qr-option is-soon"><i class="fa-solid fa-puzzle-piece"></i><span><strong>Practice games</strong><small>Coming soon for this chapter</small></span></div>`;
+    const fixIt = ch.fixItZone ? `<button type="button" class="sp-qr-option" onclick="closeChapterModal(); spOpenFixItFor(${id})">
+                <i class="fa-solid fa-wrench"></i>
+                <span><strong>Fix It Zone</strong><small>Find and fix the mistakes</small></span>
+            </button>` : '';
+    document.getElementById('spChapterModalContent').innerHTML = `
+        <div class="sp-qr-landing">
+            <div class="sp-qr-chapter" style="color:${group.deep}">Chapter ${ch.id} · Practice</div>
+            <h2>${escapeText(ch.title)}</h2>
+            <p>What would you like to do?</p>
+            <div class="sp-qr-options">${games}${fixIt}</div>
+        </div>`;
+    document.getElementById('spChapterModal').classList.add('open');
+}
+
+function spOpenFixItFor(chapterId) {
+    spNav('fixit');
+    const sel = document.getElementById('spFixItChapterSel');
+    sel.value = String(chapterId);
+    spRenderFixItActivities();
 }
 
 function setSpLoginBusy(busy, label) {
@@ -135,6 +357,8 @@ async function checkLogin() {
 }
 
 async function spLogout() {
+    await spReportTime();
+    clearInterval(spTime.timer);
     currentUser = null;
     await HMCloud.signOut();
     window.location.href = 'index.html';

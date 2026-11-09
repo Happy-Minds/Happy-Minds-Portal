@@ -1987,6 +1987,25 @@
                 </div>
 
                 <div class="admin-section-card">
+                    <h3><i class="fa-regular fa-clock"></i> Student Learning Time</h3>
+                    <p class="admin-card-explain">Each student can use the student portal for 1 hour a day, at school or at home. Give one student extra time for today only; it ends at midnight.</p>
+                    <label class="visually-hidden" for="adminStudentTimeSearch">Find a student</label>
+                    <input type="search" id="adminStudentTimeSearch" class="reflection-text-input admin-search-input" placeholder="Find a student by name, username or class (e.g. 4A)" autocomplete="off" oninput="renderAdminStudentTime(this.value)">
+                    <p class="admin-card-explain student-time-status" id="adminStudentTimeStatus" role="status"></p>
+                    <div class="admin-account-list" id="adminStudentTimeList"></div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-qrcode"></i> Workbook QR Codes</h3>
+                    <p class="admin-card-explain">Two codes per chapter for the workbook: the Practice page opens that chapter's practice and Fix It Zone, the Create page opens its Create Studio. Students log in first; chapters their class hasn't reached stay closed.</p>
+                    <div class="qr-sheet-actions">
+                        <label class="manage-field"><span>Chapters</span>
+                            <select id="qrSheetChapter" class="custom-select"></select></label>
+                        <button type="button" class="btn-primary-glowing compact" id="qrSheetButton" onclick="printWorkbookQrSheet()"><i class="fa-solid fa-print"></i> Print QR sheet</button>
+                    </div>
+                </div>
+
+                <div class="admin-section-card">
                     <h3><i class="fa-solid fa-user-tie"></i> Trainer Activity</h3>
                     <div id="adminTrainerCard"></div>
                 </div>

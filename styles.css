@@ -4335,6 +4335,17 @@ body.remote-mode .explorer-spotlight { display: none; }
     color: var(--text-dark);
 }
 
+/* Shared text box (admin searches, Schools forms, observation notes). */
+.reflection-textarea, .reflection-text-input {
+    width: 100%;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+}
+
 .reflection-textarea { min-height: 80px; resize: vertical; }
 .reflection-textarea:focus, .reflection-text-input:focus { border-color: var(--primary-blue); }
 
@@ -5004,3 +5015,16 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
 .draw-timer { margin: 4px 0 18px; text-align: center; }
 .draw-timer .btn-row-center { flex-wrap: wrap; }
 #drawTimerResetBtn[hidden] { display: none; }
+
+/* ---- Admin: student learning time + workbook QR codes (Phase 6) ---- */
+.admin-list-tag.time-ok { background: #E0F2FE; color: #0369A1; text-transform: none; letter-spacing: 0; }
+.admin-list-tag.time-over { background: #FEE2E2; color: #B91C1C; text-transform: none; letter-spacing: 0; }
+.student-time-row { flex-wrap: wrap; }
+.student-time-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.student-time-status:empty { display: none; }
+.qr-sheet-actions { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.qr-sheet-actions .manage-field { flex: 1 1 260px; max-width: 420px; }
+@media (max-width: 640px) {
+    .student-time-actions { margin-left: 0; width: 100%; }
+    .qr-sheet-actions .btn-primary-glowing { width: 100%; justify-content: center; }
+}

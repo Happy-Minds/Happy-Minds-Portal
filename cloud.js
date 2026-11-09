@@ -750,6 +750,63 @@ const HMCloud = (() => {
             return data;
         },
 
+        // ---- Student portal daily time (supabase/phase6-student-time.sql) --
+        // Reports `seconds` of use and resolves to { used, allowed } in
+        // seconds for today. Resolves to null when the limit isn't set up
+        // yet (the SQL hasn't been run), so the portal simply has no limit.
+        async studentTimeTick(seconds) {
+            const { data, error } = await client.rpc('student_time_tick', { p_seconds: Math.max(0, Math.round(seconds || 0)) });
+            if (!error) return { used: data.used, allowed: data.allowed };
+            if (error.code === 'PGRST202' || error.code === '42883' || error.code === '42P01') return null;
+            throw error;
+        },
+
+        // Today's date as the database counts it (Indian time).
+        usageDay() {
+            return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+        },
+
+        // Staff: today's time for these students, as { studentId: row }.
+        async studentUsageToday(studentIds) {
+            const result = {};
+            for (let i = 0; i < studentIds.length; i += 200) {
+                const { data, error } = await client.from('student_usage')
+                    .select('student_id, seconds, extra_minutes')
+                    .eq('day', this.usageDay())
+                    .in('student_id', studentIds.slice(i, i + 200));
+                if (error) {
+                    if (error.code === '42P01' || error.code === 'PGRST205') return null;
+                    throw error;
+                }
+                data.forEach(r => { result[r.student_id] = r; });
+            }
+            return result;
+        },
+
+        // Staff: students who have used at least `minSeconds` today, most first.
+        async studentsBusyToday(minSeconds) {
+            const { data, error } = await client.from('student_usage')
+                .select('student_id, seconds, extra_minutes')
+                .eq('day', this.usageDay()).gte('seconds', minSeconds)
+                .order('seconds', { ascending: false }).limit(30);
+            if (error) {
+                if (error.code === '42P01' || error.code === 'PGRST205') return null;
+                throw error;
+            }
+            return data;
+        },
+
+        // Admin only (enforced by the database): today's extra minutes for
+        // one student (0 removes them). Resolves to { used, allowed, extra }.
+        async grantExtraTime(studentId, minutes) {
+            const { data, error } = await client.rpc('grant_extra_time', { p_student: studentId, p_minutes: minutes });
+            if (!error) return data;
+            if (/only an admin|between 0 and 240|no student/i.test(error.message || '')) throw new Error(error.message);
+            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('Extra time is not set up yet: run supabase/phase6-student-time.sql first.');
+            console.warn('Happy Minds: extra time failed', error);
+            throw new Error("Couldn't give extra time. Please try again.");
+        },
+
         // Admin only (enforced by the database). Throws an Error whose
         // message is safe to show in the reset dialog.
         async resetPassword(username, newPassword) {

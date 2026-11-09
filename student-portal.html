@@ -29,6 +29,7 @@
         <img src="assets/logo_icon.png" alt="Happy Minds" class="sp-login-logo">
         <h1 class="sp-login-title">My Learning Space</h1>
         <p class="sp-login-sub">Happy Minds · Grade 4</p>
+        <p class="sp-login-deeplink" id="spLoginDeepLink" hidden></p>
 
         <form class="sp-login-form" id="spLoginForm" onsubmit="spAttemptLogin(event)">
             <label class="sp-field">
@@ -77,6 +78,7 @@
                 <div class="sp-student-name" id="spSideName">Aarav</div>
                 <div class="sp-student-meta">Grade 4 · <span id="spSideXP">0</span> XP</div>
                 <div class="sp-streak-pill"><i class="fa-solid fa-fire"></i> <span id="spSideStreak">0</span> day streak</div>
+                <div class="sp-time-pill" id="spSideTime" hidden><i class="fa-regular fa-clock"></i> <span></span></div>
             </div>
         </div>
 
@@ -126,6 +128,7 @@
             <span>Happy Minds</span>
         </div>
         <div class="sp-topbar-right">
+            <span class="sp-time-pill compact" id="spTopTime" hidden><i class="fa-regular fa-clock"></i> <span></span></span>
             <span class="sp-xp-chip"><i class="fa-solid fa-star"></i> <span id="spTopXP">0</span></span>
             <img src="assets/boy_arjun.png" alt="me" id="spTopAvatar" class="sp-topbar-avatar" onclick="spNav('profile')">
         </div>
@@ -639,6 +642,20 @@
 <div class="sp-toast" id="spToast"></div>
 
 <!-- ========== CHAPTER DETAIL MODAL ========== -->
+<!-- Shown when today's learning time is used up (1 hour a day). -->
+<div class="sp-timeup" id="spTimeUp" hidden role="dialog" aria-modal="true" aria-labelledby="spTimeUpTitle">
+    <div class="sp-timeup-card">
+        <img src="assets/girl_aanya.png" alt="" class="sp-timeup-img">
+        <h2 id="spTimeUpTitle">That's your learning time for today!</h2>
+        <p id="spTimeUpText">You've used your hour for today. Everything you did is saved. Come back tomorrow for more!</p>
+        <p class="sp-timeup-note" id="spTimeUpNote" role="status"></p>
+        <div class="sp-timeup-actions">
+            <button type="button" class="sp-btn-primary" onclick="spLogout()"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
+            <button type="button" class="sp-btn-glass" id="spTimeUpCheck" onclick="spCheckTimeAgain()"><i class="fa-solid fa-rotate"></i> Check for extra time</button>
+        </div>
+    </div>
+</div>
+
 <div class="sp-modal-backdrop" id="spChapterModal" onclick="closeChapterModal()">
     <div class="sp-modal" onclick="event.stopPropagation()">
         <button class="sp-modal-close" onclick="closeChapterModal()"><i class="fa-solid fa-xmark"></i></button>
