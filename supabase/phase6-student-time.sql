@@ -31,7 +31,10 @@ create policy "See student time"
     on public.student_usage for select to authenticated
     using (student_id = (select private.my_student_id()) or private.can_see_student(student_id));
 
--- No insert/update/delete policies: changes go through the functions below.
+-- Read only (rows filtered by the policy above); no insert/update/delete:
+-- changes go through the functions below.
+revoke all on public.student_usage from anon, authenticated;
+grant select on public.student_usage to authenticated;
 
 -- The daily allowance in seconds: 1 hour plus today's extra time.
 create or replace function private.student_allowance(extra integer)
