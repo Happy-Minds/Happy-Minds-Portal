@@ -207,7 +207,7 @@ const HMCloud = (() => {
         // RLS limits each of these to what this account may see: admin,
         // coordinator and management get every school; teachers and trainers
         // their own sections; students and parents their own child.
-        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras] = await Promise.all([
+        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras, packageHistory] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
             selectAll('app_documents', 'doc, student_id, data', 'doc'),
@@ -222,8 +222,10 @@ const HMCloud = (() => {
             selectAllIfReady('class_notes', NOTE_COLUMNS, 'note_date'),
             selectAllIfReady('eod_reports', EOD_COLUMNS, 'report_date'),
             selectAllIfReady('school_holidays', HOLIDAY_COLUMNS, 'start_date'),
-            selectAllIfReady('extra_sessions', EXTRA_COLUMNS, 'on_date')
+            selectAllIfReady('extra_sessions', EXTRA_COLUMNS, 'on_date'),
+            selectAllIfReady('school_package_history', 'school_id, package, from_date', 'from_date')
         ]);
+        HappyMindsConfig.PACKAGE_HISTORY = packageHistory;
         HappyMindsConfig.HOLIDAYS = holidays;
         HappyMindsConfig.EXTRA_SESSIONS = extras.map(toSlot);
         HappyMindsConfig.SESSIONS = sessionLog;
@@ -427,6 +429,7 @@ const HMCloud = (() => {
             HappyMindsConfig.EOD_REPORTS = [];
             HappyMindsConfig.HOLIDAYS = [];
             HappyMindsConfig.EXTRA_SESSIONS = [];
+            HappyMindsConfig.PACKAGE_HISTORY = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
@@ -484,8 +487,18 @@ const HMCloud = (() => {
         },
 
         async updateSchool(id, fields) {
+            const school = HappyMindsConfig.SCHOOLS.find(s => s.id === id);
+            const before = school.package;
             const row = await manage(client.from('schools').update(fields).eq('id', id).select('id, code, name, package').single());
-            Object.assign(HappyMindsConfig.SCHOOLS.find(s => s.id === id), row);
+            Object.assign(school, row);
+            // The database records a package change from today (phase10-package-history.sql); mirror it here.
+            if (row.package !== before) {
+                const today = todayInIndia();
+                const history = HappyMindsConfig.PACKAGE_HISTORY.filter(h => !(h.school_id === id && h.from_date === today));
+                if (!history.some(h => h.school_id === id)) history.push({ school_id: id, package: before, from_date: '2000-01-01' });
+                history.push({ school_id: id, package: row.package, from_date: today });
+                HappyMindsConfig.PACKAGE_HISTORY = history;
+            }
             return row;
         },
 

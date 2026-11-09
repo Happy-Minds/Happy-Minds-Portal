@@ -93,13 +93,20 @@ const VIEW_ONLY_ROLES = ['trainer', 'admin', 'coordinator', 'management'];
 //   Standard  the class teacher takes Session 1 and Session 2
 //   Premium   our trainer takes Session 1, the class teacher Session 2
 //   Advance   our trainer takes both sessions (the class teacher is optional)
-function schoolPackage(section) {
+// A package change applies from its day on; earlier sessions keep the
+// package they had (school_package_history). Without a date: today's package.
+function schoolPackage(section, iso) {
     const school = section.school || HappyMindsConfig.SCHOOLS.find(s => s.id === section.school_id);
-    return (school && school.package) || 'premium';
+    const current = (school && school.package) || 'premium';
+    if (!iso) return current;
+    const then = HappyMindsConfig.PACKAGE_HISTORY
+        .filter(h => h.school_id === section.school_id && h.from_date <= iso)
+        .reduce((latest, h) => (!latest || h.from_date > latest.from_date ? h : latest), null);
+    return then ? then.package : current;
 }
 
-function sessionRole(section, session) {
-    const pkg = schoolPackage(section);
+function sessionRole(section, session, iso) {
+    const pkg = schoolPackage(section, iso);
     if (pkg === 'standard') return 'teacher';
     if (pkg === 'advance') return 'trainer';
     return session === 1 ? 'trainer' : 'teacher';
@@ -827,10 +834,14 @@ function renderSchoolDetail() {
 async function changeSchoolPackage(select) {
     const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
     const previous = school.package;
+    if (!confirm(`Move ${school.name} to the ${PACKAGE_LABELS[select.value]} package from today? Sessions before today stay as they were.`)) {
+        select.value = previous;
+        return;
+    }
     select.disabled = true;
     try {
         await HMCloud.updateSchool(school.id, { package: select.value });
-        showNotification(`${school.name} is now on the ${PACKAGE_LABELS[select.value]} package.`);
+        showNotification(`${school.name} is on the ${PACKAGE_LABELS[select.value]} package from today. Earlier sessions keep the ${PACKAGE_LABELS[previous]} package.`);
         renderSchoolDetail();
     } catch (err) {
         select.value = previous;
@@ -1298,7 +1309,7 @@ function weekSessions(monday) {
             const iso = localDateString(date);
             // No session on a holiday, unless it was already recorded (e.g. a half day).
             if (holidayOn(section.school_id, iso) && !sessionRecord(section.id, session, iso)) return;
-            const role = sessionRole(section, session);
+            const role = sessionRole(section, session, iso);
             const sub = role === 'trainer' ? trainerSubstitution(section, iso) : null;
             const person = sessionPerson(section, session, iso);
             const mine = plan || person === me.id || (sub && sub.trainer_id === me.id);
@@ -1337,7 +1348,7 @@ function renderWeekView() {
     });
 
     const row = it => {
-        const role = SESSION_ROLE_WORD[sessionRole(it.section, it.session)];
+        const role = SESSION_ROLE_WORD[sessionRole(it.section, it.session, it.iso)];
         const who = it.person ? (accountName(it.person) || `The ${role}`) : `No ${role} yet`;
         let note = '';
         if (it.sub && it.sub.trainer_id === me.id && !plan) note = `<span class="week-flag covered">${escapeReportText(accountName(it.sub.substitute_id) || 'Another trainer')} covers this visit</span>`;
@@ -1920,7 +1931,7 @@ function datesOnWeekday(from, to, weekday) {
 // Who takes a class's session on a date: whoever the package gives it to
 // (sessionRole), and for a trainer's session their substitute that day.
 function sessionPerson(section, session, iso) {
-    if (sessionRole(section, session) === 'teacher') return section.teacher_id;
+    if (sessionRole(section, session, iso) === 'teacher') return section.teacher_id;
     const sub = trainerSubstitution(section, iso);
     return sub ? sub.substitute_id : section.trainer_id;
 }
@@ -1945,7 +1956,7 @@ function extraItems(sections, from, to) {
         const weekday = ((new Date(`${x.on_date}T12:00:00`).getDay() + 6) % 7) + 1;
         return { section, session: x.session, iso: x.on_date, extra: x,
                  slot: { weekday, starts_at: x.starts_at, ends_at: x.ends_at },
-                 sub: sessionRole(section, x.session) === 'trainer' ? trainerSubstitution(section, x.on_date) : null,
+                 sub: sessionRole(section, x.session, x.on_date) === 'trainer' ? trainerSubstitution(section, x.on_date) : null,
                  person: sessionPerson(section, x.session, x.on_date) };
     });
 }
@@ -1996,8 +2007,12 @@ function monitorAlerts(sections) {
         const monthStart = `${today.slice(0, 7)}-01`;
         bySchool.forEach((g, schoolId) => {
             const running = sections.some(s => s.school_id === schoolId && slotFor(s.id, 1));
-            const observed = appState.observations.some(o => o.schoolId === schoolId && (o.submittedAt || '') >= monthStart);
-            if (running && !observed) add('watch', `${g.name}: no observation yet this month.`);
+            // Standard schools get 2 progress visits a month; Premium and Advance 1.
+            const school = HappyMindsConfig.SCHOOLS.find(s => s.id === schoolId);
+            const needed = school && school.package === 'standard' ? 2 : 1;
+            const done = appState.observations.filter(o => o.schoolId === schoolId && (o.submittedAt || '') >= monthStart).length;
+            if (running && done === 0) add('watch', `${g.name}: no observation yet this month${needed === 2 ? ' (Standard schools get 2 visits a month)' : ''}.`);
+            else if (running && done < needed) add('watch', `${g.name}: ${done} of ${needed} observations this month (Standard schools get 2 visits a month).`);
         });
     }
     bySchool.forEach(g => {
@@ -2049,7 +2064,7 @@ function monitorAlerts(sections) {
 
     // Day reports missing for trainer visit days (up to yesterday).
     const visitDays = new Map();
-    plannedSessions(sections, from, yesterday).filter(p => sessionRole(p.section, p.session) === 'trainer' && p.person).forEach(p => {
+    plannedSessions(sections, from, yesterday).filter(p => sessionRole(p.section, p.session, p.iso) === 'trainer' && p.person).forEach(p => {
         visitDays.set(`${p.person}|${p.iso}`, { person: p.person, iso: p.iso });
     });
     visitDays.forEach(({ person, iso }) => {
@@ -2096,8 +2111,8 @@ function renderMonitor() {
     const recordsInMonth = HappyMindsConfig.SESSIONS.filter(r => r.held_on >= monthStart && r.held_on <= monthEnd && sectionIds.has(r.section_id));
 
     // Trainers
-    const byTrainer = p => sessionRole(p.section, p.session) === 'trainer';
-    const byTeacher = p => sessionRole(p.section, p.session) === 'teacher';
+    const byTrainer = p => sessionRole(p.section, p.session, p.iso) === 'trainer';
+    const byTeacher = p => sessionRole(p.section, p.session, p.iso) === 'teacher';
     const trainerIds = [...new Set([...sections.filter(needsTrainer).map(s => s.trainer_id), ...planned.filter(byTrainer).map(p => p.person)].filter(Boolean))];
     const monthSubs = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.visit_date >= monthStart && s.visit_date <= monthLast);
     const trainerRows = trainerIds.map(id => {
@@ -2108,7 +2123,7 @@ function renderMonitor() {
         const cancelled = marked.filter(r => r.status === 'cancelled').length;
         // A class teacher's Session 2 that the trainer took on a visit.
         const extraS2 = recordsInMonth.filter(r => r.session === 2 && r.recorded_by === id && r.status === 'done'
-            && sections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher')).length;
+            && sections.some(s => s.id === r.section_id && sessionRole(s, 2, r.held_on) === 'teacher')).length;
         const days = [...new Set(mine.map(p => p.iso))].filter(d => d < today);
         const reports = days.map(d => HappyMindsConfig.EOD_REPORTS.find(r => r.user_id === id && r.report_date === d && r.submitted_at));
         const onTime = reports.filter(r => r && submittedOn(r) === r.report_date).length;
@@ -2130,15 +2145,16 @@ function renderMonitor() {
         : '<tbody><tr><td class="timetable-empty">No trainer assigned to these classes yet.</td></tr></tbody>';
 
     // Class teachers
-    const teacherIds = [...new Set(sections.filter(needsTeacher).map(s => s.teacher_id).filter(Boolean))];
+    // Teachers in today's package, and anyone who had teacher sessions this month (before a package change).
+    const teacherIds = [...new Set([...sections.filter(needsTeacher).map(s => s.teacher_id), ...planned.filter(byTeacher).map(p => p.person)].filter(Boolean))];
     const teacherRows = teacherIds.map(id => {
-        const theirSections = sections.filter(s => s.teacher_id === id && needsTeacher(s));
+        const theirSections = sections.filter(s => s.teacher_id === id);
         const mine = planned.filter(p => byTeacher(p) && p.person === id);
         const marked = mine.map(p => sessionRecord(p.section.id, p.session, p.iso)).filter(Boolean);
         // Sessions done in their periods (in Premium, also a Session 2 the trainer took over).
         const done = marked.filter(r => r.status === 'done').length
             + recordsInMonth.filter(r => r.session === 2 && r.status === 'done' && r.recorded_by !== id
-                && theirSections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher') && !marked.includes(r)).length;
+                && theirSections.some(s => s.id === r.section_id && sessionRole(s, 2, r.held_on) === 'teacher') && !marked.includes(r)).length;
         const notDone = marked.filter(r => r.status === 'not_held' || r.status === 'not_done').length;
         const cancelledT = marked.filter(r => r.status === 'cancelled').length;
         const pendingNow = theirSections.filter(s => pendingSession2(s.id)).length;
