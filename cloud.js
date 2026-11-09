@@ -107,9 +107,16 @@ const HMCloud = (() => {
             friendly = /schools_code/.test(message) ? 'A school with that code already exists.'
                 : /sections_school_id_grade_letter/.test(message) ? 'That class already exists in this school.'
                 : /substitutions_school_id_visit_date_trainer_id/.test(message) ? 'That trainer already has a substitute for this visit.'
+                : /extra_sessions_section_id_session_on_date/.test(message) ? 'This class already has a make-up session that day.'
                 : 'That already exists.';
-        } else if (error?.code === '23514' && /section_slots_order/.test(message)) {
+        } else if (error?.code === '23514' && /section_slots_order|extra_sessions_order/.test(message)) {
             friendly = 'The end time must be after the start time.';
+        } else if (error?.code === '23514' && /school_holidays_order/.test(message)) {
+            friendly = 'The last day must be on or after the first day.';
+        } else if (error?.code === '23514' && /school_holidays_length/.test(message)) {
+            friendly = 'A holiday can be at most 120 days long. Add longer breaks in parts.';
+        } else if ((error?.code === '23514' && /session_log_status_check/.test(message)) || error?.code === 'PGRST205' || error?.code === '42P01') {
+            friendly = 'Holidays and cancelled periods are not set up yet: run supabase/phase9-holidays.sql in Supabase first.';
         } else if (error?.code === '23514' && /substitutions_different/.test(message)) {
             friendly = 'Choose a different trainer as the substitute.';
         } else if (error?.code === '23514' && /teacher|trainer/i.test(message)) {
@@ -135,6 +142,8 @@ const HMCloud = (() => {
     const NOTE_COLUMNS = 'id, section_id, user_id, note_date, chapter_id, session, fields, updated_at';
     const EOD_COLUMNS = 'id, user_id, report_date, draft, final, submitted_at, updated_at';
     const SUBSTITUTION_COLUMNS = 'id, school_id, visit_date, trainer_id, substitute_id, note, assigned_by, assigned_at';
+    const HOLIDAY_COLUMNS = 'id, school_id, start_date, end_date, reason, kind, status, added_by, confirmed_by, created_at';
+    const EXTRA_COLUMNS = 'id, section_id, session, on_date, starts_at, ends_at, for_date, note, created_by';
     // Times come back as "10:00:00"; the portal uses "10:00".
     const toSlot = row => ({ ...row, starts_at: String(row.starts_at).slice(0, 5), ends_at: String(row.ends_at).slice(0, 5) });
 
@@ -144,7 +153,7 @@ const HMCloud = (() => {
     }
 
     // The accounts Edge Function. Throws an Error whose message is safe to show.
-    async function callAccounts(body) {
+    async function callAccounts(body, overrides = {}) {
         const { data } = await client.auth.getSession();
         const headers = { apikey: HappyMindsConfig.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' };
         if (data.session) headers.Authorization = `Bearer ${data.session.access_token}`;
@@ -163,7 +172,7 @@ const HMCloud = (() => {
             bad_request: 'Check the details and try again. Usernames start with a letter and use only small letters, numbers, dots or dashes.',
             too_many: 'This class has too many students without logins for one go. Please contact support.'
         };
-        throw new Error(messages[result.error] || "Couldn't create the login right now. Please try again.");
+        throw new Error(overrides[result.error] || messages[result.error] || overrides.fallback || "Couldn't create the login right now. Please try again.");
     }
 
     // Supabase Auth signs in with an email, the portal with a username.
@@ -198,7 +207,7 @@ const HMCloud = (() => {
         // RLS limits each of these to what this account may see: admin,
         // coordinator and management get every school; teachers and trainers
         // their own sections; students and parents their own child.
-        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod] = await Promise.all([
+        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
             selectAll('app_documents', 'doc, student_id, data', 'doc'),
@@ -211,8 +220,12 @@ const HMCloud = (() => {
             selectAllIfReady('substitutions', SUBSTITUTION_COLUMNS, 'visit_date'),
             selectAllIfReady('session_log', SESSION_COLUMNS, 'held_on'),
             selectAllIfReady('class_notes', NOTE_COLUMNS, 'note_date'),
-            selectAllIfReady('eod_reports', EOD_COLUMNS, 'report_date')
+            selectAllIfReady('eod_reports', EOD_COLUMNS, 'report_date'),
+            selectAllIfReady('school_holidays', HOLIDAY_COLUMNS, 'start_date'),
+            selectAllIfReady('extra_sessions', EXTRA_COLUMNS, 'on_date')
         ]);
+        HappyMindsConfig.HOLIDAYS = holidays;
+        HappyMindsConfig.EXTRA_SESSIONS = extras.map(toSlot);
         HappyMindsConfig.SESSIONS = sessionLog;
         HappyMindsConfig.CLASS_NOTES = notes;
         HappyMindsConfig.EOD_REPORTS = eod;
@@ -412,6 +425,8 @@ const HMCloud = (() => {
             HappyMindsConfig.SESSIONS = [];
             HappyMindsConfig.CLASS_NOTES = [];
             HappyMindsConfig.EOD_REPORTS = [];
+            HappyMindsConfig.HOLIDAYS = [];
+            HappyMindsConfig.EXTRA_SESSIONS = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
@@ -554,6 +569,45 @@ const HMCloud = (() => {
             HappyMindsConfig.SUBSTITUTIONS = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.id !== id);
         },
 
+        // ---- Holidays, closures and make-up sessions (phase9-holidays.sql) --
+        // Planners: a holiday for one school (or every school: schoolId null).
+        // Trainers / class teachers: { kind: 'closure', status: 'reported' } for one day.
+        async addHoliday({ schoolId, startDate, endDate, reason, kind = 'holiday', status = 'confirmed' }) {
+            const row = await manage(client.from('school_holidays').insert({
+                school_id: schoolId || null, start_date: startDate, end_date: endDate || startDate,
+                reason, kind, status, added_by: signedInUserId,
+                confirmed_by: status === 'confirmed' ? signedInUserId : null
+            }).select(HOLIDAY_COLUMNS).single());
+            HappyMindsConfig.HOLIDAYS.push(row);
+            return row;
+        },
+
+        async confirmHoliday(id) {
+            const row = await manage(client.from('school_holidays').update({ status: 'confirmed', confirmed_by: signedInUserId })
+                .eq('id', id).select(HOLIDAY_COLUMNS).single());
+            Object.assign(HappyMindsConfig.HOLIDAYS.find(h => h.id === id), row);
+            return row;
+        },
+
+        async removeHoliday(id) {
+            await manage(client.from('school_holidays').delete().eq('id', id));
+            HappyMindsConfig.HOLIDAYS = HappyMindsConfig.HOLIDAYS.filter(h => h.id !== id);
+        },
+
+        async addExtraSession({ sectionId, session, onDate, startsAt, endsAt, forDate, note }) {
+            const row = await manage(client.from('extra_sessions').insert({
+                section_id: sectionId, session, on_date: onDate, starts_at: startsAt, ends_at: endsAt,
+                for_date: forDate || null, note: note || '', created_by: signedInUserId
+            }).select(EXTRA_COLUMNS).single());
+            HappyMindsConfig.EXTRA_SESSIONS.push(toSlot(row));
+            return row;
+        },
+
+        async removeExtraSession(id) {
+            await manage(client.from('extra_sessions').delete().eq('id', id));
+            HappyMindsConfig.EXTRA_SESSIONS = HappyMindsConfig.EXTRA_SESSIONS.filter(x => x.id !== id);
+        },
+
         // ---- Sessions held (Phase 3) ---------------------------------------
         // Records what happened to Session 1 or 2 of a chapter in a class on a
         // day: 'done', 'not_held' (with a reason) or 'not_done' (with the
@@ -622,6 +676,28 @@ const HMCloud = (() => {
         // class who has none yet. Resolves to { created, existing, failed }.
         async createClassLogins(sectionId) {
             const result = await callAccounts({ action: 'create_family', sectionId });
+            await reloadAccounts();
+            return result;
+        },
+
+        // Admin / coordinator: new passwords for the class's logins, or only
+        // for some students. who: 'both' | 'student' | 'parent'.
+        // Resolves to { reset: [{ studentId, name, student, parent }], failed }.
+        async resetClassLogins(sectionId, { studentIds, who = 'both' } = {}) {
+            return callAccounts({ action: 'reset_family', sectionId, studentIds, who }, {
+                not_allowed: 'Only an admin or coordinator can reset student and parent passwords.',
+                bad_request: 'Resetting passwords needs the updated accounts function: redeploy supabase/functions/accounts in Supabase.',
+                fallback: "Couldn't reset the passwords right now. Please try again."
+            });
+        },
+
+        // Admin: deletes every student and parent login of the class (their work stays).
+        async removeClassLogins(sectionId) {
+            const result = await callAccounts({ action: 'remove_family', sectionId }, {
+                not_allowed: 'Only an admin can remove a class’s logins.',
+                bad_request: 'Removing logins needs the updated accounts function: redeploy supabase/functions/accounts in Supabase.',
+                fallback: "Couldn't remove the logins right now. Please try again."
+            });
             await reloadAccounts();
             return result;
         },

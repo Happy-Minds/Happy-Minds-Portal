@@ -95,6 +95,7 @@ const HMPublic = (() => {
             [m.s1_not_held, 'Session 1 not held'],
             [m.s2_done, 'Session 2 done'],
             [m.s2_not_done, 'Session 2 not done'],
+            [m.cancelled || 0, 'Cancelled by the school'],
             [m.substitutes, 'Substitute visits']
         ];
         const rows = data.sections.map(s => {
@@ -115,7 +116,7 @@ const HMPublic = (() => {
                     </div></td>
                     <td data-label="Session 1"><div class="pp-cell">${s.s1_done} held${s.s1_not_held ? `<span class="pp-warn">${s.s1_not_held} not held</span>` : ''}</div></td>
                     <td data-label="Session 2"><div class="pp-cell">${s.s2_done} done${s.s2_not_done ? `<span class="pp-warn">${s.s2_not_done} not done</span>` : ''}</div></td>
-                    <td data-label="Last session"><div class="pp-cell">${s.last_session ? day(s.last_session) : '<span class="pp-muted">Not started</span>'}</div></td>
+                    <td data-label="Last session"><div class="pp-cell">${s.last_session ? day(s.last_session) : '<span class="pp-muted">Not started</span>'}${s.cancelled ? `<span class="pp-small">${plural(s.cancelled, 'period', 'periods')} cancelled by the school</span>` : ''}</div></td>
                     <td data-label="Home practice"><div class="pp-cell">${s.active_30d} of ${s.students} students<span class="pp-small">${plural(s.fixit_done, 'Fix It activity', 'Fix It activities')} · ${plural(s.stories, 'story', 'stories')}</span></div></td>
                 </tr>`;
         }).join('');

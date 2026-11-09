@@ -51,6 +51,10 @@ const HappyMindsConfig = {
     // Handbook notes per class and day, and End-of-Day reports (Phase 3).
     CLASS_NOTES: [],
     EOD_REPORTS: [],
+    // Holidays and closures (school_id null = every school), and one-off
+    // make-up sessions for periods the school cancelled.
+    HOLIDAYS: [],
+    EXTRA_SESSIONS: [],
     ACCOUNTS: []
 };
 

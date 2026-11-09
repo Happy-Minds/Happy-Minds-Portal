@@ -1806,6 +1806,18 @@
                     <div class="timetable-wrap"><table class="timetable-table" id="schoolTimetable"></table></div>
                 </div>
                 <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-umbrella-beach"></i> Holidays &amp; closures</h3>
+                    <p class="admin-card-explain">No sessions are expected on these days, and nothing counts as missed. Add the school’s holidays for the year; trainers and class teachers can also report a sudden closure, which you confirm here.</p>
+                    <div class="admin-chapter-list" id="schoolHolidaysList"></div>
+                    <form class="substitute-form plan-only" id="addHolidayForm" onsubmit="addHolidayFromForm(event)" novalidate>
+                        <label class="manage-field"><span>From</span><input type="date" id="holidayFrom"></label>
+                        <label class="manage-field"><span>To (same day if one day)</span><input type="date" id="holidayTo"></label>
+                        <label class="manage-field"><span>Reason</span><input type="text" id="holidayReason" maxlength="120" placeholder="e.g. Diwali, Unit tests, Sports Day" autocomplete="off"></label>
+                        <label class="manage-check"><input type="checkbox" id="holidayAllSchools"> For every school</label>
+                        <button type="submit" class="btn-primary-glowing compact" id="holidaySubmit"><i class="fa-solid fa-plus"></i> Add holiday</button>
+                    </form>
+                </div>
+                <div class="admin-section-card">
                     <h3><i class="fa-solid fa-user-clock"></i> Substitute trainers</h3>
                     <p class="admin-card-explain">When a trainer can’t come, choose a substitute for that one visit. Their other visits stay with them.</p>
                     <div class="admin-chapter-list" id="schoolSubstitutesList"></div>
@@ -1909,8 +1921,14 @@
                         <button type="button" class="btn-primary-glowing compact" id="rosterLoginBtn" onclick="createClassLogins()">
                             <i class="fa-solid fa-id-card"></i> Create logins &amp; print slips
                         </button>
+                        <button type="button" class="btn-glass compact" id="rosterResetBtn" onclick="resetClassLogins()">
+                            <i class="fa-solid fa-key"></i> New passwords for the whole class
+                        </button>
+                        <button type="button" class="btn-glass compact manage-remove admin-only-inline" id="rosterRemoveBtn" onclick="removeClassLogins()">
+                            <i class="fa-solid fa-user-slash"></i> Remove all logins
+                        </button>
                     </div>
-                    <p class="reset-password-help">Each new login slip shows the password once. Print or save the slips before closing them; a lost password can be reset under Admin.</p>
+                    <p class="reset-password-help">Each slip shows the password once. Print or save the slips before closing them. To reset one child’s or parent’s password, use <strong>Reset password</strong> next to their name below.</p>
                 </div>
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-children"></i> Students</h3>

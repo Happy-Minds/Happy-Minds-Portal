@@ -62,7 +62,7 @@ h1, h2 { margin: 0; line-height: 1.2; }
 /* Month facts: one panel, numbers side by side */
 .pp-facts {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     margin: 0;
     background: var(--pp-surface);
     border: 1px solid var(--pp-border);

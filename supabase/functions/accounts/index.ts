@@ -18,6 +18,20 @@
 //               failed: [{ studentId, name }] }
 //       A password is null for a login that already existed.
 //
+//   action "reset_family"   (admin, coordinator)
+//       JSON: { action, sectionId, studentIds?, who? }
+//       New passwords for the class's existing logins (or only the listed
+//       students). who: "both" (default) | "student" | "parent".
+//       → 200 { reset: [{ studentId, name, student?: {username, password|null}, parent?: {…} }],
+//               failed: [{ studentId, name }] }
+//       A password is null for a login that was left unchanged.
+//
+//   action "remove_family"  (admin)
+//       JSON: { action, sectionId }
+//       Deletes every student and parent login of the class. The students
+//       stay in the class with all their work; new logins can be made again.
+//       → 200 { removed: number }
+//
 // Passwords are shown once, in the reply, and stored only as a hash.
 // Usernames sign in as <username>@happyminds.local; no email is sent.
 //
@@ -30,6 +44,7 @@ const EMAIL_DOMAIN = 'happyminds.local';
 const STAFF_ROLES_ADMIN_CREATES = ['teacher', 'trainer', 'coordinator', 'management'];
 const FAMILY_MANAGERS = ['admin', 'coordinator'];
 const MAX_STUDENTS_PER_REQUEST = 80;
+const FAMILY_REMOVERS = ['admin'];
 const STAFF_AVATAR = 'assets/teacher_avatar.png';
 
 // Easy to read out to a child or parent: "river-mango-4827".
@@ -184,6 +199,72 @@ async function createFamily(admin: SupabaseClient, body: Record<string, unknown>
     return reply(200, { created, existing, failed });
 }
 
+// The class's students (optionally only some) and their existing logins.
+async function familyOf(admin: SupabaseClient, sectionId: string, studentIds?: unknown) {
+    let query = admin.from('students').select('id, name').eq('section_id', sectionId).order('name');
+    if (Array.isArray(studentIds)) query = query.in('id', studentIds.map(String).slice(0, MAX_STUDENTS_PER_REQUEST));
+    const { data: students, error } = await query;
+    if (error) throw error;
+    if (!students.length) return { students: [], profiles: [] };
+    const { data: profiles, error: profilesError } = await admin.from('profiles')
+        .select('id, username, role, student_id').in('student_id', students.map(s => s.id)).in('role', ['student', 'parent']);
+    if (profilesError) throw profilesError;
+    return { students, profiles };
+}
+
+// ---- action: reset_family -------------------------------------------------
+async function resetFamily(admin: SupabaseClient, body: Record<string, unknown>) {
+    const sectionId = String(body.sectionId ?? '');
+    const who = String(body.who ?? 'both');
+    if (!/^[0-9a-f-]{36}$/i.test(sectionId) || !['both', 'student', 'parent'].includes(who)) return fail(400, 'bad_request');
+    const { students, profiles } = await familyOf(admin, sectionId, body.studentIds);
+    if (students.length > MAX_STUDENTS_PER_REQUEST) return fail(413, 'too_many');
+
+    const reset = [];
+    const failed = [];
+    for (const st of students) {
+        const own = profiles.filter(p => p.student_id === st.id);
+        if (!own.length) continue;   // no logins yet: "Create logins" makes them
+        const entry: Record<string, unknown> = { studentId: st.id, name: st.name };
+        try {
+            for (const role of ['student', 'parent']) {
+                const login = own.find(p => p.role === role);
+                if (!login) continue;
+                if (who !== 'both' && who !== role) {
+                    entry[role] = { username: login.username, password: null };
+                    continue;
+                }
+                const password = newPassword();
+                const { error } = await admin.auth.admin.updateUserById(login.id, { password });
+                if (error) throw error;
+                entry[role] = { username: login.username, password };
+            }
+            reset.push(entry);
+        } catch (err) {
+            console.error('Could not reset logins for', st.id, err);
+            // A password already changed must still reach the reply.
+            if (entry.student || entry.parent) reset.push(entry);
+            else failed.push({ studentId: st.id, name: st.name });
+        }
+    }
+    return reply(200, { reset, failed });
+}
+
+// ---- action: remove_family ------------------------------------------------
+async function removeFamily(admin: SupabaseClient, body: Record<string, unknown>) {
+    const sectionId = String(body.sectionId ?? '');
+    if (!/^[0-9a-f-]{36}$/i.test(sectionId)) return fail(400, 'bad_request');
+    const { profiles } = await familyOf(admin, sectionId);
+    let removed = 0;
+    for (const login of profiles) {
+        // Deleting the sign-in also deletes its profile; the student's work stays.
+        const { error } = await admin.auth.admin.deleteUser(login.id);
+        if (error) console.error('Could not remove login', login.username, error);
+        else removed += 1;
+    }
+    return reply(200, { removed, failed: profiles.length - removed });
+}
+
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
     if (req.method !== 'POST') return fail(405, 'bad_request');
@@ -212,6 +293,12 @@ Deno.serve(async (req) => {
         }
         if (body.action === 'create_family') {
             return FAMILY_MANAGERS.includes(profile.role) ? await createFamily(admin, body) : fail(403, 'not_allowed');
+        }
+        if (body.action === 'reset_family') {
+            return FAMILY_MANAGERS.includes(profile.role) ? await resetFamily(admin, body) : fail(403, 'not_allowed');
+        }
+        if (body.action === 'remove_family') {
+            return FAMILY_REMOVERS.includes(profile.role) ? await removeFamily(admin, body) : fail(403, 'not_allowed');
         }
         return fail(400, 'bad_request');
     } catch (err) {

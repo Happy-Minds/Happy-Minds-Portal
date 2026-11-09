@@ -29,6 +29,8 @@ begin
                         where x.school_id = s.id and l.session = 2 and l.status = 'done' and l.held_on >= month1),
             's2_not_done', (select count(*) from public.session_log l join public.sections x on x.id = l.section_id
                         where x.school_id = s.id and l.session = 2 and l.status = 'not_done' and l.held_on >= month1),
+            'cancelled', (select count(*) from public.session_log l join public.sections x on x.id = l.section_id
+                        where x.school_id = s.id and l.status = 'cancelled' and l.held_on >= month1),
             'substitutes', (select count(*) from public.substitutions u where u.school_id = s.id and u.visit_date >= month1 and u.visit_date <= today)
         ),
         'sections', coalesce((
@@ -42,6 +44,7 @@ begin
                 's1_not_held', (select count(*) from public.session_log l where l.section_id = x.id and l.session = 1 and l.status = 'not_held'),
                 's2_done', (select count(*) from public.session_log l where l.section_id = x.id and l.session = 2 and l.status = 'done'),
                 's2_not_done', (select count(*) from public.session_log l where l.section_id = x.id and l.session = 2 and l.status = 'not_done'),
+                'cancelled', (select count(*) from public.session_log l where l.section_id = x.id and l.status = 'cancelled'),
                 'last_session', (select max(l.held_on) from public.session_log l where l.section_id = x.id and l.status = 'done'),
                 'students', (select count(*) from public.students st where st.section_id = x.id),
                 'active_30d', (select count(*) from public.students st join public.app_documents d

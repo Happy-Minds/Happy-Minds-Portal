@@ -789,6 +789,7 @@ function renderSchoolDetail() {
 
     renderSchoolTimetable();
     renderSubstitutes();
+    renderSchoolHolidays();
     renderSchoolLinks(school);
 
     const list = document.getElementById('schoolSectionsList');
@@ -936,6 +937,7 @@ function renderClassRoster() {
             <img src="${escapeReportText(st.avatar)}" alt="" class="admin-list-avatar">
             <span class="admin-list-title">${escapeReportText(st.name)} <span class="admin-list-username">${escapeReportText(st.id)}</span></span>
             ${tag}
+            ${manage && (logins.student || logins.parent) ? `<span class="roster-reset" data-student="${escapeReportText(st.id)}"><button type="button" class="btn-glass compact" onclick="openRowReset(this)"><i class="fa-solid fa-key"></i> Reset password</button></span>` : ''}
             ${manage ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeStudentFromClass('${escapeReportText(st.id)}', this)">Remove from class</button>` : ''}
         </div>`;
     }).join('');
@@ -1294,6 +1296,8 @@ function weekSessions(monday) {
             const date = new Date(monday);
             date.setDate(monday.getDate() + slot.weekday - 1);
             const iso = localDateString(date);
+            // No session on a holiday, unless it was already recorded (e.g. a half day).
+            if (holidayOn(section.school_id, iso) && !sessionRecord(section.id, session, iso)) return;
             const role = sessionRole(section, session);
             const sub = role === 'trainer' ? trainerSubstitution(section, iso) : null;
             const person = sessionPerson(section, session, iso);
@@ -1302,6 +1306,12 @@ function weekSessions(monday) {
             items.push({ section, session, slot, iso, person, sub });
         });
     });
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const visible = HappyMindsConfig.SECTIONS.filter(section => !schoolFilter || section.school_id === schoolFilter);
+    extraItems(visible, localDateString(monday), localDateString(sunday))
+        .filter(it => plan || it.person === me.id || (it.sub && it.sub.trainer_id === me.id))
+        .forEach(it => items.push(it));
     return items.sort((a, b) => a.iso.localeCompare(b.iso) || a.slot.starts_at.localeCompare(b.slot.starts_at)
         || (a.section.school?.name || '').localeCompare(b.section.school?.name || ''));
 }
@@ -1333,6 +1343,12 @@ function renderWeekView() {
         if (it.sub && it.sub.trainer_id === me.id && !plan) note = `<span class="week-flag covered">${escapeReportText(accountName(it.sub.substitute_id) || 'Another trainer')} covers this visit</span>`;
         else if (it.sub) note = `<span class="week-flag sub">Substitute for ${escapeReportText(accountName(it.sub.trainer_id) || 'the regular trainer')}</span>`;
         if (!it.person) note += '<span class="week-flag missing">Nobody assigned</span>';
+        if (it.extra) {
+            note += `<span class="week-flag covered">Make-up session${it.extra.for_date ? ` for ${formatVisitDate(it.extra.for_date)}` : ''}</span>`;
+            if (!sessionRecord(it.section.id, it.session, it.iso) && (plan || it.person === me.id)) {
+                note += `<button type="button" class="link-btn" onclick="removeMakeUp('${it.extra.id}', this)">Remove</button>`;
+            }
+        }
         return `
             <div class="week-item${it.sub && it.sub.trainer_id === me.id && !plan ? ' is-covered' : ''}">
                 <span class="week-time">${it.slot.starts_at}–${it.slot.ends_at}</span>
@@ -1345,19 +1361,42 @@ function renderWeekView() {
             </div>`;
     };
     const container = document.getElementById('weekDays');
-    if (!sessions.length) {
+    const writesReports = me.role === 'trainer';
+    // Holidays and closures for the schools shown, and "School closed" for staff.
+    const schoolIds = plan
+        ? (document.getElementById('weekSchoolFilter').value ? [document.getElementById('weekSchoolFilter').value] : HappyMindsConfig.SCHOOLS.map(s => s.id))
+        : [...new Set(HappyMindsConfig.SECTIONS.filter(s => s.teacher_id === me.id || s.trainer_id === me.id).map(s => s.school_id))];
+    const weekAgo = localDateString(new Date(Date.now() - 7 * 86400000));
+    days.forEach(d => {
+        d.holidays = [];
+        schoolIds.forEach(id => {
+            const h = holidayOn(id, d.iso);
+            if (h && !d.holidays.some(x => x.h.id === h.id && !h.school_id)) d.holidays.push({ h, schoolId: id });
+        });
+        d.closable = plan ? [] : [...new Set(d.items.filter(it => it.person === me.id && !it.extra).map(it => it.section.school_id))]
+            .filter(id => d.iso <= today && d.iso >= weekAgo && !holidayOn(id, d.iso));
+    });
+    if (!sessions.length && !days.some(d => d.holidays.length)) {
         container.innerHTML = `<p class="prep-readiness-explain week-empty">${plan
             ? 'No sessions in the timetable for this week yet. Set each class’s slots on its school page under Schools.'
             : 'Nothing in your timetable this week yet. Your coordinator sets the class timetable.'}</p>`;
         return;
     }
-    const writesReports = me.role === 'trainer';
-    container.innerHTML = days.filter(d => d.items.length || plan).map(d => `
+    const holidayHtml = ({ h, schoolId }) => {
+        const school = h.school_id ? (HappyMindsConfig.SCHOOLS.find(s => s.id === h.school_id) || {}).name : 'All schools';
+        const reported = h.status === 'reported' ? ` · reported by ${escapeReportText(accountName(h.added_by) || 'staff')}, not yet confirmed` : '';
+        const undo = h.status === 'reported' && h.added_by === me.id
+            ? ` <button type="button" class="link-btn" onclick="withdrawClosure('${h.id}', this)">Undo</button>` : '';
+        return `<p class="week-holiday"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i> ${escapeReportText(school || '')}: ${holidayText(h).label.toLowerCase()} · ${escapeReportText(h.reason)}${reported}${undo}</p>`;
+    };
+    container.innerHTML = days.filter(d => d.items.length || plan || d.holidays.length).map(d => `
         <section class="week-day${d.iso === today ? ' is-today' : ''}">
             <h3>${WEEKDAYS[d.weekday]} <span>${new Date(`${d.iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}${d.iso === today ? ' · today' : ''}</span></h3>
+            ${d.holidays.map(holidayHtml).join('')}
+            ${d.closable.map(id => `<div class="closure-slot" data-school="${id}" data-date="${d.iso}"><button type="button" class="btn-glass compact" onclick="openClosureForm(this)"><i class="fa-solid fa-door-closed"></i> ${d.closable.length > 1 ? `${escapeReportText((HappyMindsConfig.SCHOOLS.find(s => s.id === id) || {}).name || 'School')} closed` : 'School closed'}${d.iso === today ? ' today' : ''}</button></div>`).join('')}
             ${writesReports && d.iso <= today && d.items.some(it => it.person === me.id)
                 ? `<button type="button" class="btn-glass compact week-report-btn" onclick="openDayReport('${d.iso}')"><i class="fa-solid fa-file-lines"></i> Notes &amp; day report${eodReportFor(d.iso)?.submitted_at ? ' · submitted' : ''}</button>` : ''}
-            ${d.items.length ? d.items.map(row).join('') : '<p class="timetable-empty">No sessions</p>'}
+            ${d.items.length ? d.items.map(row).join('') : d.holidays.length ? '' : '<p class="timetable-empty">No sessions</p>'}
         </section>`).join('');
 }
 
@@ -1366,7 +1405,8 @@ function renderWeekView() {
 // person teaching it. The chapter is the class's current chapter (the first
 // one not finished), except that Session 2 belongs to the chapter whose
 // Session 1 is done and whose Session 2 is still pending.
-const SESSION_STATUS_LABELS = { done: 'Done', not_held: 'Not held', not_done: 'Not done' };
+const SESSION_STATUS_LABELS = { done: 'Done', not_held: 'Not held', not_done: 'Not done', cancelled: 'Cancelled by school' };
+const CANCEL_REASONS = ['Exam', 'School event', 'Assembly', 'Other'];
 
 function currentChapterOf(sectionId) {
     const done = HMCloud.classProgressFor(sectionId).completedChapters || [];
@@ -1411,11 +1451,15 @@ function sessionStatusHtml(item) {
         const detail = rec.status === 'not_held' && rec.reason ? `: ${escapeReportText(rec.reason)}`
             : rec.status === 'not_done' && rec.next_date ? ` · next: ${formatVisitDate(rec.next_date)}` : '';
         html += `<span class="session-chip ${rec.status}">${SESSION_STATUS_LABELS[rec.status]} · Ch ${rec.chapter_id}${detail}</span>`;
+    } else if (item.session === 2 && !pendingSession2(item.section.id)) {
+        // Session 2 follows its chapter's Session 1; if that hasn't happened, there is nothing new to teach.
+        html += `<p class="session-nothing">Nothing new yet: Session 1 of ${escapeReportText(chapterLabel(currentChapterOf(item.section.id)))} hasn’t happened. Use this period for revision or Fix It.</p>`;
     } else if (canRecordSession(item)) {
         const chapter = chapterForSession(item.section.id, item.session);
         html += `<div class="session-actions" data-args="${args}">
             <span class="session-chapter">${escapeReportText(chapterLabel(chapter))}</span>
             <button type="button" class="btn-glass compact session-done" onclick="markSession(${args}, 'done', this)"><i class="fa-solid fa-check"></i> Done</button>
+            <button type="button" class="btn-glass compact" onclick="openCancelForm(${args}, this)">Cancelled by school</button>
             <button type="button" class="btn-glass compact" onclick="openSessionReason(${args}, '${item.session === 1 ? 'not_held' : 'not_done'}', this)">${item.session === 1 ? 'Not held' : 'Not done'}</button>
         </div>`;
     }
@@ -1460,6 +1504,119 @@ function openSessionReason(sectionId, session, iso, status, btn) {
             <button type="button" class="btn-glass compact" onclick="renderWeekView(); renderHomeDueCard();">Cancel</button>
         </form>`;
     box.querySelector('input').focus();
+}
+
+// "Cancelled by school": why, and whether to make it up on another day.
+function openCancelForm(sectionId, session, iso, btn) {
+    const box = btn.closest('.session-actions');
+    const slot = (HappyMindsConfig.EXTRA_SESSIONS.find(x => x.section_id === sectionId && x.session === session && x.on_date === iso)) || slotFor(sectionId, session) || {};
+    box.innerHTML = `
+        <form class="session-reason cancel-form" onsubmit="submitCancelForm(event, '${sectionId}', ${session}, '${iso}')">
+            <label>Why the school took the period
+                <select class="custom-select" name="why">${CANCEL_REASONS.map(r => `<option>${r}</option>`).join('')}</select>
+            </label>
+            <label>Details (optional)
+                <input type="text" name="details" maxlength="200" placeholder="e.g. Unit test, Annual Day practice">
+            </label>
+            <fieldset class="cancel-makeup">
+                <legend>Make it up on another day?</legend>
+                <label class="inline-choice"><input type="radio" name="makeup" value="no" checked onchange="this.form.classList.remove('with-makeup')"> No, carry on next time</label>
+                <label class="inline-choice"><input type="radio" name="makeup" value="yes" onchange="this.form.classList.add('with-makeup')"> Yes, on</label>
+                <span class="makeup-when">
+                    <input type="date" name="date" min="${localDateString()}" aria-label="Make-up date">
+                    <input type="time" name="start" value="${slot.starts_at || ''}" aria-label="Start time">
+                    <input type="time" name="end" value="${slot.ends_at || ''}" aria-label="End time">
+                </span>
+            </fieldset>
+            <button type="submit" class="btn-primary-glowing compact">Save</button>
+            <button type="button" class="btn-glass compact" onclick="renderWeekView(); renderHomeDueCard();">Cancel</button>
+        </form>`;
+    box.querySelector('select').focus();
+}
+
+async function submitCancelForm(event, sectionId, session, iso) {
+    event.preventDefault();
+    const form = event.target;
+    const why = form.why.value;
+    const details = form.details.value.trim();
+    const makeUp = form.makeup.value === 'yes';
+    if (makeUp && (!form.date.value || !form.start.value || !form.end.value)) {
+        showNotification('Choose the make-up date and times, or pick "No".');
+        (form.date.value ? (form.start.value ? form.end : form.start) : form.date).focus();
+        return;
+    }
+    const reason = details ? `${why}: ${details}` : why;
+    const button = form.querySelector('button[type="submit"]');
+    if (makeUp) {
+        const restore = busyButton(button, 'Saving…');
+        try {
+            await HMCloud.addExtraSession({ sectionId, session, onDate: form.date.value, startsAt: form.start.value, endsAt: form.end.value, forDate: iso, note: reason });
+        } catch (err) {
+            restore();
+            showNotification(err.message);
+            return;
+        }
+    }
+    await markSession(sectionId, session, iso, 'cancelled', button, reason);
+    if (makeUp) showNotification(`Make-up session added for ${formatVisitDate(form.date.value)}. It shows in My week.`);
+}
+
+async function removeMakeUp(id, btn) {
+    if (!confirm('Remove this make-up session?')) return;
+    btn.disabled = true;
+    try {
+        await HMCloud.removeExtraSession(id);
+        renderWeekView();
+        renderHomeDueCard();
+    } catch (err) {
+        btn.disabled = false;
+        showNotification(err.message);
+    }
+}
+
+// ---- "School closed" for a day: reported by the trainer / class teacher ----
+function openClosureForm(btn) {
+    const box = btn.closest('.closure-slot');
+    box.innerHTML = `
+        <form class="session-reason" onsubmit="submitClosure(event, '${box.dataset.school}', '${box.dataset.date}')">
+            <label>Why was the school closed?
+                <input type="text" maxlength="120" placeholder="e.g. Rain holiday, local strike" required>
+            </label>
+            <button type="submit" class="btn-primary-glowing compact">Save</button>
+            <button type="button" class="btn-glass compact" onclick="renderWeekView(); renderHomeDueCard();">Cancel</button>
+        </form>
+        <p class="closure-help">All your classes at this school that day are taken off; nobody needs to mark them. The coordinator confirms it.</p>`;
+    box.querySelector('input').focus();
+}
+
+async function submitClosure(event, schoolId, iso) {
+    event.preventDefault();
+    const input = event.target.querySelector('input');
+    const reason = input.value.trim();
+    if (!reason) { input.focus(); return; }
+    const restore = busyButton(event.target.querySelector('button[type="submit"]'), 'Saving…');
+    try {
+        await HMCloud.addHoliday({ schoolId, startDate: iso, endDate: iso, reason, kind: 'closure', status: canPlan() ? 'confirmed' : 'reported' });
+        showNotification(`Marked as closed on ${formatVisitDate(iso)}. Your classes there that day are taken off.`);
+        if (appState.currentView === 'week') renderWeekView();
+        renderHomeDueCard();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
+async function withdrawClosure(id, btn) {
+    btn.disabled = true;
+    try {
+        await HMCloud.removeHoliday(id);
+        showNotification('Closure removed. Your classes are back for that day.');
+        if (appState.currentView === 'week') renderWeekView();
+        renderHomeDueCard();
+    } catch (err) {
+        btn.disabled = false;
+        showNotification(err.message);
+    }
 }
 
 function submitSessionReason(event, sectionId, session, iso, status) {
@@ -1768,6 +1925,31 @@ function sessionPerson(section, session, iso) {
     return sub ? sub.substitute_id : section.trainer_id;
 }
 
+// ---- Holidays, closures and make-up sessions (phase9-holidays.sql) ----
+// A holiday or closure (confirmed or just reported) at this school on this
+// date; school_id null means every school.
+function holidayOn(schoolId, iso) {
+    return HappyMindsConfig.HOLIDAYS.find(h => (!h.school_id || h.school_id === schoolId) && h.start_date <= iso && h.end_date >= iso) || null;
+}
+
+function holidayText(h) {
+    const days = h.start_date === h.end_date ? formatVisitDate(h.start_date) : `${formatVisitDate(h.start_date)} – ${formatVisitDate(h.end_date)}`;
+    return { days, label: h.kind === 'closure' ? 'School closed' : 'Holiday' };
+}
+
+// One-off make-up sessions on a date range, as week items.
+function extraItems(sections, from, to) {
+    const ids = new Set(sections.map(s => s.id));
+    return HappyMindsConfig.EXTRA_SESSIONS.filter(x => ids.has(x.section_id) && x.on_date >= from && x.on_date <= to).map(x => {
+        const section = sections.find(s => s.id === x.section_id);
+        const weekday = ((new Date(`${x.on_date}T12:00:00`).getDay() + 6) % 7) + 1;
+        return { section, session: x.session, iso: x.on_date, extra: x,
+                 slot: { weekday, starts_at: x.starts_at, ends_at: x.ends_at },
+                 sub: sessionRole(section, x.session) === 'trainer' ? trainerSubstitution(section, x.on_date) : null,
+                 person: sessionPerson(section, x.session, x.on_date) };
+    });
+}
+
 function trainerSubstitution(section, iso) {
     if (!section.trainer_id) return null;
     return HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id) || null;
@@ -1784,8 +1966,10 @@ function plannedSessions(sections, from, to) {
         const since = slot.updated_at ? new Date(slot.updated_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : from;
         datesOnWeekday(from, to, slot.weekday)
             .filter(iso => iso >= since || sessionRecord(section.id, session, iso))
+            .filter(iso => !holidayOn(section.school_id, iso) || sessionRecord(section.id, session, iso))
             .forEach(iso => out.push({ section, session, iso, person: sessionPerson(section, session, iso) }));
     }));
+    extraItems(sections, from, to).forEach(it => out.push({ section: it.section, session: it.session, iso: it.iso, person: it.person, extra: it.extra }));
     return out;
 }
 
@@ -1838,6 +2022,20 @@ function monitorAlerts(sections) {
             return `Session ${n} on ${list.map(p => short(p.iso)).join(', ')}${who ? ` (${who})` : ''}`;
         }).filter(Boolean);
         add('missing', `${sectionFullName(section)}: ${items.length} ${items.length === 1 ? 'session' : 'sessions'} not marked: ${parts.join('; ')}.`);
+    });
+
+    // Closures reported by staff, waiting for a planner to confirm.
+    const schoolIds = new Set(sections.map(s => s.school_id));
+    HappyMindsConfig.HOLIDAYS.filter(h => h.status === 'reported' && schoolIds.has(h.school_id)).forEach(h => {
+        const school = (HappyMindsConfig.SCHOOLS.find(s => s.id === h.school_id) || {}).name || 'A school';
+        add('watch', `${school}: closed on ${formatVisitDate(h.start_date)} (${h.reason}), reported by ${accountName(h.added_by) || 'staff'}. Confirm or remove it on the school page.`);
+    });
+
+    // Periods the school took this month (not our staff's doing, but worth a word with the school).
+    const monthStart = `${today.slice(0, 7)}-01`;
+    sections.forEach(s => {
+        const n = HappyMindsConfig.SESSIONS.filter(r => r.section_id === s.id && r.status === 'cancelled' && r.held_on >= monthStart).length;
+        if (n >= 3) add('watch', `${sectionFullName(s)}: ${n} periods cancelled by the school this month.`);
     });
 
     // Session 2 still pending after Session 1.
@@ -1906,7 +2104,8 @@ function renderMonitor() {
         const mine = planned.filter(p => byTrainer(p) && p.person === id);
         const marked = mine.map(p => sessionRecord(p.section.id, p.session, p.iso)).filter(Boolean);
         const done = marked.filter(r => r.status === 'done').length;
-        const notHeld = marked.filter(r => r.status !== 'done').length;
+        const notHeld = marked.filter(r => r.status === 'not_held' || r.status === 'not_done').length;
+        const cancelled = marked.filter(r => r.status === 'cancelled').length;
         // A class teacher's Session 2 that the trainer took on a visit.
         const extraS2 = recordsInMonth.filter(r => r.session === 2 && r.recorded_by === id && r.status === 'done'
             && sections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher')).length;
@@ -1920,7 +2119,7 @@ function renderMonitor() {
         const schools = [...new Set(sections.filter(s => s.trainer_id === id).map(s => (s.school ? s.school.name : '')))].join(', ');
         return `<tr>
             <th scope="row">${escapeReportText(accountName(id) || 'Unknown trainer')}<span>${escapeReportText(schools || 'Substitute visits only')}</span></th>
-            <td>${done} / ${mine.length}${notHeld ? `<span class="monitor-sub">${notHeld} not held</span>` : ''}${mine.length - marked.length ? `<span class="monitor-sub warn">${mine.length - marked.length} not marked</span>` : ''}</td>
+            <td>${done} / ${mine.length}${notHeld ? `<span class="monitor-sub">${notHeld} not held</span>` : ''}${cancelled ? `<span class="monitor-sub">${cancelled} cancelled by school</span>` : ''}${mine.length - marked.length ? `<span class="monitor-sub warn">${mine.length - marked.length} not marked</span>` : ''}</td>
             <td>${extraS2}</td>
             <td>${onTime} on time${late ? ` · ${late} late` : ''}${missing ? `<span class="monitor-sub warn">${missing} missing</span>` : ''}</td>
             <td>${covered} covered · ${coveredFor} covered for</td>
@@ -1940,12 +2139,13 @@ function renderMonitor() {
         const done = marked.filter(r => r.status === 'done').length
             + recordsInMonth.filter(r => r.session === 2 && r.status === 'done' && r.recorded_by !== id
                 && theirSections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher') && !marked.includes(r)).length;
-        const notDone = marked.filter(r => r.status !== 'done').length;
+        const notDone = marked.filter(r => r.status === 'not_held' || r.status === 'not_done').length;
+        const cancelledT = marked.filter(r => r.status === 'cancelled').length;
         const pendingNow = theirSections.filter(s => pendingSession2(s.id)).length;
         return `<tr>
             <th scope="row">${escapeReportText(accountName(id) || 'Unknown teacher')}<span>${theirSections.map(s => s.label).join(', ')}</span></th>
             <td>${done} / ${mine.length}${mine.length - marked.length ? `<span class="monitor-sub warn">${mine.length - marked.length} not marked</span>` : ''}</td>
-            <td>${notDone}</td>
+            <td>${notDone}${cancelledT ? `<span class="monitor-sub">${cancelledT} cancelled by school</span>` : ''}</td>
             <td>${pendingNow ? `<span class="monitor-sub warn">${pendingNow} pending now</span>` : '0'}</td>
         </tr>`;
     });
@@ -2046,7 +2246,24 @@ function renderHomeDueCard() {
         }
         card.innerHTML = rows.length ? `<h3><i class="fa-solid fa-school"></i> Your visit today</h3>${rows.join('')}` : '';
     }
-    card.hidden = !rows.length;
+    // Today's schools for this person: "School closed today", or the holiday already noted.
+    const todayItems = weekSessions(weekStartFor(new Date())).filter(it => it.iso === today && it.person === me.id && !it.extra);
+    const mySchools = [...new Set(HappyMindsConfig.SECTIONS.filter(s => s.teacher_id === me.id || s.trainer_id === me.id).map(s => s.school_id))];
+    const closedHtml = mySchools.map(id => {
+        const h = holidayOn(id, today);
+        const name = (HappyMindsConfig.SCHOOLS.find(s => s.id === id) || {}).name || 'School';
+        if (h) {
+            const slotsToday = HappyMindsConfig.SECTIONS.some(s => s.school_id === id && [1, 2].some(n => { const sl = slotFor(s.id, n); return sl && sl.weekday === ((new Date().getDay() + 6) % 7) + 1; }));
+            return slotsToday ? `<p class="week-holiday"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i> ${escapeReportText(name)}: ${holidayText(h).label.toLowerCase()} today · ${escapeReportText(h.reason)}${h.status === 'reported' && h.added_by === me.id ? ` <button type="button" class="link-btn" onclick="withdrawClosure('${h.id}', this)">Undo</button>` : ''}</p>` : '';
+        }
+        if (!todayItems.some(it => it.section.school_id === id)) return '';
+        return `<div class="closure-slot" data-school="${id}" data-date="${today}"><button type="button" class="btn-glass compact" onclick="openClosureForm(this)"><i class="fa-solid fa-door-closed"></i> ${mySchools.length > 1 ? `${escapeReportText(name)} closed today` : 'School closed today'}</button></div>`;
+    }).join('');
+    if (closedHtml) {
+        if (!rows.length) card.innerHTML = `<h3><i class="fa-solid fa-calendar-day"></i> Today</h3>`;
+        card.innerHTML += `<div class="due-closed">${closedHtml}</div>`;
+    }
+    card.hidden = !rows.length && !closedHtml;
 }
 
 // ---- Logins for a class's students and parents ----
@@ -2064,6 +2281,111 @@ function renderRosterLoginSummary() {
             ? `${missing} of ${students.length} students still need a student or parent login. Creating them makes a printable slip for each child, with both logins.`
             : `Every student in this class has a student login and a parent login.`;
     document.getElementById('rosterLoginBtn').disabled = !missing;
+    const any = students.some(st => { const l = familyLogins(st.id); return l.student || l.parent; });
+    document.getElementById('rosterResetBtn').disabled = !any;
+    const removeBtn = document.getElementById('rosterRemoveBtn');
+    removeBtn.hidden = appState.currentUser.role !== 'admin';
+    removeBtn.disabled = !any;
+}
+
+// ---- New passwords / removing logins (accounts function: reset_family, remove_family) ----
+// Slips open in a new tab first, while this is still the click, then fill in.
+function openSlipTab(message) {
+    const w = window.open('', '_blank');
+    if (!w) { showNotification('Allow pop-ups for this site to print the login slips.'); return null; }
+    w.document.write(`<!DOCTYPE html><html><head><title>Please wait…</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">${escapeReportText(message)}</body></html>`);
+    w.document.close();
+    return w;
+}
+
+function fillSlipTab(w, section, entries) {
+    w.document.open();
+    w.document.write(buildLoginSlipsHtml(section, entries));
+    w.document.close();
+    w.focus();
+    w.print();
+}
+
+function failSlipTab(w, message) {
+    w.document.open();
+    w.document.write(`<!DOCTYPE html><html><head><title>Not done</title></head><body style="font-family:Arial,sans-serif;padding:32px;color:#1F2937;">${escapeReportText(message)} Close this tab.</body></html>`);
+    w.document.close();
+}
+
+async function resetClassLogins() {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === rosterSectionId);
+    if (!confirm(`Make new passwords for every student and parent login in ${section.label}? The old passwords stop working at once, so hand out the new slips.`)) return;
+    const w = openSlipTab('Making new passwords for the class… This can take a minute for a big class.');
+    if (!w) return;
+    const restore = busyButton(document.getElementById('rosterResetBtn'), 'Resetting…');
+    try {
+        const result = await HMCloud.resetClassLogins(rosterSectionId, { who: 'both' });
+        if (!result.reset.length) {
+            w.close();
+            showNotification('No logins to reset in this class yet.');
+        } else {
+            fillSlipTab(w, section, result.reset);
+            showNotification(`New passwords for ${result.reset.length} ${result.reset.length === 1 ? 'student' : 'students'} and their parents.`
+                + (result.failed && result.failed.length ? ` ${result.failed.length} could not be reset; try again.` : ''));
+        }
+    } catch (err) {
+        failSlipTab(w, err.message);
+        showNotification(err.message);
+    } finally {
+        restore();
+        renderClassRoster();
+    }
+}
+
+async function removeClassLogins() {
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === rosterSectionId);
+    const typed = prompt(`This deletes every student and parent login in ${section.school ? section.school.name : ''} ${section.label}. The students stay in the class with all their work, and you can create logins again later.\n\nType ${section.label} to confirm.`);
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== section.label.toUpperCase()) { showNotification('Nothing removed: the class name didn’t match.'); return; }
+    const restore = busyButton(document.getElementById('rosterRemoveBtn'), 'Removing…');
+    try {
+        const result = await HMCloud.removeClassLogins(rosterSectionId);
+        showNotification(`Removed ${result.removed} ${result.removed === 1 ? 'login' : 'logins'} from ${section.label}.`
+            + (result.failed ? ` ${result.failed} could not be removed; try again.` : ''));
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+        renderClassRoster();
+    }
+}
+
+// One child: choose whose password to reset, then print one slip.
+function openRowReset(btn) {
+    const box = btn.closest('.roster-reset');
+    const logins = familyLogins(box.dataset.student);
+    box.innerHTML = `
+        <span class="roster-reset-choices">
+            ${logins.student ? `<button type="button" class="btn-glass compact" onclick="resetOneLogin(this, 'student')">Student</button>` : ''}
+            ${logins.parent ? `<button type="button" class="btn-glass compact" onclick="resetOneLogin(this, 'parent')">Parent</button>` : ''}
+            ${logins.student && logins.parent ? `<button type="button" class="btn-glass compact" onclick="resetOneLogin(this, 'both')">Both</button>` : ''}
+            <button type="button" class="link-btn" onclick="renderClassRoster()">Cancel</button>
+        </span>`;
+}
+
+async function resetOneLogin(btn, who) {
+    const studentId = btn.closest('.roster-reset').dataset.student;
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === rosterSectionId);
+    const w = openSlipTab('Making a new password…');
+    if (!w) return;
+    btn.closest('.roster-reset-choices').querySelectorAll('button').forEach(b => { b.disabled = true; });
+    try {
+        const result = await HMCloud.resetClassLogins(rosterSectionId, { studentIds: [studentId], who });
+        if (!result.reset.length) throw new Error('That student has no login yet. Use Create logins first.');
+        fillSlipTab(w, section, result.reset);
+        const whoText = who === 'both' ? 'student and parent' : who;
+        showNotification(`New ${whoText} password for ${result.reset[0].name}. The old one no longer works.`);
+    } catch (err) {
+        failSlipTab(w, err.message);
+        showNotification(err.message);
+    } finally {
+        renderClassRoster();
+    }
 }
 
 // The slip page opens now, while this is still the click (browsers block
@@ -2388,6 +2710,82 @@ async function giveExtraTime(studentId, totalExtra, button) {
     } catch (err) {
         showNotification(err.message);
         row.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    }
+}
+
+// ================= Holidays & closures on the school page =================
+// This school's holidays and every-school ones: upcoming first, then the
+// last two months. Reported closures wait here for a planner to confirm.
+function renderSchoolHolidays() {
+    const list = document.getElementById('schoolHolidaysList');
+    const plan = canPlan();
+    const today = localDateString();
+    const since = localDateString(new Date(Date.now() - 60 * 86400000));
+    const rows = HappyMindsConfig.HOLIDAYS
+        .filter(h => (!h.school_id || h.school_id === detailSchoolId) && h.end_date >= since)
+        .sort((a, b) => (a.status === 'reported' ? 0 : 1) - (b.status === 'reported' ? 0 : 1)
+            || (a.end_date < today) - (b.end_date < today) || a.start_date.localeCompare(b.start_date));
+    if (!rows.length) {
+        list.innerHTML = `<p class="prep-readiness-explain">No holidays added yet.${plan ? ' Add the school’s holidays for the year below.' : ''}</p>`;
+        return;
+    }
+    list.innerHTML = rows.map(h => {
+        const { days, label } = holidayText(h);
+        const past = h.end_date < today;
+        const reported = h.status === 'reported';
+        return `
+            <div class="admin-list-row holiday-row${past ? ' is-past' : ''}${reported ? ' is-reported' : ''}">
+                <span class="admin-list-title">${escapeReportText(days)} · ${escapeReportText(h.reason)}
+                    <span class="admin-list-username">${label}${h.school_id ? '' : ' · every school'}${reported ? ` · reported by ${escapeReportText(accountName(h.added_by) || 'staff')}, not yet confirmed` : ''}</span></span>
+                ${plan && reported ? `<button type="button" class="btn-glass compact" onclick="confirmHolidayRow('${h.id}', this)"><i class="fa-solid fa-check"></i> Confirm</button>` : ''}
+                ${plan ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeHolidayRow('${h.id}', this)">Remove</button>` : ''}
+            </div>`;
+    }).join('');
+}
+
+async function addHolidayFromForm(event) {
+    event.preventDefault();
+    const from = document.getElementById('holidayFrom');
+    const to = document.getElementById('holidayTo');
+    const reason = document.getElementById('holidayReason');
+    const all = document.getElementById('holidayAllSchools');
+    if (!from.value) { showNotification('Choose the first day of the holiday.'); from.focus(); return; }
+    if (to.value && to.value < from.value) { showNotification('The last day must be on or after the first day.'); to.focus(); return; }
+    if (!reason.value.trim()) { showNotification('Add a reason, e.g. Diwali.'); reason.focus(); return; }
+    const restore = busyButton(document.getElementById('holidaySubmit'), 'Adding…');
+    try {
+        await HMCloud.addHoliday({ schoolId: all.checked ? null : detailSchoolId, startDate: from.value, endDate: to.value || from.value, reason: reason.value.trim() });
+        showNotification(`Holiday added${all.checked ? ' for every school' : ''}.`);
+        document.getElementById('addHolidayForm').reset();
+        renderSchoolHolidays();
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+    }
+}
+
+async function confirmHolidayRow(id, btn) {
+    btn.disabled = true;
+    try {
+        await HMCloud.confirmHoliday(id);
+        renderSchoolHolidays();
+    } catch (err) {
+        btn.disabled = false;
+        showNotification(err.message);
+    }
+}
+
+async function removeHolidayRow(id, btn) {
+    const h = HappyMindsConfig.HOLIDAYS.find(x => x.id === id);
+    if (!h || !confirm(`Remove "${h.reason}"? Sessions on ${holidayText(h).days} will be expected again.`)) return;
+    btn.disabled = true;
+    try {
+        await HMCloud.removeHoliday(id);
+        renderSchoolHolidays();
+    } catch (err) {
+        btn.disabled = false;
+        showNotification(err.message);
     }
 }
 

@@ -5070,3 +5070,29 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
 .recognition-list.notes li { flex-direction: column; gap: 2px; }
 .recognition-list.notes li span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 .recognition-list.notes li p { margin: 0; white-space: pre-wrap; }
+
+/* ---- Holidays, closures, cancelled periods, make-ups ---- */
+.link-btn { background: none; border: 0; padding: 0 2px; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--primary-blue); text-decoration: underline; cursor: pointer; }
+.link-btn:disabled { opacity: 0.5; cursor: default; }
+.week-holiday { display: block; margin: 4px 0 8px; padding: 8px 12px; border-radius: 10px; background: #ECFDF5; color: #065F46; font-size: 13px; font-weight: 600; }
+.week-holiday i { color: #059669; margin-right: 6px; }
+.closure-slot { margin: 4px 0 8px; }
+.closure-help { margin: 6px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.due-closed { display: grid; gap: 6px; margin-top: 10px; }
+.session-nothing { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); font-weight: 600; font-style: italic; }
+.cancel-form { align-items: flex-end; }
+.cancel-makeup { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; flex-basis: 100%; }
+.cancel-makeup legend { font-size: 12.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; padding: 0; }
+.inline-choice { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.makeup-when { display: none; gap: 6px; flex-wrap: wrap; }
+.cancel-form.with-makeup .makeup-when { display: inline-flex; }
+.makeup-when input { border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 6px 8px; font: inherit; font-size: 13px; }
+.session-chip.cancelled { background: #EEF2FF; color: #4338CA; }
+.holiday-row.is-past { opacity: 0.6; }
+.holiday-row.is-reported { background: #FFFBEB; }
+.manage-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-dark); align-self: center; }
+
+/* ---- Class logins: reset / remove ---- */
+.roster-reset { display: inline-flex; }
+.roster-reset-choices { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#rosterRemoveBtn[hidden] { display: none; }
