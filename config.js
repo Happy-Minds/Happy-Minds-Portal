@@ -46,6 +46,11 @@ const HappyMindsConfig = {
     // Weekly Session 1 / Session 2 slots per class, and substitute trainers.
     SLOTS: [],
     SUBSTITUTIONS: [],
+    // Sessions held: Session 1 / 2 of a chapter, done / not held / not done (Phase 3).
+    SESSIONS: [],
+    // Handbook notes per class and day, and End-of-Day reports (Phase 3).
+    CLASS_NOTES: [],
+    EOD_REPORTS: [],
     ACCOUNTS: []
 };
 

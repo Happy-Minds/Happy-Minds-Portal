@@ -76,7 +76,7 @@
                 <button class="nav-btn" data-view="chapters" data-roles="teacher,trainer,admin,coordinator,management" onclick="navigateTo('chapters')">
                     <i class="fa-solid fa-map"></i> Chapters
                 </button>
-                <button class="nav-btn" data-view="scan" data-roles="teacher" onclick="openScanView()">
+                <button class="nav-btn" data-view="scan" data-roles="teacher,trainer" onclick="openScanView()">
                     <i class="fa-solid fa-qrcode"></i> Scan
                 </button>
                 <button class="nav-btn" data-view="observe" data-role="trainer" onclick="openObservationPicker()" style="display:none;">
@@ -151,6 +151,8 @@
 
             <!-- ================= VIEW 1: HOME PAGE ================= -->
             <section id="home-view" class="view-section active-view">
+                <!-- Teachers: Session 2 due; trainers: today's visit (Phase 3) -->
+                <div class="home-due-card" id="homeDueCard" hidden></div>
 
                 <div class="hero-card">
                     <div class="hero-left">
@@ -1826,6 +1828,42 @@
                     <select id="weekSchoolFilter" class="custom-select" onchange="renderWeekView()"></select>
                 </div>
                 <div id="weekDays" class="week-days"></div>
+            </section>
+
+            <!-- ================= NOTES & DAY REPORT (trainer, Phase 3) ================= -->
+            <section id="day-report-view" class="view-section">
+                <button type="button" class="back-link-btn compact" onclick="openWeekView()">
+                    <i class="fa-solid fa-arrow-left"></i> My week
+                </button>
+                <div class="roadmap-header" style="margin-top:16px;">
+                    <div class="roadmap-title-area">
+                        <h2>Notes &amp; day report</h2>
+                        <p id="dayReportSubtitle"></p>
+                    </div>
+                    <label class="day-report-date">Day
+                        <input type="date" id="dayReportDate" onchange="renderDayReport()">
+                    </label>
+                </div>
+                <p class="admin-card-explain day-report-help">Type your Handbook notes for each class, in the same order as the Handbook page. They save as you type. At the end of the day, ask for your report: your notes are tidied into a proper report for every class, ready to check, submit and download.</p>
+                <div id="dayReportClasses" class="day-report-classes"></div>
+
+                <div class="admin-section-card" id="dayReportCard">
+                    <h3><i class="fa-solid fa-file-lines"></i> End-of-Day report</h3>
+                    <p class="admin-card-explain" id="eodStatus"></p>
+                    <div class="manage-inline-row">
+                        <button type="button" class="btn-primary-glowing compact" id="eodGenerateBtn" onclick="generateEodReport()">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Write my report from my notes
+                        </button>
+                        <button type="button" class="btn-glass compact" id="eodPdfBtn" onclick="printEodReport()" hidden>
+                            <i class="fa-solid fa-file-pdf"></i> Download PDF
+                        </button>
+                    </div>
+                    <form id="eodForm" class="eod-form" onsubmit="event.preventDefault()" hidden></form>
+                    <div class="manage-inline-row" id="eodActions" hidden>
+                        <button type="button" class="btn-glass compact" id="eodSaveBtn" onclick="saveEodDraft()"><i class="fa-regular fa-floppy-disk"></i> Save changes</button>
+                        <button type="button" class="btn-primary-glowing compact" id="eodSubmitBtn" onclick="submitEodReport()"><i class="fa-solid fa-paper-plane"></i> Submit report</button>
+                    </div>
+                </div>
             </section>
 
             <section id="class-roster-view" class="view-section">

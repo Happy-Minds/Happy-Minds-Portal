@@ -130,6 +130,9 @@ const HMCloud = (() => {
 
     const SECTION_COLUMNS = 'id, school_id, grade, letter, teacher_id, trainer_id';
     const SLOT_COLUMNS = 'section_id, session, weekday, starts_at, ends_at';
+    const SESSION_COLUMNS = 'id, section_id, chapter_id, session, held_on, status, reason, next_date, recorded_by, recorded_at';
+    const NOTE_COLUMNS = 'id, section_id, user_id, note_date, chapter_id, session, fields, updated_at';
+    const EOD_COLUMNS = 'id, user_id, report_date, draft, final, submitted_at, updated_at';
     const SUBSTITUTION_COLUMNS = 'id, school_id, visit_date, trainer_id, substitute_id, note, assigned_by, assigned_at';
     // Times come back as "10:00:00"; the portal uses "10:00".
     const toSlot = row => ({ ...row, starts_at: String(row.starts_at).slice(0, 5), ends_at: String(row.ends_at).slice(0, 5) });
@@ -194,7 +197,7 @@ const HMCloud = (() => {
         // RLS limits each of these to what this account may see: admin,
         // coordinator and management get every school; teachers and trainers
         // their own sections; students and parents their own child.
-        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs] = await Promise.all([
+        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
             selectAll('app_documents', 'doc, student_id, data', 'doc'),
@@ -204,8 +207,14 @@ const HMCloud = (() => {
             selectAll('time_logs', 'user_id, section_id, chapter_id, stage, day, seconds', 'day'),
             selectAll('prep_status', 'user_id, chapter_id, data', 'chapter_id'),
             selectAllIfReady('section_slots', SLOT_COLUMNS, 'section_id'),
-            selectAllIfReady('substitutions', SUBSTITUTION_COLUMNS, 'visit_date')
+            selectAllIfReady('substitutions', SUBSTITUTION_COLUMNS, 'visit_date'),
+            selectAllIfReady('session_log', SESSION_COLUMNS, 'held_on'),
+            selectAllIfReady('class_notes', NOTE_COLUMNS, 'note_date'),
+            selectAllIfReady('eod_reports', EOD_COLUMNS, 'report_date')
         ]);
+        HappyMindsConfig.SESSIONS = sessionLog;
+        HappyMindsConfig.CLASS_NOTES = notes;
+        HappyMindsConfig.EOD_REPORTS = eod;
         HappyMindsConfig.SLOTS = slots.map(toSlot);
         HappyMindsConfig.SUBSTITUTIONS = subs;
 
@@ -399,6 +408,9 @@ const HMCloud = (() => {
             HappyMindsConfig.SECTIONS = [];
             HappyMindsConfig.SLOTS = [];
             HappyMindsConfig.SUBSTITUTIONS = [];
+            HappyMindsConfig.SESSIONS = [];
+            HappyMindsConfig.CLASS_NOTES = [];
+            HappyMindsConfig.EOD_REPORTS = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
@@ -539,6 +551,61 @@ const HMCloud = (() => {
         async removeSubstitution(id) {
             await manage(client.from('substitutions').delete().eq('id', id));
             HappyMindsConfig.SUBSTITUTIONS = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.id !== id);
+        },
+
+        // ---- Sessions held (Phase 3) ---------------------------------------
+        // Records what happened to Session 1 or 2 of a chapter in a class on a
+        // day: 'done', 'not_held' (with a reason) or 'not_done' (with the
+        // next date it will be taken). Recording again for the same day
+        // replaces it.
+        async recordSession({ sectionId, chapterId, session, heldOn, status, reason, nextDate }) {
+            const row = await manage(client.from('session_log').upsert({
+                section_id: sectionId, chapter_id: chapterId, session, held_on: heldOn, status,
+                reason: reason || '', next_date: nextDate || null, recorded_by: signedInUserId
+            }, { onConflict: 'section_id,chapter_id,session,held_on' }).select(SESSION_COLUMNS).single());
+            HappyMindsConfig.SESSIONS = HappyMindsConfig.SESSIONS
+                .filter(s => !(s.section_id === sectionId && s.chapter_id === chapterId && s.session === session && s.held_on === heldOn))
+                .concat(row);
+            return row;
+        },
+
+        // ---- Handbook notes and the End-of-Day report (Phase 3) ----------
+        // Saves the signed-in person's notes for one class on one day.
+        async saveClassNotes({ sectionId, noteDate, session, chapterId, fields }) {
+            const row = await manage(client.from('class_notes').upsert({
+                section_id: sectionId, user_id: signedInUserId, note_date: noteDate, session, chapter_id: chapterId, fields
+            }, { onConflict: 'section_id,user_id,note_date,session' }).select(NOTE_COLUMNS).single());
+            HappyMindsConfig.CLASS_NOTES = HappyMindsConfig.CLASS_NOTES
+                .filter(n => !(n.section_id === sectionId && n.user_id === signedInUserId && n.note_date === noteDate && n.session === session))
+                .concat(row);
+            return row;
+        },
+
+        // The AI-tidied draft of the day's report. payload: { date, writer, classes }.
+        // Throws a StoryError (busy, offline, failed…).
+        async draftEodReport(payload) {
+            const body = JSON.stringify({ action: 'eod', ...payload });
+            return (await callStories(body, 'application/json')).report;
+        },
+
+        // Saves the day's report: the draft, and the final text when submitted.
+        async saveEodReport({ reportDate, draft, final, submit }) {
+            const values = { user_id: signedInUserId, report_date: reportDate, draft };
+            if (final !== undefined) values.final = final;
+            if (submit) values.submitted_at = new Date().toISOString();
+            const row = await manage(client.from('eod_reports').upsert(values, { onConflict: 'user_id,report_date' }).select(EOD_COLUMNS).single());
+            HappyMindsConfig.EOD_REPORTS = HappyMindsConfig.EOD_REPORTS
+                .filter(r => !(r.user_id === signedInUserId && r.report_date === reportDate)).concat(row);
+            return row;
+        },
+
+        whoAmI() {
+            return signedInUserId;
+        },
+
+        // Class progress of any section this account can see (not only the chosen one).
+        classProgressFor(sectionId) {
+            return clone(sectionDocs.get(keyOf('classProgress', sectionId))) || { completedChapters: [], chapterProgress: {} };
         },
 
         // ---- Logins (the `accounts` Edge Function) ------------------------

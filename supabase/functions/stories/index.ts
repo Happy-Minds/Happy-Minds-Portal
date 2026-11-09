@@ -16,6 +16,13 @@
 //       multipart: image, chapter (JSON string)
 //       → 200 { text, feedback, attemptsUsed }
 //
+//   action "eod"      (trainers, teachers) — the End-of-Day report
+//       JSON: { action, date, writer, classes: [{ key, label, chapter, session, status, notes }] }
+//       notes: { lesson, attentiveness, participation, stars, support, remarks }
+//       → 200 { report: { classes: [{ key, lesson, attentiveness, participation, stars, support, remarks }], summary } }
+//       Fixes grammar and spelling and lays the notes out as a report, with a
+//       closing summary in the writer's own voice. Adds nothing new.
+//
 //   action "cleanup"  (anyone — run hourly by pg_cron, see schema.sql)
 //       JSON: { action }
 //       Deletes story photos older than 7 days and clears their
@@ -74,6 +81,46 @@ const FEEDBACK_FIELDS = {
     praise: { type: 'string', description: 'One or two sentences on something specific the student did well.' },
     tip: { type: 'string', description: 'Exactly one small, concrete thing to try next time, with a short example.' },
     question: { type: 'string', description: 'One friendly question that helps them add more to the story.' },
+};
+
+// ---- End-of-Day report -----------------------------------------------------
+const EOD_NOTE_KEYS = ['lesson', 'attentiveness', 'participation', 'stars', 'support', 'remarks'];
+const EOD_MAX_CLASSES = 12;
+const EOD_MAX_NOTE_CHARS = 1500;
+
+const EOD_SYSTEM = `You help a HappyMinds trainer in India turn the notes they typed during their school visit into their End-of-Day report. The report goes to the school Principal and the HappyMinds team.
+
+For each class you get the trainer's notes in up to six sections: lesson and activities done, how attentive the students were, who participated and answered, star performers, students who need support, and remarks.
+
+How to write it:
+- Use only what the trainer wrote. Never add facts, names, numbers, events, praise or problems that are not in the notes.
+- Include every point the trainer wrote. Never drop, skip or shorten away any detail, name or observation; if a note lists several things, keep all of them.
+- Correct spelling, grammar and punctuation, and turn short notes into clear, complete sentences in simple, professional English. Keep the trainer's meaning.
+- Keep students' names exactly as the trainer wrote them.
+- Keep each section about its own topic. If a section has no notes, return an empty string for it.
+- Write the closing summary in the first person, as the trainer would ("Today I visited…"), in 3 to 5 sentences covering the whole day across all classes, using only the notes.`;
+
+const EOD_TOOL = {
+    name: 'write_eod_report',
+    description: "Write the trainer's End-of-Day report from their class notes.",
+    input_schema: {
+        type: 'object',
+        properties: {
+            classes: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    properties: {
+                        key: { type: 'string', description: 'The class key exactly as given.' },
+                        ...Object.fromEntries(EOD_NOTE_KEYS.map(k => [k, { type: 'string' }])),
+                    },
+                    required: ['key', ...EOD_NOTE_KEYS],
+                },
+            },
+            summary: { type: 'string', description: "Closing summary of the day in the trainer's own voice." },
+        },
+        required: ['classes', 'summary'],
+    },
 };
 
 const FEEDBACK_TOOL = {
@@ -241,6 +288,55 @@ async function giveFeedback(body: Record<string, unknown>) {
     return reply(200, { feedback });
 }
 
+// ---- action: eod (trainers, teachers) -------------------------------------
+async function writeEodReport(body: Record<string, unknown>) {
+    const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+    const classes = Array.isArray(body.classes) ? body.classes.slice(0, EOD_MAX_CLASSES) : [];
+    const cleaned = classes.map((c: Record<string, unknown>) => {
+        const notes = (c?.notes ?? {}) as Record<string, unknown>;
+        return {
+            key: text(c?.key, 80),
+            label: text(c?.label, 160),
+            chapter: text(c?.chapter, 120),
+            session: text(c?.session, 20),
+            status: text(c?.status, 40),
+            notes: Object.fromEntries(EOD_NOTE_KEYS.map(k => [k, text(notes[k], EOD_MAX_NOTE_CHARS)])),
+        };
+    }).filter(c => c.key && Object.values(c.notes).some(Boolean));
+    if (!cleaned.length) return fail(400, 'bad_request');
+
+    const sectionNames: Record<string, string> = {
+        lesson: 'Lesson and activities done', attentiveness: 'How attentive the students were',
+        participation: 'Who participated and answered', stars: 'Star performers',
+        support: 'Students who need support', remarks: 'Remarks',
+    };
+    const notesText = cleaned.map(c => [
+        `<class key="${c.key}">`,
+        `${c.label}${c.chapter ? ` — ${c.chapter}` : ''}${c.session ? ` — Session ${c.session}` : ''}${c.status ? ` (${c.status})` : ''}`,
+        ...EOD_NOTE_KEYS.map(k => `${sectionNames[k]}: ${c.notes[k] || '(no notes)'}`),
+        '</class>',
+    ].join('\n')).join('\n\n');
+
+    const result = await callClaude({
+        max_tokens: 4000,
+        system: EOD_SYSTEM,
+        tools: [EOD_TOOL],
+        tool_choice: { type: 'tool', name: EOD_TOOL.name },
+        messages: [{
+            role: 'user',
+            content: `Date: ${text(body.date, 20)}\nTrainer: ${text(body.writer, 80)}\n\n${notesText}`,
+        }],
+    });
+    const input = toolInput(result) as { classes?: Record<string, unknown>[]; summary?: unknown } | undefined;
+    const keys = new Set(cleaned.map(c => c.key));
+    const out = (input?.classes ?? [])
+        .filter(c => keys.has(String(c?.key ?? '')))
+        .map(c => ({ key: String(c.key), ...Object.fromEntries(EOD_NOTE_KEYS.map(k => [k, text(c[k], 3000)])) }));
+    const summary = text(input?.summary, 3000);
+    if (!out.length || !summary) return fail(502, 'reader_failed');
+    return reply(200, { report: { classes: out, summary } });
+}
+
 // ---- action: submit (students) -------------------------------------------
 async function submitStory(form: FormData, userId: string, studentId: string) {
     const image = form.get('image');
@@ -358,6 +454,9 @@ Deno.serve(async (req) => {
         if ((req.headers.get('content-type') ?? '').includes('application/json')) {
             const body = await req.json().catch(() => ({}));
             if (body.action === 'feedback') return isStaff ? await giveFeedback(body) : fail(403, 'not_allowed');
+            if (body.action === 'eod') {
+                return ['trainer', 'teacher'].includes(profile.role) ? await writeEodReport(body) : fail(403, 'not_allowed');
+            }
             return fail(400, 'bad_request');
         }
 

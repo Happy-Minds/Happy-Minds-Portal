@@ -82,13 +82,33 @@ function localDateString(date) {
 // screens to see what the teacher sees, but only the teacher runs the class:
 // nothing they do there is saved, counts as class time, marks a stage or
 // chapter done, uses the story helper, or controls a projector. They do
-// still save their own work (observations). To give admins full teacher
-// controls again, remove 'admin' here. Coordinators and management watch
-// over every school, so they preview lessons the same way.
+// still save their own work (observations). Coordinators and management
+// watch over every school, so they preview lessons the same way.
+// A trainer teaches for real (Session 1, or a pending Session 2) in their own
+// classes and in a class they cover as a substitute today; anywhere else
+// they preview too.
 const VIEW_ONLY_ROLES = ['trainer', 'admin', 'coordinator', 'management'];
 
 function isViewOnly() {
-    return !!appState.currentUser && VIEW_ONLY_ROLES.includes(appState.currentUser.role);
+    const me = appState.currentUser;
+    if (!me || !VIEW_ONLY_ROLES.includes(me.role)) return false;
+    return !(me.role === 'trainer' && trainerTeachesCurrentSection());
+}
+
+function trainerTeachesCurrentSection() {
+    const me = appState.currentUser;
+    const section = HappyMindsConfig.SECTIONS.find(s => s.id === HMCloud.getSection());
+    if (!me || !section) return false;
+    if (section.trainer_id === me.id) return true;
+    return isCoveringToday(section);
+}
+
+// This trainer is the substitute for this class's visit today.
+function isCoveringToday(section) {
+    const me = appState.currentUser;
+    const today = localDateString();
+    return HappyMindsConfig.SUBSTITUTIONS.some(s => s.substitute_id === me.id && s.school_id === section.school_id
+        && s.trainer_id === section.trainer_id && s.visit_date === today);
 }
 
 function viewOnlyNotice(what) {
@@ -313,7 +333,7 @@ function navigateTo(viewId) {
     // Chapter screens take the chapter's colour group from the book.
     if (PREVIEW_BANNER_VIEWS.includes(viewId)) applyChapterColours(appState.currentChapterId);
 
-    if (viewId === 'home') renderHomeHeroStats();
+    if (viewId === 'home') { renderHomeHeroStats(); renderHomeDueCard(); }
     if (viewId !== 'explore-stage') {
         stopStorybookNarration();
         pauseChapterVideo();
@@ -449,11 +469,11 @@ function enterApp(account) {
     }
 
     appState.currentUser = account;
-    document.body.classList.toggle('view-only', isViewOnly());
     document.body.classList.toggle('can-manage', canManage());
     document.body.classList.toggle('can-plan', canPlan());
     document.getElementById('weekNavLabel').textContent = canPlan() ? 'Week' : 'My week';
     if (account.role !== 'parent') chooseStartingSection(account);
+    document.body.classList.toggle('view-only', isViewOnly());
     reloadSavedState();
     renderChaptersRoadmap();
     renderChapterHub();
@@ -599,6 +619,9 @@ function selectSection(sectionId) {
     }
     endTimer();
     HMCloud.setSection(sectionId);
+    document.body.classList.toggle('view-only', isViewOnly());
+    // The projector link opens for anyone who now runs lessons here.
+    ensureRemoteChannel();
     try { localStorage.setItem(`${SECTION_CHOICE_KEY}:${appState.currentUser.id}`, sectionId); } catch (err) { /* private mode */ }
     document.getElementById('sectionPickerModal').classList.remove('active-modal');
     reloadSavedState();
@@ -1187,10 +1210,16 @@ async function removeSubstitute(id, btn) {
 // Monday of the shown week (local calendar), as a Date at noon. On a
 // Sunday, "this week" is the week starting tomorrow.
 function weekStart() {
-    const d = new Date();
+    const d = weekStartFor(new Date());
+    d.setDate(d.getDate() + weekOffset * 7);
+    return d;
+}
+
+function weekStartFor(day) {
+    const d = new Date(day);
     d.setHours(12, 0, 0, 0);
     if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + weekOffset * 7);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
     return d;
 }
 
@@ -1277,6 +1306,7 @@ function renderWeekView() {
                     <strong>${escapeReportText(it.section.school ? it.section.school.name : '')} · ${it.section.label}</strong>
                     <span>Session ${it.session} · ${escapeReportText(who)}</span>
                     ${note}
+                    ${sessionStatusHtml(it)}
                 </span>
             </div>`;
     };
@@ -1287,11 +1317,425 @@ function renderWeekView() {
             : 'Nothing in your timetable this week yet. Your coordinator sets the class timetable.'}</p>`;
         return;
     }
+    const writesReports = me.role === 'trainer';
     container.innerHTML = days.filter(d => d.items.length || plan).map(d => `
         <section class="week-day${d.iso === today ? ' is-today' : ''}">
             <h3>${WEEKDAYS[d.weekday]} <span>${new Date(`${d.iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}${d.iso === today ? ' · today' : ''}</span></h3>
+            ${writesReports && d.iso <= today && d.items.some(it => it.person === me.id)
+                ? `<button type="button" class="btn-glass compact week-report-btn" onclick="openDayReport('${d.iso}')"><i class="fa-solid fa-file-lines"></i> Notes &amp; day report${eodReportFor(d.iso)?.submitted_at ? ' · submitted' : ''}</button>` : ''}
             ${d.items.length ? d.items.map(row).join('') : '<p class="timetable-empty">No sessions</p>'}
         </section>`).join('');
+}
+
+// ================= Sessions held (Phase 3) =================
+// What happened to each Session 1 and 2: recorded from the week by the
+// person teaching it. The chapter is the class's current chapter (the first
+// one not finished), except that Session 2 belongs to the chapter whose
+// Session 1 is done and whose Session 2 is still pending.
+const SESSION_STATUS_LABELS = { done: 'Done', not_held: 'Not held', not_done: 'Not done' };
+
+function currentChapterOf(sectionId) {
+    const done = HMCloud.classProgressFor(sectionId).completedChapters || [];
+    return (CHAPTERS.find(c => !done.includes(c.id)) || CHAPTERS[CHAPTERS.length - 1]).id;
+}
+
+function sessionRecord(sectionId, session, iso) {
+    return HappyMindsConfig.SESSIONS.find(s => s.section_id === sectionId && s.session === session && s.held_on === iso) || null;
+}
+
+// The latest Session 1 that was held, if its chapter's Session 2 hasn't been done.
+function pendingSession2(sectionId) {
+    const ones = HappyMindsConfig.SESSIONS.filter(s => s.section_id === sectionId && s.session === 1 && s.status === 'done')
+        .sort((a, b) => b.held_on.localeCompare(a.held_on));
+    const last = ones[0];
+    if (!last) return null;
+    const twoDone = HappyMindsConfig.SESSIONS.some(s => s.section_id === sectionId && s.session === 2 && s.chapter_id === last.chapter_id && s.status === 'done');
+    if (twoDone) return null;
+    const lastTwo = HappyMindsConfig.SESSIONS.filter(s => s.section_id === sectionId && s.session === 2 && s.chapter_id === last.chapter_id)
+        .sort((a, b) => b.held_on.localeCompare(a.held_on))[0] || null;
+    return { chapterId: last.chapter_id, sessionOne: last, lastTry: lastTwo };
+}
+
+function chapterForSession(sectionId, session) {
+    const pending = session === 2 ? pendingSession2(sectionId) : null;
+    return pending ? pending.chapterId : currentChapterOf(sectionId);
+}
+
+const chapterLabel = id => { const c = getChapterById(id); return `Chapter ${id}${c ? `: ${c.title}` : ''}`; };
+
+// Only the person teaching that session records it (and only for today or earlier).
+function canRecordSession(item) {
+    const me = appState.currentUser;
+    return !!me && ['teacher', 'trainer'].includes(me.role) && item.person === me.id && item.iso <= localDateString();
+}
+
+function sessionStatusHtml(item) {
+    const rec = sessionRecord(item.section.id, item.session, item.iso);
+    const args = `'${item.section.id}', ${item.session}, '${item.iso}'`;
+    let html = '';
+    if (rec) {
+        const detail = rec.status === 'not_held' && rec.reason ? `: ${escapeReportText(rec.reason)}`
+            : rec.status === 'not_done' && rec.next_date ? ` · next: ${formatVisitDate(rec.next_date)}` : '';
+        html += `<span class="session-chip ${rec.status}">${SESSION_STATUS_LABELS[rec.status]} · Ch ${rec.chapter_id}${detail}</span>`;
+    } else if (canRecordSession(item)) {
+        const chapter = chapterForSession(item.section.id, item.session);
+        html += `<div class="session-actions" data-args="${args}">
+            <span class="session-chapter">${escapeReportText(chapterLabel(chapter))}</span>
+            <button type="button" class="btn-glass compact session-done" onclick="markSession(${args}, 'done', this)"><i class="fa-solid fa-check"></i> Done</button>
+            <button type="button" class="btn-glass compact" onclick="openSessionReason(${args}, '${item.session === 1 ? 'not_held' : 'not_done'}', this)">${item.session === 1 ? 'Not held' : 'Not done'}</button>
+        </div>`;
+    }
+    // A Session 2 still pending from an earlier visit: the trainer can take it now.
+    if (item.session === 1) {
+        const pending = pendingSession2(item.section.id);
+        if (pending && pending.sessionOne.held_on < item.iso) {
+            html += `<span class="week-flag covered">Session 2 of Ch ${pending.chapterId} still pending</span>`;
+            if (canRecordSession(item) && !sessionRecord(item.section.id, 2, item.iso)) {
+                html += `<button type="button" class="btn-glass compact session-extra" onclick="markSession('${item.section.id}', 2, '${item.iso}', 'done', this)"><i class="fa-solid fa-check"></i> I took Session 2 too</button>`;
+            }
+        }
+    }
+    return html;
+}
+
+async function markSession(sectionId, session, iso, status, btn, reason = '', nextDate = null) {
+    const chapterId = chapterForSession(sectionId, session);
+    const restore = btn ? busyButton(btn, 'Saving…') : () => {};
+    try {
+        await HMCloud.recordSession({ sectionId, chapterId, session, heldOn: iso, status, reason, nextDate });
+        const label = HappyMindsConfig.SECTIONS.find(s => s.id === sectionId)?.label || '';
+        showNotification(`${label}: Session ${session} of Chapter ${chapterId} marked ${SESSION_STATUS_LABELS[status].toLowerCase()}.`);
+        if (appState.currentView === 'week') renderWeekView();
+        renderHomeDueCard();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
+// "Not held" asks why; "Not done" asks when the teacher will take it.
+function openSessionReason(sectionId, session, iso, status, btn) {
+    const box = btn.closest('.session-actions');
+    const notDone = status === 'not_done';
+    box.innerHTML = `
+        <form class="session-reason" onsubmit="submitSessionReason(event, '${sectionId}', ${session}, '${iso}', '${status}')">
+            <label>${notDone ? 'Next date you will take it' : 'Why it was not held'}
+                ${notDone ? `<input type="date" min="${localDateString()}" required>` : '<input type="text" maxlength="300" placeholder="e.g. School function, trainer on leave" required>'}
+            </label>
+            <button type="submit" class="btn-primary-glowing compact">Save</button>
+            <button type="button" class="btn-glass compact" onclick="renderWeekView(); renderHomeDueCard();">Cancel</button>
+        </form>`;
+    box.querySelector('input').focus();
+}
+
+function submitSessionReason(event, sectionId, session, iso, status) {
+    event.preventDefault();
+    const input = event.target.querySelector('input');
+    const value = input.value.trim();
+    if (!value) { input.focus(); return; }
+    markSession(sectionId, session, iso, status, event.target.querySelector('button[type="submit"]'),
+        status === 'not_held' ? value : '', status === 'not_done' ? value : null);
+}
+
+// ================= Handbook notes and the End-of-Day report (Phase 3) =================
+// The trainer types notes for each class taught that day, in the Handbook
+// page's order; they save as they type. "Write my report" sends the notes to
+// the stories function, which fixes the English and lays them out as a
+// report with a closing summary in the trainer's voice, adding nothing new.
+// The trainer checks and edits it, submits it, and downloads it as a PDF.
+const NOTE_FIELDS = [
+    ['lesson', 'Lesson and activities done'],
+    ['attentiveness', 'How attentive were the students?'],
+    ['participation', 'Who participated and answered'],
+    ['stars', 'Star performers'],
+    ['support', 'Students who need support'],
+    ['remarks', 'Remarks']
+];
+const noteSaveTimers = new Map();
+
+function openDayReport(iso) {
+    const input = document.getElementById('dayReportDate');
+    input.max = localDateString();
+    input.value = iso || localDateString();
+    renderDayReport();
+    navigateTo('day-report');
+}
+
+// The classes this person taught (or was due to teach) on that day.
+function dayClasses(iso) {
+    const me = appState.currentUser;
+    const items = weekSessions(weekStartFor(new Date(`${iso}T12:00:00`))).filter(it => it.iso === iso && it.person === me.id);
+    // A pending Session 2 the trainer took on the visit.
+    HappyMindsConfig.SESSIONS.filter(s => s.recorded_by === me.id && s.held_on === iso)
+        .forEach(s => {
+            if (items.some(it => it.section.id === s.section_id && it.session === s.session)) return;
+            const section = HappyMindsConfig.SECTIONS.find(x => x.id === s.section_id);
+            if (section) items.push({ section, session: s.session, slot: slotFor(section.id, s.session), iso, person: me.id });
+        });
+    return items.map(it => {
+        const rec = sessionRecord(it.section.id, it.session, iso);
+        return { ...it, chapterId: rec ? rec.chapter_id : chapterForSession(it.section.id, it.session), record: rec };
+    });
+}
+
+function notesFor(sectionId, iso, session) {
+    const me = HMCloud.whoAmI();
+    return HappyMindsConfig.CLASS_NOTES.find(n => n.section_id === sectionId && n.user_id === me && n.note_date === iso && n.session === session) || null;
+}
+
+function renderDayReport() {
+    const iso = document.getElementById('dayReportDate').value || localDateString();
+    const classes = dayClasses(iso);
+    document.getElementById('dayReportSubtitle').textContent =
+        `${new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`;
+    const container = document.getElementById('dayReportClasses');
+    container.innerHTML = classes.length ? classes.map(c => {
+        const note = notesFor(c.section.id, iso, c.session);
+        const fields = (note && note.fields) || {};
+        const key = `${c.section.id}|${c.session}`;
+        const status = c.record ? `<span class="session-chip ${c.record.status}">${SESSION_STATUS_LABELS[c.record.status]}</span>` : '';
+        return `
+            <section class="admin-section-card day-class" data-key="${key}" data-chapter="${c.chapterId}">
+                <div class="day-class-head">
+                    <h3>${escapeReportText(sectionFullName(c.section))} · Session ${c.session}</h3>
+                    ${status}
+                    <span class="day-class-saved" aria-live="polite"></span>
+                </div>
+                <p class="day-class-meta">${escapeReportText(chapterLabel(c.chapterId))}${c.slot ? ` · ${c.slot.starts_at}–${c.slot.ends_at}` : ''}</p>
+                <div class="day-class-fields">
+                    ${NOTE_FIELDS.map(([k, label]) => `
+                        <label class="manage-field"><span>${label}</span>
+                            <textarea rows="2" data-field="${k}" oninput="queueNoteSave('${c.section.id}', ${c.session}, ${c.chapterId}, '${iso}', this)">${escapeReportText(fields[k] || '')}</textarea>
+                        </label>`).join('')}
+                </div>
+            </section>`;
+    }).join('') : `<p class="prep-readiness-explain">No classes on this day in your timetable. Choose another day, or check My week.</p>`;
+    renderEodCard(iso, classes);
+}
+
+function queueNoteSave(sectionId, session, chapterId, iso, el) {
+    const card = el.closest('.day-class');
+    const key = card.dataset.key;
+    card.querySelector('.day-class-saved').textContent = 'Saving…';
+    clearTimeout(noteSaveTimers.get(key));
+    noteSaveTimers.set(key, setTimeout(() => saveNotesFromCard(card, sectionId, session, chapterId, iso), 900));
+}
+
+async function saveNotesFromCard(card, sectionId, session, chapterId, iso) {
+    noteSaveTimers.delete(card.dataset.key);
+    const fields = {};
+    card.querySelectorAll('textarea[data-field]').forEach(t => { fields[t.dataset.field] = t.value.trim(); });
+    const saved = card.querySelector('.day-class-saved');
+    try {
+        await HMCloud.saveClassNotes({ sectionId, noteDate: iso, session, chapterId, fields });
+        saved.textContent = 'Saved';
+    } catch (err) {
+        saved.textContent = "Not saved: check the connection";
+        showNotification(err.message);
+    }
+}
+
+// Saves any notes still waiting (the trainer may ask for the report right after typing).
+async function flushNoteSaves() {
+    const pending = [...document.querySelectorAll('#dayReportClasses .day-class')].filter(card => noteSaveTimers.has(card.dataset.key));
+    await Promise.all(pending.map(card => {
+        clearTimeout(noteSaveTimers.get(card.dataset.key));
+        const [sectionId, session] = card.dataset.key.split('|');
+        return saveNotesFromCard(card, sectionId, Number(session), Number(card.dataset.chapter), document.getElementById('dayReportDate').value);
+    }));
+}
+
+function eodReportFor(iso) {
+    const me = HMCloud.whoAmI();
+    return HappyMindsConfig.EOD_REPORTS.find(r => r.user_id === me && r.report_date === iso) || null;
+}
+
+function renderEodCard(iso, classes) {
+    const report = eodReportFor(iso);
+    const status = document.getElementById('eodStatus');
+    const form = document.getElementById('eodForm');
+    const body = report && (report.final || report.draft);
+    document.getElementById('eodPdfBtn').hidden = !body;
+    document.getElementById('eodActions').hidden = !body;
+    document.getElementById('eodGenerateBtn').innerHTML = body
+        ? '<i class="fa-solid fa-wand-magic-sparkles"></i> Write it again from my notes'
+        : '<i class="fa-solid fa-wand-magic-sparkles"></i> Write my report from my notes';
+    document.getElementById('eodGenerateBtn').disabled = !classes.length;
+    status.textContent = report && report.submitted_at
+        ? `Submitted ${new Date(report.submitted_at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}. You can still correct it and submit again.`
+        : body ? 'Draft ready. Check it, make any changes, then submit.'
+            : classes.length ? 'When your notes are in, ask for your report. Nothing is added that you did not write.' : '';
+    form.hidden = !body;
+    if (!body) { form.innerHTML = ''; return; }
+    form.innerHTML = `
+        ${(body.classes || []).map(c => `
+            <fieldset class="eod-class" data-key="${escapeReportText(c.key)}">
+                <legend>${escapeReportText(c.label || '')}${c.chapter ? ` · ${escapeReportText(c.chapter)}` : ''}</legend>
+                ${NOTE_FIELDS.map(([k, label]) => `
+                    <label class="manage-field"><span>${label}</span>
+                        <textarea rows="2" data-field="${k}">${escapeReportText(c[k] || '')}</textarea></label>`).join('')}
+            </fieldset>`).join('')}
+        <label class="manage-field eod-summary"><span>Summary of the day</span>
+            <textarea rows="4" id="eodSummary">${escapeReportText(body.summary || '')}</textarea></label>`;
+}
+
+function readEodForm() {
+    const iso = document.getElementById('dayReportDate').value;
+    const report = eodReportFor(iso);
+    const base = (report && (report.final || report.draft)) || { classes: [] };
+    const classes = [...document.querySelectorAll('#eodForm .eod-class')].map(fs => {
+        const old = base.classes.find(c => c.key === fs.dataset.key) || {};
+        const entry = { key: fs.dataset.key, label: old.label || '', chapter: old.chapter || '' };
+        fs.querySelectorAll('textarea[data-field]').forEach(t => { entry[t.dataset.field] = t.value.trim(); });
+        return entry;
+    });
+    return { classes, summary: document.getElementById('eodSummary').value.trim() };
+}
+
+async function generateEodReport() {
+    const iso = document.getElementById('dayReportDate').value;
+    await flushNoteSaves();
+    const classes = dayClasses(iso).map(c => {
+        const note = notesFor(c.section.id, iso, c.session);
+        return {
+            key: `${c.section.id}|${c.session}`,
+            label: sectionFullName(c.section),
+            chapter: chapterLabel(c.chapterId),
+            session: String(c.session),
+            status: c.record ? SESSION_STATUS_LABELS[c.record.status] : '',
+            notes: (note && note.fields) || {}
+        };
+    }).filter(c => Object.values(c.notes).some(v => v && v.trim()));
+    if (!classes.length) {
+        showNotification('Type notes for at least one class first.');
+        return;
+    }
+    const restore = busyButton(document.getElementById('eodGenerateBtn'), 'Writing your report…');
+    try {
+        const draft = await HMCloud.draftEodReport({ date: iso, writer: appState.currentUser.name, classes });
+        // Keep each class's name and chapter with its section of the report.
+        draft.classes = draft.classes.map(c => {
+            const source = classes.find(x => x.key === c.key) || {};
+            return { ...c, label: source.label || '', chapter: source.chapter || '' };
+        });
+        await HMCloud.saveEodReport({ reportDate: iso, draft, final: null });
+        showNotification('Your report is ready. Check it, then submit.');
+    } catch (err) {
+        showNotification(err.code ? storyErrorMessage(err, 'write the report') : err.message);
+    } finally {
+        restore();
+        renderEodCard(iso, dayClasses(iso));
+    }
+}
+
+async function saveEodDraft() {
+    const iso = document.getElementById('dayReportDate').value;
+    const edited = readEodForm();
+    const report = eodReportFor(iso);
+    const restore = busyButton(document.getElementById('eodSaveBtn'), 'Saving…');
+    try {
+        await HMCloud.saveEodReport({ reportDate: iso, draft: edited, final: report && report.submitted_at ? edited : undefined });
+        showNotification('Changes saved.');
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+        renderEodCard(iso, dayClasses(iso));
+    }
+}
+
+async function submitEodReport() {
+    const iso = document.getElementById('dayReportDate').value;
+    const edited = readEodForm();
+    if (!edited.summary) {
+        showNotification('Add a short summary of the day before submitting.');
+        document.getElementById('eodSummary').focus();
+        return;
+    }
+    const restore = busyButton(document.getElementById('eodSubmitBtn'), 'Submitting…');
+    try {
+        await HMCloud.saveEodReport({ reportDate: iso, draft: edited, final: edited, submit: true });
+        showNotification('Report submitted. Download the PDF to give the Principal.');
+    } catch (err) {
+        showNotification(err.message);
+    } finally {
+        restore();
+        renderEodCard(iso, dayClasses(iso));
+    }
+}
+
+function printEodReport() {
+    const iso = document.getElementById('dayReportDate').value;
+    const report = eodReportFor(iso);
+    const body = report && (report.final || report.draft);
+    if (!body) return;
+    const me = appState.currentUser;
+    const day = new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const schools = [...new Set(body.classes.map(c => (c.label || '').split(' · ')[0]).filter(Boolean))].join(', ');
+    const sections = body.classes.map(c => `
+        <section class="eod-print">
+            <h2>${escapeReportText(c.label)}${c.chapter ? ` <span>${escapeReportText(c.chapter)}</span>` : ''}</h2>
+            <dl>${NOTE_FIELDS.filter(([k]) => c[k]).map(([k, label]) => `<dt>${label}</dt><dd>${escapeReportText(c[k])}</dd>`).join('')}</dl>
+        </section>`).join('');
+    openPrintPage(`End-of-Day report - ${me.name} - ${iso}`, `
+        <header>
+            <div class="brand">Happy Minds · End-of-Day report</div>
+            <h1>${escapeReportText(schools || 'School visit')}</h1>
+            <p class="meta">${escapeReportText(me.name)} · ${escapeReportText(day)}${report.submitted_at ? '' : ' · draft, not yet submitted'}</p>
+        </header>
+        ${sections}
+        <section class="summary"><h2>Summary of the day</h2><p>${escapeReportText(body.summary)}</p></section>`);
+}
+
+// ---- Home: what's due for this teacher or trainer ----
+function renderHomeDueCard() {
+    const card = document.getElementById('homeDueCard');
+    const me = appState.currentUser;
+    if (!card || !me || !['teacher', 'trainer'].includes(me.role)) { if (card) card.hidden = true; return; }
+    const today = localDateString();
+    let rows = [];
+    if (me.role === 'teacher') {
+        HappyMindsConfig.SECTIONS.filter(s => s.teacher_id === me.id).forEach(section => {
+            const pending = pendingSession2(section.id);
+            if (!pending) return;
+            const slot = slotFor(section.id, 2);
+            const taughtBy = accountName(pending.sessionOne.recorded_by) || 'the trainer';
+            const retry = pending.lastTry && pending.lastTry.status === 'not_done' && pending.lastTry.next_date
+                ? ` You planned it for ${formatVisitDate(pending.lastTry.next_date)}.` : '';
+            const done = sessionRecord(section.id, 2, today);
+            rows.push(`
+                <div class="due-row">
+                    <div class="due-text">
+                        <strong>${escapeReportText(sectionFullName(section))} · Session 2 of ${escapeReportText(chapterLabel(pending.chapterId))}</strong>
+                        <span>Session 1 was taken by ${escapeReportText(taughtBy)} on ${formatVisitDate(pending.sessionOne.held_on)}.${slot ? ` Your period: ${slotText(slot)}.` : ''}${retry}</span>
+                    </div>
+                    ${done ? '' : `<div class="session-actions">
+                        <button type="button" class="btn-glass compact session-done" onclick="markSession('${section.id}', 2, '${today}', 'done', this)"><i class="fa-solid fa-check"></i> Done</button>
+                        <button type="button" class="btn-glass compact" onclick="openSessionReason('${section.id}', 2, '${today}', 'not_done', this)">Not done</button>
+                    </div>`}
+                </div>`);
+        });
+        card.innerHTML = rows.length ? `<h3><i class="fa-solid fa-bell"></i> Session 2 due</h3>${rows.join('')}` : '';
+    } else {
+        const items = weekSessions(weekStartFor(new Date())).filter(it => it.iso === today && it.person === me.id);
+        if (items.length) {
+            const schools = [...new Set(items.map(it => it.section.school ? it.section.school.name : ''))].join(', ');
+            const open = items.filter(it => !sessionRecord(it.section.id, it.session, today)).length;
+            rows.push(`
+                <div class="due-row">
+                    <div class="due-text">
+                        <strong>Today: ${escapeReportText(schools)}</strong>
+                        <span>${items.length} ${items.length === 1 ? 'class' : 'classes'} · ${open ? `${open} still to mark Done or Not held` : 'all marked'}</span>
+                    </div>
+                    <div class="session-actions">
+                        <button type="button" class="btn-primary-glowing compact" onclick="openDayReport()"><i class="fa-solid fa-file-lines"></i> Notes &amp; day report</button>
+                        <button type="button" class="btn-glass compact" onclick="openWeekView()"><i class="fa-solid fa-calendar-week"></i> My week</button>
+                    </div>
+                </div>`);
+        }
+        card.innerHTML = rows.length ? `<h3><i class="fa-solid fa-school"></i> Your visit today</h3>${rows.join('')}` : '';
+    }
+    card.hidden = !rows.length;
 }
 
 // ---- Logins for a class's students and parents ----
@@ -5407,6 +5851,9 @@ const PRINT_PAGE_STYLES = `
     .na { color: #9CA3AF; font-weight: normal; font-style: italic; }
     .reflection-report-stars { color: #F59E0B; letter-spacing: 1px; }
     .reflection-report-stars span { color: #D1D5DB; }
+    section.eod-print dd { font-weight: normal; }
+    h2 span { font-weight: normal; color: #6B7280; }
+    section.summary p { font-size: 13.5px; line-height: 1.6; margin: 0; white-space: pre-wrap; }
     .signatures { display: flex; gap: 40px; margin-top: 18px; }
     .signatures div { flex: 1; border-top: 1px solid #9CA3AF; padding-top: 6px; font-size: 12px; color: #4B5563; }
     .signatures strong { display: block; font-size: 14px; color: #1F2937; margin-bottom: 2px; }
@@ -5430,7 +5877,10 @@ function openPrintPage(title, bodyHtml) {
 
 // ================= VIEW 9: Scan (standalone teacher tool, from the nav bar) =================
 function openScanView() {
-    if (isViewOnly()) return;
+    if (isViewOnly()) {
+        viewOnlyNotice('stories are scanned in the classes you teach. Switch to one of your classes first.');
+        return;
+    }
     renderScanView();
     navigateTo('scan');
     startTimer(appState.scanTargetChapterId, 'scan');
