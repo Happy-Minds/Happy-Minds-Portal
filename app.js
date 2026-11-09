@@ -1872,7 +1872,7 @@ function printEodReport() {
 }
 
 // The PDF of one person's day report (their own, or anyone's for oversight).
-function printEodReportFor(report, writerName) {
+function printEodReportFor(report, writerName, w) {
     const iso = report.report_date;
     const body = report.final || report.draft;
     if (!body) return;
@@ -1891,7 +1891,7 @@ function printEodReportFor(report, writerName) {
             <p class="meta">${escapeReportText(me.name)} · ${escapeReportText(day)}${report.submitted_at ? '' : ' · draft, not yet submitted'}</p>
         </header>
         ${sections}
-        <section class="summary"><h2>Summary of the day</h2><p>${escapeReportText(body.summary)}</p></section>`);
+        <section class="summary"><h2>Summary of the day</h2><p>${escapeReportText(body.summary)}</p></section>`, w || undefined);
 }
 
 // ================= Programme monitoring (Phase 5) =================
@@ -2170,14 +2170,21 @@ function renderMonitor() {
         : '<tbody><tr><td class="timetable-empty">No class teacher assigned to these classes yet.</td></tr></tbody>';
 
     // Day reports this month
-    const sectionLabels = new Set(sections.map(s => sectionFullName(s)));
+    // Which classes a report covers comes from that day's notes and marked
+    // sessions, so the list doesn't need each report's full text.
+    const sectionIdsShown = new Set(sections.map(s => s.id));
+    const reportSections = r => [...new Set([
+        ...HappyMindsConfig.CLASS_NOTES.filter(n => n.user_id === r.user_id && n.note_date === r.report_date).map(n => n.section_id),
+        ...HappyMindsConfig.SESSIONS.filter(x => x.recorded_by === r.user_id && x.held_on === r.report_date).map(x => x.section_id)
+    ])].map(id => HappyMindsConfig.SECTIONS.find(s => s.id === id)).filter(Boolean);
     const reports = HappyMindsConfig.EOD_REPORTS
         .filter(r => r.submitted_at && r.report_date >= monthStart && r.report_date <= monthLast)
-        .filter(r => !schoolFilter || ((r.final || r.draft || {}).classes || []).some(c => sectionLabels.has(c.label)))
+        .filter(r => !schoolFilter || reportSections(r).some(s => sectionIdsShown.has(s.id)))
         .sort((a, b) => b.report_date.localeCompare(a.report_date));
     document.getElementById('monitorReports').innerHTML = reports.length ? reports.map(r => {
-        const body = r.final || r.draft || { classes: [] };
-        const schools = [...new Set(body.classes.map(c => (c.label || '').split(' · ')[0]).filter(Boolean))].join(', ');
+        const covered = reportSections(r);
+        const body = { classes: covered };
+        const schools = [...new Set(covered.map(s => (s.school ? s.school.name : '')).filter(Boolean))].join(', ');
         const late = submittedOn(r) !== r.report_date;
         return `
             <div class="admin-list-row">
@@ -2192,9 +2199,18 @@ function renderMonitor() {
     document.getElementById('reportsClassHeading').textContent = section ? `This class: ${sectionFullName(section)}` : '';
 }
 
-function openMonitorReport(id) {
-    const report = HappyMindsConfig.EOD_REPORTS.find(r => r.id === id);
-    if (report) printEodReportFor(report, accountName(report.user_id) || 'Trainer');
+async function openMonitorReport(id) {
+    const known = HappyMindsConfig.EOD_REPORTS.find(r => r.id === id);
+    // Open the tab now, while this is still the click, then fill it in.
+    const w = known && (known.final || known.draft) ? undefined : window.open('', '_blank');
+    if (w) { w.document.write('<!DOCTYPE html><title>Loading…</title><p style="font-family:Arial,sans-serif;padding:32px">Loading the day report…</p>'); }
+    try {
+        const report = await HMCloud.dayReport(id);
+        printEodReportFor(report, accountName(report.user_id) || 'Trainer', w);
+    } catch (err) {
+        if (w) w.close();
+        showNotification(err.message);
+    }
 }
 
 // ---- Home: what's due for this teacher or trainer ----
@@ -6501,6 +6517,12 @@ async function renderRecognition() {
     const section = currentSection();
     if (!box) return;
     if (!section) { box.innerHTML = '<p class="prep-readiness-explain">Choose a class first.</p>'; return; }
+    if (!box.dataset.ready || box.dataset.ready !== section.id) {
+        box.innerHTML = '<p class="prep-readiness-explain">Loading…</p>';
+        try { await HMCloud.ensureClassDetail(section.id); } catch (err) { /* use what is known */ }
+        if (!currentSection() || currentSection().id !== section.id) return;
+        box.dataset.ready = section.id;
+    }
     const month = HMRecognition.monthKey();
     const students = HappyMindsConfig.STUDENTS;
     const progress = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY) || {};
@@ -6565,7 +6587,7 @@ async function renderRecognition() {
     if (recognitionStories === null) {
         recognitionStories = [];
         try {
-            recognitionStories = await HMCloud.listStories({ sectionId: section.id });
+            recognitionStories = await HMCloud.listStories({ sectionId: section.id, light: true });
             if (currentSection() && currentSection().id === section.id) renderRecognition();
         } catch (err) { /* suggestions then use portal work only */ }
     }
@@ -6594,8 +6616,14 @@ function clearClassStar() {
 }
 
 
-function openStudentReport(studentId) {
+async function openStudentReport(studentId) {
     const container = document.getElementById('teacherReportContent');
+    const student = HappyMindsConfig.ALL_STUDENTS.find(s => s.id === studentId);
+    if (student && student.section_id) {
+        container.innerHTML = '<p class="prep-readiness-explain">Loading the report…</p>';
+        navigateTo('teacher-report');
+        try { await HMCloud.ensureClassDetail(student.section_id); } catch (err) { /* show what is known */ }
+    }
     container.innerHTML = buildStudentReportHtml(studentId);
     loadReportStories(container, studentId);
     navigateTo('teacher-report');
@@ -6720,7 +6748,7 @@ async function loadReportStories(container, studentId) {
     const name = student ? student.name : 'This student';
     let stories;
     try {
-        stories = (await HMCloud.listStories()).filter(s => s.student_id === studentId);
+        stories = await HMCloud.listStories({ studentId });
     } catch (err) {
         box.innerHTML = `<p class="prep-readiness-explain">Couldn't load the stories. Check the internet connection and open this page again.</p>`;
         return;
@@ -7051,12 +7079,13 @@ const PRINT_PAGE_STYLES = `
     @media print { body { padding: 0; max-width: none; } }
 `;
 
-function openPrintPage(title, bodyHtml) {
-    const w = window.open('', '_blank');
+// `w`: a tab already opened during the click (when the content had to load first).
+function openPrintPage(title, bodyHtml, w = window.open('', '_blank')) {
     if (!w) {
         showNotification('Allow pop-ups for this site to save the PDF.');
         return;
     }
+    w.document.open();
     w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>${escapeReportText(title)}</title><style>${PRINT_PAGE_STYLES}</style></head>

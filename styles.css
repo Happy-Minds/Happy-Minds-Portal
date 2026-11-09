@@ -5096,3 +5096,8 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
 .roster-reset { display: inline-flex; }
 .roster-reset-choices { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 #rosterRemoveBtn[hidden] { display: none; }
+
+.home-due-card[hidden] { display: none; }
+
+.login-privacy-link { display: block; margin-top: 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.login-privacy-link:hover { color: var(--primary-blue); }

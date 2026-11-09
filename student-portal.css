@@ -1496,3 +1496,5 @@ body {
 .sp-rec-label { font-size: 12px; font-weight: 800; color: var(--sp-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .sp-rec-name { font-size: 17px; font-weight: 900; color: var(--sp-text); }
 @media (prefers-reduced-motion: reduce) { .sp-rec-streak { transition: none; } }
+
+.sp-privacy-link { display: block; margin-top: 10px; text-align: center; font-size: 12px; font-weight: 600; color: var(--sp-muted); }

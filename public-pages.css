@@ -196,3 +196,4 @@ h1, h2 { margin: 0; line-height: 1.2; }
 }
 .pp-star { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 9px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; }
 .pp-star i { color: #D97706; }
+.pp-footer a { color: inherit; }

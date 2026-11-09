@@ -53,10 +53,10 @@ const HMCloud = (() => {
     // PostgREST returns at most 1000 rows per request; a whole programme has
     // a few thousand students, so read in pages.
     const PAGE_SIZE = 1000;
-    async function selectAll(table, columns, orderBy) {
+    async function selectAll(table, columns, orderBy, filter = q => q) {
         const rows = [];
         for (let from = 0; ; from += PAGE_SIZE) {
-            const { data, error } = await client.from(table).select(columns).order(orderBy).range(from, from + PAGE_SIZE - 1);
+            const { data, error } = await filter(client.from(table).select(columns)).order(orderBy).range(from, from + PAGE_SIZE - 1);
             if (error) throw error;
             rows.push(...data);
             if (data.length < PAGE_SIZE) return rows;
@@ -65,9 +65,9 @@ const HMCloud = (() => {
 
     // A table added by a later setup step: an empty list if it doesn't exist
     // yet, so signing in keeps working before that SQL has been run.
-    async function selectAllIfReady(table, columns, orderBy) {
+    async function selectAllIfReady(table, columns, orderBy, filter) {
         try {
-            return await selectAll(table, columns, orderBy);
+            return await selectAll(table, columns, orderBy, filter);
         } catch (err) {
             if (err && (err.code === '42P01' || err.code === 'PGRST205' || /does not exist|schema cache/i.test(err.message || ''))) {
                 console.warn(`Happy Minds: ${table} is not set up yet`);
@@ -141,6 +141,12 @@ const HMCloud = (() => {
     const SESSION_COLUMNS = 'id, section_id, chapter_id, session, held_on, status, reason, next_date, recorded_by, recorded_at';
     const NOTE_COLUMNS = 'id, section_id, user_id, note_date, chapter_id, session, fields, updated_at';
     const EOD_COLUMNS = 'id, user_id, report_date, draft, final, submitted_at, updated_at';
+    // Lighter lists for admin / coordinator / management (details load when needed).
+    const EOD_LIST_COLUMNS = 'id, user_id, report_date, submitted_at, updated_at';
+    const NOTE_LIST_COLUMNS = 'id, section_id, user_id, note_date, chapter_id, session, updated_at';
+    const STUDENT_DOCS = ['studentPortal', 'chapter1Practice'];
+    let oversight = false;
+    const detailLoaded = new Map();   // sectionId -> Promise of that class's details
     const SUBSTITUTION_COLUMNS = 'id, school_id, visit_date, trainer_id, substitute_id, note, assigned_by, assigned_at';
     const HOLIDAY_COLUMNS = 'id, school_id, start_date, end_date, reason, kind, status, added_by, confirmed_by, created_at';
     const EXTRA_COLUMNS = 'id, section_id, session, on_date, starts_at, ends_at, for_date, note, created_by';
@@ -207,10 +213,17 @@ const HMCloud = (() => {
         // RLS limits each of these to what this account may see: admin,
         // coordinator and management get every school; teachers and trainers
         // their own sections; students and parents their own child.
+        // Admin, coordinator and management see the whole programme, so for
+        // them the heavy parts load later, per class or when opened: each
+        // student's portal records, the trainers' note text, and the full
+        // text of day reports (see ensureClassDetail / dayReport).
+        oversight = ['admin', 'coordinator', 'management'].includes(me.role);
+        detailLoaded.clear();
+        const notStudentDocs = q => q.not('doc', 'in', `(${STUDENT_DOCS.join(',')})`);
         const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras, packageHistory] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
-            selectAll('app_documents', 'doc, student_id, data', 'doc'),
+            selectAll('app_documents', 'doc, student_id, data', 'doc', oversight ? notStudentDocs : undefined),
             selectAll('schools', 'id, code, name, package', 'name'),
             selectAll('sections', 'id, school_id, grade, letter, teacher_id, trainer_id', 'grade'),
             selectAll('section_documents', 'doc, section_id, data', 'doc'),
@@ -219,8 +232,8 @@ const HMCloud = (() => {
             selectAllIfReady('section_slots', SLOT_COLUMNS, 'section_id'),
             selectAllIfReady('substitutions', SUBSTITUTION_COLUMNS, 'visit_date'),
             selectAllIfReady('session_log', SESSION_COLUMNS, 'held_on'),
-            selectAllIfReady('class_notes', NOTE_COLUMNS, 'note_date'),
-            selectAllIfReady('eod_reports', EOD_COLUMNS, 'report_date'),
+            selectAllIfReady('class_notes', oversight ? NOTE_LIST_COLUMNS : NOTE_COLUMNS, 'note_date'),
+            selectAllIfReady('eod_reports', oversight ? EOD_LIST_COLUMNS : EOD_COLUMNS, 'report_date'),
             selectAllIfReady('school_holidays', HOLIDAY_COLUMNS, 'start_date'),
             selectAllIfReady('extra_sessions', EXTRA_COLUMNS, 'on_date'),
             selectAllIfReady('school_package_history', 'school_id, package, from_date', 'from_date')
@@ -472,7 +485,39 @@ const HMCloud = (() => {
         setSection(sectionId) {
             currentSectionId = HappyMindsConfig.SECTIONS.some(s => s.id === sectionId) ? sectionId : null;
             applySectionRoster();
+            if (currentSectionId) this.ensureClassDetail(currentSectionId).catch(() => {});
             return currentSectionId;
+        },
+
+        // Admin / coordinator / management: one class's student portal
+        // records and the trainers' note text, loaded once when first needed.
+        // Everyone else already has them from sign-in.
+        ensureClassDetail(sectionId) {
+            if (!oversight || !sectionId) return Promise.resolve();
+            if (!detailLoaded.has(sectionId)) {
+                const ids = HappyMindsConfig.ALL_STUDENTS.filter(s => s.section_id === sectionId).map(s => s.id);
+                const work = Promise.all([
+                    ids.length ? selectAll('app_documents', 'doc, student_id, data', 'doc', q => q.in('doc', STUDENT_DOCS).in('student_id', ids)) : [],
+                    selectAllIfReady('class_notes', NOTE_COLUMNS, 'note_date', q => q.eq('section_id', sectionId))
+                ]).then(([studentDocs, notes]) => {
+                    studentDocs.forEach(row => { if (!unsaved.has(`a|${row.doc}|${row.student_id}`)) docs.set(keyOf(row.doc, row.student_id), row.data); });
+                    const full = new Map(notes.map(n => [n.id, n]));
+                    HappyMindsConfig.CLASS_NOTES = HappyMindsConfig.CLASS_NOTES.map(n => full.get(n.id) || n);
+                }).catch(err => { detailLoaded.delete(sectionId); throw err; });
+                detailLoaded.set(sectionId, work);
+            }
+            return detailLoaded.get(sectionId);
+        },
+
+        // A day report with its full text (admin / coordinator / management
+        // load only the list at sign-in).
+        async dayReport(id) {
+            const known = HappyMindsConfig.EOD_REPORTS.find(r => r.id === id);
+            if (known && (known.final || known.draft)) return known;
+            const { data, error } = await client.from('eod_reports').select(EOD_COLUMNS).eq('id', id).single();
+            if (error) throw new Error("Couldn't open that day report. Check your connection and try again.");
+            if (known) Object.assign(known, data);
+            return data;
         },
 
         // ---- Managing schools, classes and student lists -------------------
@@ -824,13 +869,15 @@ const HMCloud = (() => {
 
         // Stories this account may see (Row Level Security decides), newest
         // first. Filter by { chapterId, source } if given.
-        async listStories({ chapterId, source, sectionId } = {}) {
+        // `light`: only who wrote each story and when (for counting).
+        async listStories({ chapterId, source, sectionId, studentId, light = false } = {}) {
             let query = client.from('story_submissions')
-                .select('*')   // includes `showcase` once supabase/phase7-qr-pages.sql is run
+                .select(light ? 'id, student_id, section_id, chapter_id, source, created_at' : '*')   // includes `showcase` once supabase/phase7-qr-pages.sql is run
                 .order('created_at', { ascending: false });
             if (chapterId) query = query.eq('chapter_id', chapterId);
             if (source) query = query.eq('source', source);
             if (sectionId) query = query.eq('section_id', sectionId);
+            if (studentId) query = query.eq('student_id', studentId);
             const { data, error } = await query;
             if (error) {
                 console.warn('Happy Minds: could not load stories', error);

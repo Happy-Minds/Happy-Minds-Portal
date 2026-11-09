@@ -213,7 +213,7 @@ const HMPublic = (() => {
                     : '<p class="pp-muted">Our teachers will share some of our students’ stories here soon.</p>'}
             </section>
 
-            <footer class="pp-footer">Stories are shown only when a teacher chooses them, with the student’s first name and initial. Numbers come from the Happy Minds portal.</footer>`;
+            <footer class="pp-footer">Stories are shown only when a teacher chooses them, with the student’s first name and initial. Numbers come from the Happy Minds portal. <a href="privacy.html">Privacy</a></footer>`;
     }
 
     async function start(fn, render) {
