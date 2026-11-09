@@ -484,6 +484,7 @@ function enterApp(account) {
 
     document.getElementById('headerUserAvatar').src = account.avatar;
     document.getElementById('headerUserName').textContent = `Hi, ${account.name}!`;
+    document.getElementById('headerUserName').title = account.name;
     updateSectionBadge();
 
     // Any nav item tagged data-role="X" only shows for that role. A few
@@ -1768,6 +1769,15 @@ function monitorAlerts(sections) {
         if (!s.trainer_id) g.trainer.push(s.label);
         if (!slotFor(s.id, 1) || !slotFor(s.id, 2)) g.timetable.push(s.label);
     });
+    // A monthly observation per school (only admin and management can see observations).
+    if (['admin', 'management'].includes(appState.currentUser.role)) {
+        const monthStart = `${today.slice(0, 7)}-01`;
+        bySchool.forEach((g, schoolId) => {
+            const running = sections.some(s => s.school_id === schoolId && slotFor(s.id, 1));
+            const observed = appState.observations.some(o => o.schoolId === schoolId && (o.submittedAt || '') >= monthStart);
+            if (running && !observed) add('watch', `${g.name}: no observation yet this month.`);
+        });
+    }
     bySchool.forEach(g => {
         if (g.teacher.length) add('setup', `${g.name}: no class teacher for ${g.teacher.join(', ')}.`);
         if (g.trainer.length) add('setup', `${g.name}: no trainer for ${g.trainer.join(', ')}.`);
@@ -4881,10 +4891,32 @@ function saveObservations() {
 
 let observeDraft = null;
 
+// The monthly observation is done by the HappyMinds management team (admin,
+// management) in the chosen class. In Standard schools they observe the class
+// teacher; in Premium and Advance, our trainer. Only admin and management
+// can read observations (enforced by the database).
+function observedPerson() {
+    const section = currentSection();
+    const who = document.getElementById('observeWhoSelect').value;
+    const id = section ? (who === 'trainer' ? section.trainer_id : section.teacher_id) : null;
+    return { role: who, account: id ? HappyMindsConfig.ACCOUNTS.find(a => a.id === id) || null : null };
+}
+
 function openObservationPicker() {
+    const section = currentSection();
+    document.getElementById('observeClassLine').textContent = section
+        ? `Class: ${sectionFullName(section)} (${PACKAGE_LABELS[section.school ? section.school.package : 'premium'] || ''} package). To observe another class, use Switch class in your profile menu.`
+        : 'Choose a class first: Switch class in your profile menu.';
+    const who = document.getElementById('observeWhoSelect');
+    const teacher = section && section.teacher_id ? accountName(section.teacher_id) : '';
+    const trainer = section && section.trainer_id ? accountName(section.trainer_id) : '';
+    who.innerHTML = `<option value="teacher">Class teacher${teacher ? `: ${escapeReportText(teacher)}` : ' (none yet)'}</option>
+        <option value="trainer">Trainer${trainer ? `: ${escapeReportText(trainer)}` : ' (none yet)'}</option>`;
+    who.value = section && section.school && section.school.package === 'standard' ? 'teacher' : 'trainer';
     const chapterSelect = document.getElementById('observeChapterSelect');
     const chaptersWithPrep = CHAPTERS.filter(c => c.prep);
     chapterSelect.innerHTML = chaptersWithPrep.map(c => `<option value="${c.id}">Chapter ${String(c.id).padStart(2, '0')} — ${c.title}</option>`).join('');
+    if (section) chapterSelect.value = String(chapterForSession(section.id, 1));
     renderObserveToday();
     renderObservationHistory();
     navigateTo('observe-picker');
@@ -4899,16 +4931,18 @@ function renderObserveToday() {
     if (!chapterSelect || !chapterSelect.value || !card) return;
 
     const chapterId = Number(chapterSelect.value);
-    const teacher = sectionTeacher();
+    const { role, account: teacher } = observedPerson();
     if (!teacher) {
-        card.innerHTML = '<p class="prep-readiness-explain">This class has no class teacher yet.</p>';
+        card.innerHTML = `<p class="prep-readiness-explain">This class has no ${role === 'trainer' ? 'trainer' : 'class teacher'} yet.</p>`;
         return;
     }
     const status = computeReadinessStatus(chapterId, teacher.id);
     const teacherTime = HMCloud.timeTotals(teacher.id);
     const prepMinutes = Math.round(((teacherTime[chapterId] && teacherTime[chapterId].prep) || 0) / 60);
     const labels = { green: 'Ready for class', amber: 'Getting there', red: 'Not opened yet' };
-    const lastObs = appState.observations.slice().reverse()[0];
+    // The last observation of this class (older ones without a class count too).
+    const section = currentSection();
+    const lastObs = appState.observations.slice().reverse().find(o => !o.sectionId || (section && o.sectionId === section.id));
 
     card.innerHTML = `
         <div class="admin-list-row">
@@ -4930,7 +4964,8 @@ function renderObservationHistory() {
     }
     list.innerHTML = appState.observations.slice().reverse().map((obs, i) => `
         <div class="admin-list-row">
-            <span class="admin-list-title">${obs.chapterTitle} — Session ${obs.session}</span>
+            <span class="admin-list-title">${obs.classLabel ? `${escapeReportText(obs.classLabel)} · ` : ''}${escapeReportText(obs.chapterTitle)} — Session ${obs.session}
+                ${obs.observedName ? `<span class="class-report-meta">Observed: ${escapeReportText(obs.observedName)} (${obs.observedRole === 'trainer' ? 'trainer' : 'class teacher'})${obs.rating ? ` · rated ${obs.rating}/5` : ''}${obs.observerName ? ` · by ${escapeReportText(obs.observerName)}` : ''}</span>` : ''}</span>
             <span class="admin-list-tag role-teacher">${new Date(obs.submittedAt).toLocaleDateString()}</span>
             <button class="btn-glass compact" title="Print / save as PDF" onclick="printObservationSummary(${i})"><i class="fa-solid fa-file-pdf"></i> PDF</button>
             ${obs.followUp
@@ -4944,15 +4979,25 @@ function openObservationForm() {
     const session = Number(document.getElementById('observeSessionSelect').value);
     const chapter = getChapterById(chapterId);
 
+    const section = currentSection();
+    const { role: observedRole, account: observed } = observedPerson();
+    if (!section || !observed) {
+        showNotification(`This class has no ${observedRole === 'trainer' ? 'trainer' : 'class teacher'} to observe yet.`);
+        return;
+    }
     observeDraft = {
         chapterId, session, chapterTitle: chapter.title,
+        sectionId: section.id, schoolId: section.school_id, classLabel: sectionFullName(section),
+        observedId: observed.id, observedName: observed.name, observedRole,
+        observerId: appState.currentUser.id, observerName: appState.currentUser.name, rating: 0,
         protocol: { introduced: false, sat: false, opened: false },
         tally: 0, onTask: 0, bodyLanguage: 0, classSize: HappyMindsConfig.STUDENTS.length,
         partA: {}, partANotes: {}, partB: {}, partD: { note: '' }, partDPlanned: {}, partE: {},
         evidence: {}, nonNeg: {}, coreNotes: ''
     };
 
-    document.getElementById('observeFormTitle').textContent = `Observing: ${chapter.title} — Session ${session}`;
+    document.getElementById('observeFormTitle').textContent = `Observing ${observed.name}: ${section.label} · ${chapter.title} — Session ${session}`;
+    document.getElementById('observeSignTeacherLabel').textContent = `${observedRole === 'trainer' ? 'Trainer' : 'Class teacher'}'s signature (${observed.name})`;
 
     document.getElementById('observeProtocol').innerHTML = [
         ['introduced', "I introduced myself — here to support and see student engagement"],
@@ -5021,6 +5066,7 @@ function openObservationForm() {
     renderObserveTallyPct();
     renderObserveStars('observeOnTaskStars', 0, 'onTask');
     renderObserveStars('observeBodyStars', 0, 'bodyLanguage');
+    renderObserveStars('observeOverallStars', 0, 'rating');
     document.getElementById('observeDisengagedNote').value = '';
     document.getElementById('observeStrengths').value = '';
     document.getElementById('observeCoreNotes').value = '';
@@ -5100,6 +5146,11 @@ function copyCoreModelNotes() {
 }
 
 function submitObservation() {
+    if (!observeDraft.rating) {
+        showNotification('Give an overall rating (1-5) before submitting.');
+        document.getElementById('observeOverallStars').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
     observeDraft.disengagedNote = document.getElementById('observeDisengagedNote').value;
     observeDraft.strengths = document.getElementById('observeStrengths').value;
     observeDraft.coreNotes = document.getElementById('observeCoreNotes').value;
@@ -5171,7 +5222,9 @@ function printObservationSummary(reversedIndex) {
 
     const chapter = getChapterById(obs.chapterId);
     const phases = obs.session === 1 ? ['Explore', 'Practice'] : ['Create', 'Perform'];
-    const minutes = getTimeReport(obs.chapterId)[obs.chapterId] || {};
+    // Class time of the person observed, in that class (older observations: the viewer's own).
+    const observedTime = obs.observedId ? HMCloud.timeTotals(obs.observedId, obs.sectionId) : appState.timeTracking;
+    const minutes = Object.fromEntries(Object.entries(observedTime[obs.chapterId] || {}).map(([k, v]) => [k, Math.round((v / 60) * 10) / 10]));
     const pct = obs.classSize ? Math.round(((obs.tally || 0) / obs.classSize) * 100) : 0;
     const ev = obs.evidence || {};
     const nonNeg = OBSERVE_NONNEGOTIABLES[obs.session] || [];
@@ -5180,8 +5233,8 @@ function printObservationSummary(reversedIndex) {
     openPrintPage(`Observation - Chapter ${obs.chapterId} Session ${obs.session} - ${new Date(obs.submittedAt).toISOString().slice(0, 10)}`, `
         <header>
             <div class="brand">Happy Minds · Classroom Observation</div>
-            <h1>${e(obs.chapterTitle)} — Session ${obs.session}</h1>
-            <p class="meta">Observed by ${e(obs.signObserver || '—')} · ${new Date(obs.submittedAt).toLocaleString()}</p>
+            <h1>${obs.classLabel ? `${e(obs.classLabel)} · ` : ''}${e(obs.chapterTitle)} — Session ${obs.session}</h1>
+            <p class="meta">${obs.observedName ? `Observed: ${e(obs.observedName)} (${obs.observedRole === 'trainer' ? 'trainer' : 'class teacher'}) · ` : ''}Observed by ${e(obs.observerName || obs.signObserver || '—')} · ${new Date(obs.submittedAt).toLocaleString()}${obs.rating ? ` · Overall rating ${obs.rating}/5` : ''}</p>
         </header>
         ${section('A. Core Model Adherence', phases.map(p => [p, `${answer((obs.partA || {})[p])}${(obs.partANotes || {})[p] ? `<br><span style="font-weight:normal">${e(obs.partANotes[p])}</span>` : ''}`]))}
         ${section('B. Facilitator vs Lecturer', [['Behaviours seen', ticks(OBSERVE_BEHAVIORS, obs.partB)]])}
@@ -5218,7 +5271,7 @@ function printObservationSummary(reversedIndex) {
         ])}
         <div class="signatures">
             <div><strong>${e(obs.signObserver || '')}&nbsp;</strong>Observer</div>
-            <div><strong>${e(obs.signTeacher || '')}&nbsp;</strong>Teacher</div>
+            <div><strong>${e(obs.signTeacher || '')}&nbsp;</strong>${obs.observedRole === 'trainer' ? 'Trainer' : 'Class teacher'}</div>
         </div>`);
 }
 

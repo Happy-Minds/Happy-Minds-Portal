@@ -136,11 +136,14 @@ body {
     gap: 16px;
 }
 
-/* Admin and coordinator have six tabs: keep the header on one row on laptops. */
+/* Admin and management have up to seven tabs: keep the header on one row on
+   laptops. The chapter search shrinks to its icon and opens when tapped. */
 @media (min-width: 1081px) and (max-width: 1500px) {
     .main-nav { gap: 2px; }
-    .nav-btn { padding: 10px 13px; }
-    .main-header .search-box { width: 150px; }
+    .nav-btn { padding: 10px 12px; }
+    .main-header .search-box { width: 44px; padding: 8px 13px; overflow: hidden; cursor: text; }
+    .main-header .search-box:focus-within { width: 200px; }
+    .main-header .profile-name { display: block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 .search-box {

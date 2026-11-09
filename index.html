@@ -79,7 +79,7 @@
                 <button class="nav-btn" data-view="scan" data-roles="teacher,trainer" onclick="openScanView()">
                     <i class="fa-solid fa-qrcode"></i> Scan
                 </button>
-                <button class="nav-btn" data-view="observe" data-role="trainer" onclick="openObservationPicker()" style="display:none;">
+                <button class="nav-btn" data-view="observe-picker" data-roles="admin,management" onclick="openObservationPicker()" style="display:none;">
                     <i class="fa-solid fa-user-tie"></i> Observe
                 </button>
                 <button class="nav-btn" data-view="reports" data-roles="trainer,admin,coordinator,management" onclick="openReportsHome()" style="display:none;">
@@ -467,7 +467,7 @@
                     <div class="badge-icon blue"><i class="fa-solid fa-user-tie"></i></div>
                     <div class="prep-header-text">
                         <h2>Classroom Observation</h2>
-                        <p>Pick a chapter and session to observe, or check your observation history.</p>
+                        <p>The monthly classroom observation by the HappyMinds management team. Only admin and management can see these.</p>
                     </div>
                 </div>
 
@@ -478,7 +478,9 @@
 
                 <div class="prep-section-card">
                     <h3><i class="fa-solid fa-eye"></i> Start a New Observation</h3>
+                    <p class="prep-readiness-explain" id="observeClassLine"></p>
                     <div class="observe-picker-row">
+                        <select class="custom-select" id="observeWhoSelect" aria-label="Who are you observing?" onchange="renderObserveToday()"></select>
                         <select class="custom-select" id="observeChapterSelect" onchange="renderObserveToday()">
                             <option value="1">Chapter 01 — My Imaginary World</option>
                         </select>
@@ -604,10 +606,11 @@
                     <div class="observe-signoff-row">
                         <div class="reflection-field"><label>Observer signature</label>
                             <input type="text" class="reflection-text-input" id="observeSignObserver"></div>
-                        <div class="reflection-field"><label>Teacher signature</label>
+                        <div class="reflection-field"><label id="observeSignTeacherLabel">Signature of the person observed</label>
                             <input type="text" class="reflection-text-input" id="observeSignTeacher"></div>
                     </div>
-                    <p class="prep-readiness-explain">Hold the feedback conversation within 24 hours.</p>
+                    <div class="reflection-field"><label>Overall rating (1-5)</label><div class="reflection-stars" id="observeOverallStars"></div></div>
+                    <p class="prep-readiness-explain">Hold the feedback conversation within 24 hours. Only admin and management can see this observation.</p>
                 </div>
 
                 <div class="prep-section-card reflection-submit-card">
