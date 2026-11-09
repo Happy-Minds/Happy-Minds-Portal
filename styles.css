@@ -1073,6 +1073,13 @@ body.lesson-view .settle-card {
     box-shadow: 0 10px 30px color-mix(in srgb, var(--ch-main, #0EA5E9) 30%, transparent);
 }
 body.lesson-view .settle-card .btn-primary-glowing { background: white; color: var(--ch-deep, #0284C7); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18); }
+/* Create and Perform opening boxes: same chapter colours as Explore's Settle card. */
+body.lesson-view .ritual-card.theme-create,
+body.lesson-view .ritual-card.theme-perform {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--ch-main, #0EA5E9) 45%, var(--ch-deep, #0284C7)), var(--ch-deep, #0284C7));
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--ch-main, #0EA5E9) 30%, transparent);
+}
+body.lesson-view .ritual-card .btn-primary-glowing { background: white; color: var(--ch-deep, #0284C7); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18); }
 body.lesson-view .btn-primary-glowing {
     background: linear-gradient(135deg, color-mix(in srgb, var(--ch-main, #10B981) 45%, var(--ch-deep, #059669)) 0%, var(--ch-deep, #059669) 100%);
     box-shadow: 0 8px 24px color-mix(in srgb, var(--ch-main, #10B981) 35%, transparent);

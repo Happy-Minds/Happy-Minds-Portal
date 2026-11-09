@@ -386,6 +386,7 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Learning is experience. Everything else is just information.", by: "Albert Einstein" },
         video: 'chapter-02.mp4',
+        videoYoutubeId: 'qpfCur7IYAo',   // https://youtu.be/qpfCur7IYAo
         thinkTalk: [
             'What was the very first step in the journey you watched?',
             'How do you think the character felt at the start?',
