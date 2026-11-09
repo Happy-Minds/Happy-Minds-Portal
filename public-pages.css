@@ -194,3 +194,5 @@ h1, h2 { margin: 0; line-height: 1.2; }
     .pp-hero { background: none; color: var(--pp-text); border: 2px solid var(--pp-blue); }
     .pp-hero .pp-brand, .pp-hero p { color: var(--pp-blue-deep); }
 }
+.pp-star { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 9px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; }
+.pp-star i { color: #D97706; }

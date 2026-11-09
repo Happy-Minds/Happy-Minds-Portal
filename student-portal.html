@@ -15,6 +15,7 @@
     <script src="config.js"></script>
     <script src="cloud.js"></script>
     <script src="chapters-data.js"></script>
+    <script src="recognition.js"></script>
     <link rel="stylesheet" href="student-portal.css">
     <!-- Student-side Chapter 1 practice (separate from the teacher app's chapter1-practice.*) -->
     <link rel="stylesheet" href="student-practice.css">
@@ -28,7 +29,7 @@
         </div>
         <img src="assets/logo_icon.png" alt="Happy Minds" class="sp-login-logo">
         <h1 class="sp-login-title">My Learning Space</h1>
-        <p class="sp-login-sub">Happy Minds · Grade 4</p>
+        <p class="sp-login-sub">Happy Minds · English Communication Journey</p>
         <p class="sp-login-deeplink" id="spLoginDeepLink" hidden></p>
 
         <form class="sp-login-form" id="spLoginForm" onsubmit="spAttemptLogin(event)">
@@ -76,7 +77,7 @@
             </div>
             <div class="sp-student-info">
                 <div class="sp-student-name" id="spSideName">Aarav</div>
-                <div class="sp-student-meta">Grade 4 · <span id="spSideXP">0</span> XP</div>
+                <div class="sp-student-meta"><span id="spSideClass">Happy Minds</span> · <span id="spSideXP">0</span> XP</div>
                 <div class="sp-streak-pill"><i class="fa-solid fa-fire"></i> <span id="spSideStreak">0</span> day streak</div>
                 <div class="sp-time-pill" id="spSideTime" hidden><i class="fa-regular fa-clock"></i> <span></span></div>
             </div>
@@ -159,6 +160,9 @@
                     <img src="assets/dragon_buddy.png" alt="Flame" class="sp-greeting-flame">
                 </div>
             </div>
+
+            <!-- Recognition: Class Star of the Month + my Fix It streak -->
+            <div class="sp-recognition" id="spRecognition" hidden></div>
 
             <!-- Quick Stats Row -->
             <div class="sp-quick-stats">
@@ -602,7 +606,7 @@
                         <div class="sp-profile-xp-ring"></div>
                     </div>
                     <h2 class="sp-profile-name" id="spProfileName">Aarav</h2>
-                    <div class="sp-profile-grade">Grade 4 · Happy Minds</div>
+                    <div class="sp-profile-grade" id="spProfileClass">Happy Minds</div>
 
                     <div class="sp-profile-chips">
                         <div class="sp-chip orange"><i class="fa-solid fa-fire"></i> <span id="spProfileStreak">0</span> day streak</div>

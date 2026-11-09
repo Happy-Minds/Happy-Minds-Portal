@@ -458,9 +458,17 @@ function toggleSidebar() {
     document.getElementById('spSidebar').classList.toggle('open');
 }
 
+// "Class 4A" from the student's own class (Std 4–8 share the portal).
+function spClassLabel() {
+    const me = HappyMindsConfig.ALL_STUDENTS.find(s => s.id === currentUser.studentId);
+    const section = me && HappyMindsConfig.SECTIONS.find(s => s.id === me.section_id);
+    return section ? `Class ${section.label}` : 'Happy Minds';
+}
+
 function updateGlobalUI() {
     // Sidebar & Topbar
     document.getElementById('spSideName').textContent = currentUser.name;
+    document.getElementById('spSideClass').textContent = spClassLabel();
     document.getElementById('spSideXP').textContent = spState.xp;
     document.getElementById('spTopXP').textContent = spState.xp;
     document.getElementById('spSideStreak').textContent = spState.streak;
@@ -491,6 +499,8 @@ function renderHome() {
     const hour = new Date().getHours();
     document.getElementById('spGreetingTime').textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     document.getElementById('spGreetChapter').textContent = currentChap.id;
+
+    renderRecognitionCard();
 
     // Quick Stats
     document.getElementById('spQChapComp').textContent = doneCount;
@@ -549,6 +559,36 @@ function renderHome() {
                 <div class="sp-rec-desc">${r.desc}</div>
             </div>`).join('')
         : `<div class="sp-empty-state-small"><div class="sp-empty-char">🌟</div><p>You're all caught up for Chapter ${currentChap.id}!</p></div>`;
+}
+
+// The class's Star of the Month (chosen by the teacher or trainer) and
+// this student's Fix It Zone streak.
+function renderRecognitionCard() {
+    const box = document.getElementById('spRecognition');
+    const star = HMRecognition.starOf(HMCloud.get(CLASS_PROGRESS_STORAGE_KEY));
+    const streak = HMRecognition.fixItStreak(spState);
+    const parts = [];
+    if (star) {
+        const me = star.studentId === currentUser.studentId;
+        parts.push(`
+            <div class="sp-rec-star${me ? ' is-me' : ''}">
+                <span class="sp-rec-star-icon" aria-hidden="true">🌟</span>
+                <div>
+                    <div class="sp-rec-label">Class Star of ${HMRecognition.monthName(HMRecognition.monthKey()).split(' ')[0]}</div>
+                    <div class="sp-rec-name">${me ? 'That’s you! Well done!' : escapeText(star.name)}</div>
+                </div>
+            </div>`);
+    }
+    parts.push(`
+        <div class="sp-rec-streak" onclick="spNav('fixit')" role="button" tabindex="0" onkeydown="if (event.key === 'Enter') spNav('fixit')">
+            <span class="sp-rec-star-icon" aria-hidden="true">🛠</span>
+            <div>
+                <div class="sp-rec-label">Fix It streak</div>
+                <div class="sp-rec-name">${streak ? `${streak} ${streak === 1 ? 'day' : 'days'} in a row` : 'Do a Fix It box today to start one!'}</div>
+            </div>
+        </div>`);
+    box.innerHTML = parts.join('');
+    box.hidden = false;
 }
 
 function renderJourney() {
@@ -865,6 +905,7 @@ function renderMyProgress() {
 
 function renderProfile() {
     document.getElementById('spProfileName').textContent = currentUser.name;
+    document.getElementById('spProfileClass').textContent = `${spClassLabel()} · Happy Minds`;
     document.getElementById('spProfileXP').textContent = spState.xp;
     document.getElementById('spProfileStreak').textContent = spState.streak;
     document.getElementById('spProfileAvatar').src = spState.avatar;

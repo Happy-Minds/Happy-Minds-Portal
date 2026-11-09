@@ -89,6 +89,26 @@ function localDateString(date) {
 // they preview too.
 const VIEW_ONLY_ROLES = ['trainer', 'admin', 'coordinator', 'management'];
 
+// Who takes each session, by the school's package (fixed for the year):
+//   Standard  the class teacher takes Session 1 and Session 2
+//   Premium   our trainer takes Session 1, the class teacher Session 2
+//   Advance   our trainer takes both sessions (the class teacher is optional)
+function schoolPackage(section) {
+    const school = section.school || HappyMindsConfig.SCHOOLS.find(s => s.id === section.school_id);
+    return (school && school.package) || 'premium';
+}
+
+function sessionRole(section, session) {
+    const pkg = schoolPackage(section);
+    if (pkg === 'standard') return 'teacher';
+    if (pkg === 'advance') return 'trainer';
+    return session === 1 ? 'trainer' : 'teacher';
+}
+
+const needsTrainer = section => schoolPackage(section) !== 'standard';
+const needsTeacher = section => schoolPackage(section) !== 'advance';
+const SESSION_ROLE_WORD = { trainer: 'trainer', teacher: 'class teacher' };
+
 function isViewOnly() {
     const me = appState.currentUser;
     if (!me || !VIEW_ONLY_ROLES.includes(me.role)) return false;
@@ -123,7 +143,9 @@ function loadClassProgress() {
 
 function saveClassProgress() {
     if (isViewOnly()) return;
+    const saved = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY) || {};
     HMCloud.save(CLASS_PROGRESS_STORAGE_KEY, {
+        ...saved,   // keeps the Class Star of the Month (stars)
         completedChapters: appState.completedChapters,
         chapterProgress: appState.chapterProgress
     });
@@ -777,12 +799,16 @@ function renderSchoolDetail() {
     const manage = canManage();
     list.innerHTML = sections.map(s => {
         const count = studentsInSection(s.id).length;
+        // Standard needs no trainer; in Advance the class teacher is only a contact.
+        const trainerField = needsTrainer(s) || s.trainer_id
+            ? `<label class="manage-field"><span>Trainer${needsTrainer(s) ? '' : ' (not needed in Standard)'}</span>
+                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'trainer_id', this)">${options(trainers, s.trainer_id, needsTrainer(s) ? 'No trainer yet' : 'No trainer')}</select></label>`
+            : `<div class="manage-field manage-field-note"><span>Trainer</span><p>Not needed: the class teacher takes both sessions.</p></div>`;
         const staff = manage ? `
-                <label class="manage-field"><span>Class teacher</span>
-                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'teacher_id', this)">${options(teachers, s.teacher_id, 'No class teacher yet')}</select></label>
-                <label class="manage-field"><span>Trainer</span>
-                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'trainer_id', this)">${options(trainers, s.trainer_id, 'No trainer yet')}</select></label>`
-            : `<span class="admin-list-username">${escapeReportText(accountName(s.teacher_id) || 'No class teacher yet')} · trainer: ${escapeReportText(accountName(s.trainer_id) || 'none yet')}</span>`;
+                <label class="manage-field"><span>Class teacher${needsTeacher(s) ? '' : ' (optional)'}</span>
+                    <select class="custom-select" onchange="assignSectionStaff('${s.id}', 'teacher_id', this)">${options(teachers, s.teacher_id, needsTeacher(s) ? 'No class teacher yet' : 'No class teacher')}</select></label>
+                ${trainerField}`
+            : `<span class="admin-list-username">${escapeReportText(accountName(s.teacher_id) || (needsTeacher(s) ? 'No class teacher yet' : 'No class teacher'))}${needsTrainer(s) ? ` · trainer: ${escapeReportText(accountName(s.trainer_id) || 'none yet')}` : ''}</span>`;
         const remove = manage && !count
             ? `<button type="button" class="btn-glass compact manage-remove" onclick="removeSection('${s.id}', this)">Remove class</button>` : '';
         return `
@@ -1034,23 +1060,28 @@ function timetableWarnings(sections) {
             warnings.push(`${s.label}: Session 2 (${slotText(two)}) comes before Session 1 (${slotText(one)}) in the week.`);
         }
     });
-    // One trainer can't be in two classes at once, and usually visits a school on one day.
-    const byTrainer = new Map();
-    sections.forEach(s => {
-        const one = slotFor(s.id, 1);
-        if (!s.trainer_id || !one) return;
-        if (!byTrainer.has(s.trainer_id)) byTrainer.set(s.trainer_id, []);
-        byTrainer.get(s.trainer_id).push({ section: s, slot: one });
-    });
-    byTrainer.forEach((items, trainerId) => {
-        const name = accountName(trainerId) || 'A trainer';
-        const days = [...new Set(items.map(i => i.slot.weekday))];
-        if (days.length > 1) warnings.push(`${name}'s Session 1 classes here are on ${days.map(d => WEEKDAYS[d]).join(' and ')}; one visit day is usual.`);
+    // Nobody can be in two classes at once (the person depends on the package).
+    const byPerson = new Map();
+    sections.forEach(s => [1, 2].forEach(session => {
+        const slot = slotFor(s.id, session);
+        const person = s[`${sessionRole(s, session)}_id`];
+        if (!slot || !person) return;
+        if (!byPerson.has(person)) byPerson.set(person, []);
+        byPerson.get(person).push({ section: s, session, slot });
+    }));
+    byPerson.forEach((items, personId) => {
+        const name = accountName(personId) || 'Someone';
         items.forEach((a, i) => items.slice(i + 1).forEach(b => {
             if (a.slot.weekday === b.slot.weekday && a.slot.starts_at < b.slot.ends_at && b.slot.starts_at < a.slot.ends_at) {
-                warnings.push(`${name} has ${a.section.label} and ${b.section.label} at the same time (${WEEKDAY_SHORT[a.slot.weekday]} ${a.slot.starts_at}).`);
+                warnings.push(`${name} has ${a.section.label} (Session ${a.session}) and ${b.section.label} (Session ${b.session}) at the same time (${WEEKDAY_SHORT[a.slot.weekday]} ${a.slot.starts_at}).`);
             }
         }));
+    });
+    // A trainer usually visits a school on one day for Session 1.
+    byPerson.forEach((items, personId) => {
+        const visits = items.filter(i => i.session === 1 && sessionRole(i.section, 1) === 'trainer');
+        const days = [...new Set(visits.map(i => i.slot.weekday))];
+        if (days.length > 1) warnings.push(`${accountName(personId) || 'A trainer'}'s Session 1 classes here are on ${days.map(d => WEEKDAYS[d]).join(' and ')}; one visit day is usual.`);
     });
     return warnings;
 }
@@ -1079,11 +1110,15 @@ function renderSchoolTimetable() {
         table.innerHTML = '<tbody><tr><td class="timetable-empty">Add classes first.</td></tr></tbody>';
         return;
     }
+    // Column headings follow the school's package (every class in a school shares it).
+    const first = sections[0];
+    const people = s => [...new Set([1, 2].map(n => sessionRole(s, n)))]
+        .map(role => escapeReportText(accountName(s[`${role}_id`]) || `No ${SESSION_ROLE_WORD[role]}`)).join(' · ');
     table.innerHTML = `
-        <thead><tr><th scope="col">Class</th><th scope="col">Session 1 · trainer</th><th scope="col">Session 2 · class teacher</th></tr></thead>
+        <thead><tr><th scope="col">Class</th><th scope="col">Session 1 · ${SESSION_ROLE_WORD[sessionRole(first, 1)]}</th><th scope="col">Session 2 · ${SESSION_ROLE_WORD[sessionRole(first, 2)]}</th></tr></thead>
         <tbody>${sections.map(s => `
             <tr>
-                <th scope="row">${s.label}<span>${escapeReportText(accountName(s.trainer_id) || 'No trainer')} · ${escapeReportText(accountName(s.teacher_id) || 'No class teacher')}</span></th>
+                <th scope="row">${s.label}<span>${people(s)}</span></th>
                 ${cell(s, 1)}${cell(s, 2)}
             </tr>`).join('')}</tbody>`;
 }
@@ -1259,14 +1294,10 @@ function weekSessions(monday) {
             const date = new Date(monday);
             date.setDate(monday.getDate() + slot.weekday - 1);
             const iso = localDateString(date);
-            let person = session === 1 ? section.trainer_id : section.teacher_id;
-            const sub = session === 1 && section.trainer_id
-                ? HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id)
-                : null;
-            if (sub) person = sub.substitute_id;
-            const mine = plan
-                || (me.role === 'trainer' && session === 1 && (person === me.id || (sub && sub.trainer_id === me.id)))
-                || (me.role === 'teacher' && session === 2 && section.teacher_id === me.id);
+            const role = sessionRole(section, session);
+            const sub = role === 'trainer' ? trainerSubstitution(section, iso) : null;
+            const person = sessionPerson(section, session, iso);
+            const mine = plan || person === me.id || (sub && sub.trainer_id === me.id);
             if (!mine) return;
             items.push({ section, session, slot, iso, person, sub });
         });
@@ -1284,7 +1315,7 @@ function renderWeekView() {
     const range = `${monday.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} – ${saturday.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
     document.getElementById('weekTitle').textContent = plan ? 'Week plan' : 'My week';
     document.getElementById('weekSubtitle').textContent = `${range}${weekOffset === 0 ? ' · this week' : ''}`
-        + (plan ? ' · Session 1 by trainers, Session 2 by class teachers' : me.role === 'trainer' ? ' · your school visits (Session 1)' : ' · your Session 2 periods');
+        + (plan ? ' · who takes each session follows the school’s package' : me.role === 'trainer' ? ' · your school visits' : ' · your Happy Minds periods');
 
     const sessions = weekSessions(monday);
     const today = localDateString();
@@ -1296,7 +1327,8 @@ function renderWeekView() {
     });
 
     const row = it => {
-        const who = it.person ? (accountName(it.person) || (it.session === 1 ? 'A trainer' : 'The class teacher')) : (it.session === 1 ? 'No trainer yet' : 'No class teacher yet');
+        const role = SESSION_ROLE_WORD[sessionRole(it.section, it.session)];
+        const who = it.person ? (accountName(it.person) || `The ${role}`) : `No ${role} yet`;
         let note = '';
         if (it.sub && it.sub.trainer_id === me.id && !plan) note = `<span class="week-flag covered">${escapeReportText(accountName(it.sub.substitute_id) || 'Another trainer')} covers this visit</span>`;
         else if (it.sub) note = `<span class="week-flag sub">Substitute for ${escapeReportText(accountName(it.sub.trainer_id) || 'the regular trainer')}</span>`;
@@ -1728,12 +1760,17 @@ function datesOnWeekday(from, to, weekday) {
     return out;
 }
 
-// Who takes a class's session on a date: the class teacher for Session 2,
-// the trainer (or their substitute that day) for Session 1.
+// Who takes a class's session on a date: whoever the package gives it to
+// (sessionRole), and for a trainer's session their substitute that day.
 function sessionPerson(section, session, iso) {
-    if (session === 2) return section.teacher_id;
-    const sub = HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id);
+    if (sessionRole(section, session) === 'teacher') return section.teacher_id;
+    const sub = trainerSubstitution(section, iso);
     return sub ? sub.substitute_id : section.trainer_id;
+}
+
+function trainerSubstitution(section, iso) {
+    if (!section.trainer_id) return null;
+    return HappyMindsConfig.SUBSTITUTIONS.find(s => s.school_id === section.school_id && s.visit_date === iso && s.trainer_id === section.trainer_id) || null;
 }
 
 // Every planned session from `from` to `to` (inclusive) for the given classes.
@@ -1766,8 +1803,8 @@ function monitorAlerts(sections) {
     sections.forEach(s => {
         if (!bySchool.has(s.school_id)) bySchool.set(s.school_id, { name: s.school ? s.school.name : 'School', teacher: [], trainer: [], timetable: [] });
         const g = bySchool.get(s.school_id);
-        if (!s.teacher_id) g.teacher.push(s.label);
-        if (!s.trainer_id) g.trainer.push(s.label);
+        if (!s.teacher_id && needsTeacher(s)) g.teacher.push(s.label);
+        if (!s.trainer_id && needsTrainer(s)) g.trainer.push(s.label);
         if (!slotFor(s.id, 1) || !slotFor(s.id, 2)) g.timetable.push(s.label);
     });
     // A monthly observation per school (only admin and management can see observations).
@@ -1814,7 +1851,7 @@ function monitorAlerts(sections) {
 
     // Day reports missing for trainer visit days (up to yesterday).
     const visitDays = new Map();
-    plannedSessions(sections, from, yesterday).filter(p => p.session === 1 && p.person).forEach(p => {
+    plannedSessions(sections, from, yesterday).filter(p => sessionRole(p.section, p.session) === 'trainer' && p.person).forEach(p => {
         visitDays.set(`${p.person}|${p.iso}`, { person: p.person, iso: p.iso });
     });
     visitDays.forEach(({ person, iso }) => {
@@ -1861,14 +1898,18 @@ function renderMonitor() {
     const recordsInMonth = HappyMindsConfig.SESSIONS.filter(r => r.held_on >= monthStart && r.held_on <= monthEnd && sectionIds.has(r.section_id));
 
     // Trainers
-    const trainerIds = [...new Set([...sections.map(s => s.trainer_id), ...planned.filter(p => p.session === 1).map(p => p.person)].filter(Boolean))];
+    const byTrainer = p => sessionRole(p.section, p.session) === 'trainer';
+    const byTeacher = p => sessionRole(p.section, p.session) === 'teacher';
+    const trainerIds = [...new Set([...sections.filter(needsTrainer).map(s => s.trainer_id), ...planned.filter(byTrainer).map(p => p.person)].filter(Boolean))];
     const monthSubs = HappyMindsConfig.SUBSTITUTIONS.filter(s => s.visit_date >= monthStart && s.visit_date <= monthLast);
     const trainerRows = trainerIds.map(id => {
-        const mine = planned.filter(p => p.session === 1 && p.person === id);
-        const marked = mine.map(p => sessionRecord(p.section.id, 1, p.iso)).filter(Boolean);
+        const mine = planned.filter(p => byTrainer(p) && p.person === id);
+        const marked = mine.map(p => sessionRecord(p.section.id, p.session, p.iso)).filter(Boolean);
         const done = marked.filter(r => r.status === 'done').length;
-        const notHeld = marked.filter(r => r.status === 'not_held').length;
-        const extraS2 = recordsInMonth.filter(r => r.session === 2 && r.recorded_by === id && r.status === 'done').length;
+        const notHeld = marked.filter(r => r.status !== 'done').length;
+        // A class teacher's Session 2 that the trainer took on a visit.
+        const extraS2 = recordsInMonth.filter(r => r.session === 2 && r.recorded_by === id && r.status === 'done'
+            && sections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher')).length;
         const days = [...new Set(mine.map(p => p.iso))].filter(d => d < today);
         const reports = days.map(d => HappyMindsConfig.EOD_REPORTS.find(r => r.user_id === id && r.report_date === d && r.submitted_at));
         const onTime = reports.filter(r => r && submittedOn(r) === r.report_date).length;
@@ -1886,17 +1927,20 @@ function renderMonitor() {
         </tr>`;
     });
     document.getElementById('monitorTrainers').innerHTML = trainerRows.length
-        ? `<thead><tr><th scope="col">Trainer</th><th scope="col">Session 1 done / planned</th><th scope="col">Session 2 taken over</th><th scope="col">Day reports</th><th scope="col">Substitutes</th></tr></thead><tbody>${trainerRows.join('')}</tbody>`
+        ? `<thead><tr><th scope="col">Trainer</th><th scope="col">Sessions done / planned</th><th scope="col">Session 2 taken over</th><th scope="col">Day reports</th><th scope="col">Substitutes</th></tr></thead><tbody>${trainerRows.join('')}</tbody>`
         : '<tbody><tr><td class="timetable-empty">No trainer assigned to these classes yet.</td></tr></tbody>';
 
     // Class teachers
-    const teacherIds = [...new Set(sections.map(s => s.teacher_id).filter(Boolean))];
+    const teacherIds = [...new Set(sections.filter(needsTeacher).map(s => s.teacher_id).filter(Boolean))];
     const teacherRows = teacherIds.map(id => {
-        const theirSections = sections.filter(s => s.teacher_id === id);
-        const mine = planned.filter(p => p.session === 2 && p.person === id);
-        const marked = mine.map(p => sessionRecord(p.section.id, 2, p.iso)).filter(Boolean);
-        const done = recordsInMonth.filter(r => r.session === 2 && r.status === 'done' && theirSections.some(s => s.id === r.section_id)).length;
-        const notDone = marked.filter(r => r.status === 'not_done').length;
+        const theirSections = sections.filter(s => s.teacher_id === id && needsTeacher(s));
+        const mine = planned.filter(p => byTeacher(p) && p.person === id);
+        const marked = mine.map(p => sessionRecord(p.section.id, p.session, p.iso)).filter(Boolean);
+        // Sessions done in their periods (in Premium, also a Session 2 the trainer took over).
+        const done = marked.filter(r => r.status === 'done').length
+            + recordsInMonth.filter(r => r.session === 2 && r.status === 'done' && r.recorded_by !== id
+                && theirSections.some(s => s.id === r.section_id && sessionRole(s, 2) === 'teacher') && !marked.includes(r)).length;
+        const notDone = marked.filter(r => r.status !== 'done').length;
         const pendingNow = theirSections.filter(s => pendingSession2(s.id)).length;
         return `<tr>
             <th scope="row">${escapeReportText(accountName(id) || 'Unknown teacher')}<span>${theirSections.map(s => s.label).join(', ')}</span></th>
@@ -1906,7 +1950,7 @@ function renderMonitor() {
         </tr>`;
     });
     document.getElementById('monitorTeachers').innerHTML = teacherRows.length
-        ? `<thead><tr><th scope="col">Class teacher</th><th scope="col">Session 2 done / periods</th><th scope="col">Not done</th><th scope="col">Session 2 waiting</th></tr></thead><tbody>${teacherRows.join('')}</tbody>`
+        ? `<thead><tr><th scope="col">Class teacher</th><th scope="col">Sessions done / periods</th><th scope="col">Not done</th><th scope="col">Session 2 waiting</th></tr></thead><tbody>${teacherRows.join('')}</tbody>`
         : '<tbody><tr><td class="timetable-empty">No class teacher assigned to these classes yet.</td></tr></tbody>';
 
     // Day reports this month
@@ -1945,7 +1989,19 @@ function renderHomeDueCard() {
     const today = localDateString();
     let rows = [];
     if (me.role === 'teacher') {
-        HappyMindsConfig.SECTIONS.filter(s => s.teacher_id === me.id).forEach(section => {
+        // Standard: the class teacher takes Session 1 too; today's ones to mark.
+        weekSessions(weekStartFor(new Date())).filter(it => it.iso === today && it.person === me.id && it.session === 1).forEach(it => {
+            rows.push(`
+                <div class="due-row">
+                    <div class="due-text">
+                        <strong>${escapeReportText(sectionFullName(it.section))} · Session 1 today</strong>
+                        <span>Your period: ${slotText(it.slot)}.</span>
+                    </div>
+                    ${sessionStatusHtml(it)}
+                </div>`);
+        });
+        // Premium: Session 2 after the trainer's Session 1.
+        HappyMindsConfig.SECTIONS.filter(s => s.teacher_id === me.id && sessionRole(s, 1) === 'trainer' && sessionRole(s, 2) === 'teacher').forEach(section => {
             const pending = pendingSession2(section.id);
             if (!pending) return;
             const slot = slotFor(section.id, 2);
@@ -1970,7 +2026,7 @@ function renderHomeDueCard() {
                     </div>`}
                 </div>`);
         });
-        card.innerHTML = rows.length ? `<h3><i class="fa-solid fa-bell"></i> Session 2 due</h3>${rows.join('')}` : '';
+        card.innerHTML = rows.length ? `<h3><i class="fa-solid fa-bell"></i> Your sessions</h3>${rows.join('')}` : '';
     } else {
         const items = weekSessions(weekStartFor(new Date())).filter(it => it.iso === today && it.person === me.id);
         if (items.length) {
@@ -6016,7 +6072,113 @@ function openReportsHome() {
         </div>`).join('');
     navigateTo('reports-home');
     renderClassReportsList();
+    recognitionStories = null;
+    renderRecognition();
 }
+
+// ================= Student recognition (Reports, this class) =================
+// Class Star of the Month (suggested from this month's portal activity and
+// stories; the class teacher or trainer chooses), Fix It Zone streaks, and
+// the star performers trainers wrote in their Handbook notes. Facts only.
+let recognitionStories = null;   // this class's stories, loaded once per visit
+
+async function renderRecognition() {
+    const box = document.getElementById('recognitionBody');
+    const section = currentSection();
+    if (!box) return;
+    if (!section) { box.innerHTML = '<p class="prep-readiness-explain">Choose a class first.</p>'; return; }
+    const month = HMRecognition.monthKey();
+    const students = HappyMindsConfig.STUDENTS;
+    const progress = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY) || {};
+    const star = HMRecognition.starOf(progress, month);
+    const lastMonthKey = HMRecognition.monthKey(new Date(`${month}-01T12:00:00`).getTime() - 5 * 86400000);
+    const lastStar = HMRecognition.starOf(progress, lastMonthKey);
+    const canChoose = !isViewOnly() && ['teacher', 'trainer'].includes(appState.currentUser.role);
+
+    const storiesOf = id => (recognitionStories || []).filter(s => s.student_id === id);
+    const rows = students.map(s => {
+        const portal = loadStudentPortalState(s.id);
+        return { student: s, activity: HMRecognition.monthActivity(portal, storiesOf(s.id), month), streak: HMRecognition.fixItStreak(portal) };
+    });
+    const suggestions = rows.filter(r => r.activity.score > 0)
+        .sort((a, b) => b.activity.score - a.activity.score || a.student.name.localeCompare(b.student.name)).slice(0, 3);
+    const streaks = rows.filter(r => r.streak >= 2).sort((a, b) => b.streak - a.streak).slice(0, 8);
+    const notes = HappyMindsConfig.CLASS_NOTES
+        .filter(n => n.section_id === section.id && n.note_date.slice(0, 7) === month && n.fields && n.fields.stars && n.fields.stars.trim())
+        .sort((a, b) => b.note_date.localeCompare(a.note_date));
+
+    const chooseBtn = r => canChoose
+        ? `<button type="button" class="btn-glass compact" onclick="chooseClassStar('${r.student.id}', this)"><i class="fa-solid fa-star"></i> Choose</button>` : '';
+    const starHtml = star ? `
+        <div class="recognition-star">
+            <i class="fa-solid fa-star" aria-hidden="true"></i>
+            <div>
+                <strong>${escapeReportText((students.find(s => s.id === star.studentId) || {}).name || star.name)}</strong>
+                <span>Chosen by ${escapeReportText(accountName(star.by) || 'class staff')} on ${formatVisitDate(star.at.slice(0, 10))}</span>
+            </div>
+            ${canChoose ? `<button type="button" class="btn-glass compact" onclick="clearClassStar(this)">Change</button>` : ''}
+        </div>`
+        : `<p class="prep-readiness-explain">Not chosen yet for ${HMRecognition.monthName(month)}.${canChoose ? ' Suggested from this month’s portal work and stories:' : ''}</p>
+           ${suggestions.length ? suggestions.map(r => `
+            <div class="admin-list-row recognition-row">
+                <span class="admin-list-title">${escapeReportText(r.student.name)}<span class="admin-list-username">${escapeReportText(HMRecognition.describe(r.activity))}</span></span>
+                ${chooseBtn(r)}
+            </div>`).join('') : '<p class="prep-readiness-explain">No portal work or stories yet this month to suggest from.</p>'}
+           ${canChoose && students.length ? `
+            <label class="manage-field recognition-other"><span>Or choose any student</span>
+                <select class="custom-select" onchange="if (this.value) chooseClassStar(this.value, this)">
+                    <option value="">Choose a student…</option>
+                    ${students.map(s => `<option value="${escapeReportText(s.id)}">${escapeReportText(s.name)}</option>`).join('')}
+                </select></label>` : ''}`;
+
+    box.innerHTML = `
+        <div class="recognition-block">
+            <h4>Class Star of the Month · ${HMRecognition.monthName(month)}</h4>
+            ${starHtml}
+            ${lastStar ? `<p class="recognition-last">${HMRecognition.monthName(lastMonthKey)}: ${escapeReportText((students.find(s => s.id === lastStar.studentId) || {}).name || lastStar.name)}</p>` : ''}
+        </div>
+        <div class="recognition-block">
+            <h4>Fix It Zone streaks</h4>
+            ${streaks.length ? `<ul class="recognition-list">${streaks.map(r => `<li><span>${escapeReportText(r.student.name)}</span><strong>${r.streak} days in a row</strong></li>`).join('')}</ul>`
+                : '<p class="prep-readiness-explain">No one has a streak of 2 days or more right now. A streak counts days in a row with Fix It work in the Learning Space.</p>'}
+        </div>
+        <div class="recognition-block">
+            <h4>Star performers from the trainer’s notes</h4>
+            ${notes.length ? `<ul class="recognition-list notes">${notes.map(n => `<li><span>${formatVisitDate(n.note_date)} · ${escapeReportText(accountName(n.user_id) || 'Trainer')}</span><p>${escapeReportText(n.fields.stars)}</p></li>`).join('')}</ul>`
+                : '<p class="prep-readiness-explain">None this month yet. They come from “Star performers” in the Handbook notes on visit days.</p>'}
+        </div>`;
+
+    if (recognitionStories === null) {
+        recognitionStories = [];
+        try {
+            recognitionStories = await HMCloud.listStories({ sectionId: section.id });
+            if (currentSection() && currentSection().id === section.id) renderRecognition();
+        } catch (err) { /* suggestions then use portal work only */ }
+    }
+}
+
+function saveClassStar(entry) {
+    const month = HMRecognition.monthKey();
+    const saved = HMCloud.get(CLASS_PROGRESS_STORAGE_KEY) || { completedChapters: appState.completedChapters, chapterProgress: appState.chapterProgress };
+    const stars = { ...(saved.stars || {}) };
+    if (entry) stars[month] = entry; else delete stars[month];
+    HMCloud.save(CLASS_PROGRESS_STORAGE_KEY, { ...saved, stars });
+}
+
+function chooseClassStar(studentId, el) {
+    const student = HappyMindsConfig.STUDENTS.find(s => s.id === studentId);
+    if (!student || isViewOnly()) return;
+    saveClassStar({ studentId, name: HMRecognition.shortName(student.name), by: appState.currentUser.id, at: new Date().toISOString() });
+    showNotification(`${student.name} is the Class Star of the Month! They will see it in their Learning Space.`);
+    renderRecognition();
+}
+
+function clearClassStar() {
+    if (isViewOnly()) return;
+    saveClassStar(null);
+    renderRecognition();
+}
+
 
 function openStudentReport(studentId) {
     const container = document.getElementById('teacherReportContent');

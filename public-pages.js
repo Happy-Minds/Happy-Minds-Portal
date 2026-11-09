@@ -106,6 +106,7 @@ const HMPublic = (() => {
                     <th scope="row" data-label="Class">
                         <span class="pp-class">${s.grade}${esc(s.letter)}</span>
                         <span class="pp-people">${people || 'No teacher or trainer assigned yet'}</span>
+                        ${s.star ? `<span class="pp-star"><i class="fa-solid fa-star" aria-hidden="true"></i> Star of the Month: ${esc(s.star)}</span>` : ''}
                     </th>
                     <td data-label="Now on"><div class="pp-cell">${next ? `<span class="pp-chapter-chip" style="--chip:${getChapterGroup(next.id).deep}">Ch ${next.id}</span> ${esc(next.title)}` : 'All chapters done'}</div></td>
                     <td data-label="Chapters done"><div class="pp-cell">

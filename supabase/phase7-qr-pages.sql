@@ -160,7 +160,12 @@ begin
                 'fixit_done', (select coalesce(sum(jsonb_array_length(coalesce(d.data -> 'completedFixIt', '[]'::jsonb))), 0)
                                from public.students st join public.app_documents d on d.doc = 'studentPortal' and d.student_id = st.id
                                where st.section_id = x.id),
-                'stories', (select count(*) from public.story_submissions t where t.section_id = x.id)
+                'stories', (select count(*) from public.story_submissions t where t.section_id = x.id),
+                -- Class Star of the Month, chosen by the class teacher or trainer.
+                'star', (select private.public_name(st.name) from public.students st
+                         where st.id = (select d.data -> 'stars' -> to_char(today, 'YYYY-MM') ->> 'studentId'
+                                        from public.section_documents d
+                                        where d.doc = 'classProgress' and d.section_id = x.id))
             ) order by x.grade, x.letter)
             from public.sections x where x.school_id = s.id), '[]'::json)
     );

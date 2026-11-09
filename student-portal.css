@@ -1474,3 +1474,25 @@ body {
     .sp-timeup-card { animation: none; }
     .sp-qr-option { transition: none; }
 }
+
+/* ==========================================================================
+   RECOGNITION (home): Class Star of the Month + Fix It streak
+   ========================================================================== */
+.sp-recognition { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.sp-recognition[hidden] { display: none; }
+.sp-rec-star, .sp-rec-streak {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--sp-glass);
+    border: 2px solid #FDE68A;
+    border-radius: var(--sp-r-lg);
+    padding: 16px 18px;
+    box-shadow: var(--sp-shadow);
+}
+.sp-rec-streak { border-color: #FBCFE8; cursor: pointer; transition: transform 0.2s; }
+.sp-rec-streak:hover { transform: translateY(-2px); }
+.sp-rec-streak:focus-visible { outline: 3px solid #A5B4FC; outline-offset: 2px; }
+.sp-rec-star.is-me { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
+.sp-rec-star-icon { font-size: 30px; line-height: 1; }
+.sp-rec-label { font-size: 12px; font-weight: 800; color: var(--sp-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.sp-rec-name { font-size: 17px; font-weight: 900; color: var(--sp-text); }
+@media (prefers-reduced-motion: reduce) { .sp-rec-streak { transition: none; } }
