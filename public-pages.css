@@ -1,0 +1,196 @@
+/* ==========================================================================
+   Happy Minds — QR pages without a login (progress.html, portfolio.html)
+   Same colours and type as the main app (styles.css :root).
+   ========================================================================== */
+:root {
+    --pp-blue: #0EA5E9;
+    --pp-blue-deep: #0369A1;
+    --pp-indigo: #4F46E5;
+    --pp-bg: #F0F9FF;
+    --pp-surface: #FFFFFF;
+    --pp-border: #E2E8F0;
+    --pp-text: #1E293B;
+    --pp-muted: #64748B;
+    --pp-warn: #B45309;
+    --pp-warn-bg: #FEF3C7;
+    --pp-ok: #047857;
+    --pp-radius: 16px;
+    --pp-font: 'Outfit', 'Nunito', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+    margin: 0;
+    font-family: var(--pp-font);
+    color: var(--pp-text);
+    background: var(--pp-bg);
+    line-height: 1.5;
+}
+.pp-main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 48px; }
+.pp-portfolio .pp-main { max-width: 920px; }
+h1, h2 { margin: 0; line-height: 1.2; }
+.pp-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.pp-brand { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--pp-blue-deep); text-transform: uppercase; letter-spacing: 0.06em; }
+.pp-brand img { width: 28px; height: 28px; object-fit: contain; }
+
+/* ---- Header (progress) ---- */
+.pp-header { padding-bottom: 20px; border-bottom: 2px solid var(--pp-blue); margin-bottom: 8px; }
+.pp-header h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 900; margin: 10px 0 6px; }
+.pp-meta { margin: 0; font-size: 14px; font-weight: 600; color: var(--pp-muted); }
+
+/* ---- Hero (portfolio) ---- */
+.pp-hero {
+    background: linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%);
+    color: #FFFFFF;
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 8px;
+}
+.pp-hero .pp-brand { color: #E0F2FE; }
+.pp-hero .pp-brand img { background: #FFFFFF; border-radius: 50%; padding: 2px; }
+.pp-hero h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 900; margin: 14px 0 8px; }
+.pp-hero p { margin: 0; font-size: 16px; font-weight: 500; color: #E0F2FE; max-width: 560px; }
+
+/* ---- Sections ---- */
+.pp-section { padding: 24px 0 8px; }
+.pp-section h2 { font-size: 19px; font-weight: 800; margin-bottom: 14px; }
+.pp-muted { color: var(--pp-muted); font-weight: 500; }
+.pp-small { display: block; font-size: 12px; font-weight: 500; color: var(--pp-muted); }
+
+/* Month facts: one panel, numbers side by side */
+.pp-facts {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    margin: 0;
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius);
+}
+.pp-facts div { padding: 16px 18px; border-left: 1px solid var(--pp-border); }
+.pp-facts div:first-child { border-left: 0; }
+.pp-facts dt { font-size: 13px; font-weight: 600; color: var(--pp-muted); }
+.pp-facts dd { margin: 4px 0 0; font-size: 28px; font-weight: 900; }
+
+.pp-alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pp-alerts li { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--pp-warn-bg); color: #78350F; font-size: 14px; }
+.pp-alerts i { color: var(--pp-warn); margin-top: 3px; }
+.pp-ok { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--pp-ok); font-weight: 700; }
+
+/* Classes table */
+.pp-table-wrap { background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); overflow-x: auto; }
+.pp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pp-table th, .pp-table td { text-align: left; vertical-align: top; padding: 12px 14px; border-top: 1px solid var(--pp-border); }
+.pp-table thead th { border-top: 0; font-size: 12px; font-weight: 700; color: var(--pp-muted); text-transform: uppercase; letter-spacing: 0.04em; background: #F8FAFC; }
+.pp-table thead .pp-small { display: inline; text-transform: none; letter-spacing: 0; }
+.pp-class { display: block; font-size: 17px; font-weight: 900; }
+.pp-people { display: block; font-size: 12px; font-weight: 500; color: var(--pp-muted); max-width: 220px; }
+.pp-warn { display: block; font-size: 12px; font-weight: 700; color: var(--pp-warn); }
+.pp-bar { display: block; width: 110px; height: 8px; background: #E2E8F0; border-radius: 99px; overflow: hidden; margin: 6px 0 4px; }
+.pp-bar span { display: block; height: 100%; background: var(--pp-blue); border-radius: 99px; }
+
+.pp-chapter-chip {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 99px;
+    color: #FFFFFF;
+    background: var(--chip, var(--pp-blue));
+    white-space: nowrap;
+}
+
+/* Portfolio numbers */
+.pp-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0; }
+.pp-numbers div { background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); padding: 18px; display: flex; flex-direction: column-reverse; }
+.pp-numbers dd { margin: 0; font-size: 34px; font-weight: 900; color: var(--pp-blue-deep); line-height: 1.1; }
+.pp-numbers dt { font-size: 14px; font-weight: 600; color: var(--pp-muted); }
+
+.pp-chapters { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.pp-chapters li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--chip-soft, #F1F5F9); font-size: 14px; font-weight: 700; }
+
+/* Story showcase */
+.pp-stories { columns: 2 300px; column-gap: 16px; }
+.pp-story {
+    break-inside: avoid;
+    margin: 0 0 16px;
+    background: var(--pp-surface);
+    border: 1px solid var(--pp-border);
+    border-top: 4px solid var(--chip, var(--pp-blue));
+    border-radius: var(--pp-radius);
+    padding: 18px 20px;
+}
+.pp-story header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pp-story-title { font-size: 14px; font-weight: 800; }
+.pp-story-text { margin: 0; font-size: 15px; line-height: 1.7; white-space: pre-wrap; }
+.pp-story details summary { list-style: none; cursor: pointer; }
+.pp-story details summary::-webkit-details-marker { display: none; }
+.pp-story details[open] summary { display: none; }
+.pp-more { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--pp-blue-deep); }
+.pp-praise { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #F0F9FF; font-size: 13px; color: var(--pp-blue-deep); font-weight: 600; }
+.pp-praise i { color: #F59E0B; margin-right: 4px; }
+.pp-story footer { margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--pp-muted); }
+
+.pp-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--pp-border); font-size: 12px; color: var(--pp-muted); }
+
+/* Messages, loading */
+.pp-message { text-align: center; max-width: 440px; margin: 12vh auto 0; background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: 24px; padding: 36px 28px; }
+.pp-message > i { font-size: 32px; color: var(--pp-muted); margin-bottom: 14px; }
+.pp-message h1 { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.pp-message p { margin: 0; color: var(--pp-muted); font-weight: 500; }
+.pp-button {
+    margin-top: 18px;
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 10px 22px;
+    border: 0; border-radius: 99px;
+    background: var(--pp-blue-deep); color: #FFFFFF;
+    font: inherit; font-weight: 700; cursor: pointer;
+}
+.pp-button:hover { background: #075985; }
+.pp-button:focus-visible, .pp-story summary:focus-visible { outline: 3px solid #7DD3FC; outline-offset: 2px; }
+
+.pp-skeleton { display: grid; gap: 14px; }
+.pp-sk { display: block; border-radius: 12px; background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%); background-size: 200% 100%; animation: pp-shimmer 1.4s infinite linear; }
+.pp-sk-title { height: 36px; width: 55%; }
+.pp-sk-line { height: 16px; width: 35%; }
+.pp-sk-block { height: 140px; }
+@keyframes pp-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .pp-sk { animation: none; } }
+
+/* ---- Tablet / phone ---- */
+@media (max-width: 860px) {
+    .pp-facts { grid-template-columns: repeat(3, 1fr); }
+    .pp-facts div:nth-child(4) { border-left: 0; }
+    .pp-facts div:nth-child(n+4) { border-top: 1px solid var(--pp-border); }
+
+    /* Each class becomes its own block instead of a wide table. */
+    .pp-table-wrap { background: none; border: 0; overflow: visible; }
+    .pp-table thead { display: none; }
+    .pp-table, .pp-table tbody, .pp-table tr, .pp-table th, .pp-table td { display: block; width: 100%; }
+    .pp-table tr { background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); margin-bottom: 12px; padding: 4px 0; }
+    .pp-table th, .pp-table td { border-top: 0; padding: 6px 16px; }
+    .pp-table th { padding-top: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--pp-border); margin-bottom: 4px; }
+    .pp-table td { display: flex; gap: 8px; }
+    .pp-table td::before { content: attr(data-label); flex: 0 0 120px; font-size: 12px; font-weight: 700; color: var(--pp-muted); padding-top: 2px; }
+    .pp-cell { min-width: 0; flex: 1; }
+    .pp-people { max-width: none; }
+}
+@media (max-width: 560px) {
+    .pp-main { padding: 20px 16px 36px; }
+    .pp-hero { padding: 24px 20px; border-radius: 20px; }
+    .pp-facts { grid-template-columns: repeat(2, 1fr); }
+    .pp-facts div { border-left: 0; border-top: 1px solid var(--pp-border); }
+    .pp-facts div:nth-child(-n+2) { border-top: 0; }
+    .pp-facts div:nth-child(even) { border-left: 1px solid var(--pp-border); }
+    .pp-facts dd { font-size: 24px; }
+    .pp-numbers { grid-template-columns: repeat(2, 1fr); }
+    .pp-numbers dd { font-size: 28px; }
+    .pp-table td::before { flex-basis: 104px; }
+}
+
+@media print {
+    body { background: #FFFFFF; }
+    .pp-hero { background: none; color: var(--pp-text); border: 2px solid var(--pp-blue); }
+    .pp-hero .pp-brand, .pp-hero p { color: var(--pp-blue-deep); }
+}

@@ -767,6 +767,7 @@ function renderSchoolDetail() {
 
     renderSchoolTimetable();
     renderSubstitutes();
+    renderSchoolLinks(school);
 
     const list = document.getElementById('schoolSectionsList');
     if (!sections.length) {
@@ -2332,6 +2333,117 @@ async function giveExtraTime(studentId, totalExtra, button) {
         showNotification(err.message);
         row.querySelectorAll('button').forEach(b => { b.disabled = false; });
     }
+}
+
+// ================= ADMIN: a school's two QR pages (Phase 7) =================
+// progress.html: for the school's management, private. portfolio.html:
+// printed in the school's books, public. Admin only; the secret links never
+// reach other accounts (supabase/phase7-qr-pages.sql).
+const SCHOOL_LINK_KINDS = [
+    { kind: 'progress', page: 'progress.html', title: 'School progress page', icon: 'fa-chart-simple',
+      who: 'For the Principal, Chairman and Correspondent. Keep it private: anyone with this link can see each class’s progress, visits and sessions.' },
+    { kind: 'portfolio', page: 'portfolio.html', title: 'Book portfolio page', icon: 'fa-book-open',
+      who: 'Printed as a QR code in this school’s books, so anyone can open it: chapters covered, totals, and only the stories staff chose to show.' }
+];
+let schoolLinks = null;
+
+function schoolLinkUrl(kind, links) {
+    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
+    const url = new URL(info.page, window.location.href);
+    url.search = `?k=${links[`${kind}_token`]}`;
+    return url.href;
+}
+
+async function renderSchoolLinks(school) {
+    const card = document.getElementById('schoolLinksCard');
+    const body = document.getElementById('schoolLinksBody');
+    card.hidden = appState.currentUser.role !== 'admin';
+    if (card.hidden) return;
+    schoolLinks = null;
+    body.innerHTML = '<p class="prep-readiness-explain">Loading the links…</p>';
+    try {
+        const links = await HMCloud.schoolLinks(school.id);
+        if (detailSchoolId !== school.id) return;
+        schoolLinks = links;
+    } catch (err) {
+        body.innerHTML = `<p class="prep-readiness-explain">${escapeReportText(err.message)}</p>`;
+        return;
+    }
+    body.innerHTML = SCHOOL_LINK_KINDS.map(info => {
+        const on = schoolLinks[`${info.kind}_on`];
+        return `
+            <div class="school-link-row${on ? '' : ' is-off'}" data-kind="${info.kind}">
+                <div class="school-link-head">
+                    <i class="fa-solid ${info.icon}" aria-hidden="true"></i>
+                    <div>
+                        <h4>${info.title} <span class="admin-list-tag ${on ? 'full' : 'partial'}">${on ? 'On' : 'Off'}</span></h4>
+                        <p>${info.who}</p>
+                    </div>
+                </div>
+                <div class="school-link-actions">
+                    ${on ? `
+                    <a class="btn-glass compact" href="${schoolLinkUrl(info.kind, schoolLinks)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>
+                    <button type="button" class="btn-glass compact" onclick="copySchoolLink('${info.kind}')"><i class="fa-regular fa-copy"></i> Copy link</button>
+                    <button type="button" class="btn-glass compact" onclick="printSchoolLinkQr('${info.kind}')"><i class="fa-solid fa-print"></i> Print QR</button>
+                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'off')">Turn off</button>` : `
+                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'on')">Turn on</button>`}
+                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'new')"><i class="fa-solid fa-rotate"></i> New link</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+async function changeSchoolLink(kind, action) {
+    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
+    const name = info.title.toLowerCase();
+    if (action === 'new' && !confirm(`Make a new link for the ${name}? The old QR code${kind === 'portfolio' ? ', including any already printed in books,' : ''} will stop working.`)) return;
+    if (action === 'off' && !confirm(`Turn off the ${name}? Its QR code will say the link isn't active until you turn it on again.`)) return;
+    const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    try {
+        await HMCloud.changeSchoolLink(school.id, kind, action);
+        showNotification(action === 'new' ? 'New link made. Print the new QR code.' : action === 'off' ? 'Link turned off.' : 'Link turned on.');
+    } catch (err) {
+        showNotification(err.message);
+    }
+    renderSchoolLinks(school);
+}
+
+async function copySchoolLink(kind) {
+    try {
+        await navigator.clipboard.writeText(schoolLinkUrl(kind, schoolLinks));
+        showNotification('Link copied.');
+    } catch (err) {
+        showNotification("Couldn't copy. Use Open and copy the address from the new tab.");
+    }
+}
+
+async function printSchoolLinkQr(kind) {
+    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
+    const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    try {
+        await loadQrLibrary();
+    } catch (err) {
+        showNotification("Couldn't load the QR code maker. Check your internet connection and try again.");
+        return;
+    }
+    const url = schoolLinkUrl(kind, schoolLinks);
+    openPrintPage(`${info.title} QR - ${school.name}`, `
+        <style>
+            .qr-single { text-align: center; padding-top: 30px; }
+            .qr-single svg { width: 80mm; height: 80mm; display: block; margin: 0 auto 14px; }
+            .qr-single p { font-size: 13px; color: #4B5563; margin: 4px 0; }
+            .qr-single .qr-url { font-size: 10px; color: #9CA3AF; word-break: break-all; }
+        </style>
+        <header>
+            <div class="brand">Happy Minds · ${escapeReportText(info.title)}</div>
+            <h1>${escapeReportText(school.name)}</h1>
+            <p class="meta">${kind === 'progress' ? 'For school management. Please keep this private.' : 'Scan to see what our students have learned with Happy Minds.'}</p>
+        </header>
+        <div class="qr-single">
+            ${qrSvg(url)}
+            <p>${kind === 'progress' ? 'Scan to see each class’s progress' : 'Scan to see our Happy Minds portfolio'}</p>
+            <p class="qr-url">${escapeReportText(url)}</p>
+        </div>`);
 }
 
 // ================= ADMIN: Workbook QR codes (Phase 6) =================
@@ -6042,6 +6154,7 @@ async function loadReportStories(container, studentId) {
         box.innerHTML = `<p class="prep-readiness-explain">No stories yet. ${escapeReportText(name)}'s stories will appear here when the teacher scans one in class or ${escapeReportText(name)} sends one from the Learning Space.</p>`;
         return;
     }
+    const canShowcase = SHOWCASE_ROLES.includes(appState.currentUser.role);
     box.innerHTML = stories.map((story, i) => {
         const chapter = getChapterById(story.chapter_id);
         const f = story.feedback || {};
@@ -6066,9 +6179,32 @@ async function loadReportStories(container, studentId) {
                         <dt>Try this next time</dt><dd>${escapeReportText(f.tip)}</dd>
                         <dt>Think about</dt><dd>${escapeReportText(f.question)}</dd>
                     </dl>
+                    ${canShowcase && 'showcase' in story ? `
+                    <label class="showcase-toggle">
+                        <input type="checkbox" ${story.showcase ? 'checked' : ''} onchange="toggleStoryShowcase('${story.id}', this)">
+                        <span><strong>Show on the school portfolio</strong> The public page printed in the book. Only the story, the first name and initial, and what went well.</span>
+                    </label>` : ''}
                 </div>
             </details>`;
     }).join('');
+}
+
+// Teachers, trainers, coordinators and admins choose which stories appear on
+// the school's public portfolio page (portfolio.html); the database re-checks.
+const SHOWCASE_ROLES = ['teacher', 'trainer', 'coordinator', 'admin'];
+
+async function toggleStoryShowcase(storyId, input) {
+    const on = input.checked;
+    input.disabled = true;
+    try {
+        await HMCloud.setStoryShowcase(storyId, on);
+        showNotification(on ? 'This story will show on the school portfolio.' : 'Removed from the school portfolio.');
+    } catch (err) {
+        input.checked = !on;
+        showNotification(err.message);
+    } finally {
+        input.disabled = false;
+    }
 }
 
 // ================= TRAINER/ADMIN: Teacher Usage Report =================

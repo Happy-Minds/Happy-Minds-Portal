@@ -5028,3 +5028,19 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
     .student-time-actions { margin-left: 0; width: 100%; }
     .qr-sheet-actions .btn-primary-glowing { width: 100%; justify-content: center; }
 }
+
+/* ---- Phase 7: school QR pages (admin) + portfolio stories ---- */
+.school-links { display: grid; gap: 12px; }
+.school-link-row { border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); padding: 14px 16px; display: grid; gap: 12px; }
+.school-link-row.is-off { background: #F8FAFC; }
+.school-link-head { display: flex; gap: 12px; align-items: flex-start; }
+.school-link-head > i { font-size: 18px; color: var(--primary-blue); margin-top: 3px; width: 22px; text-align: center; }
+.school-link-head h4 { font-size: 15px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
+.school-link-head p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+.school-link-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.school-link-actions a.btn-glass { text-decoration: none; }
+
+.showcase-toggle { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 14px; border-radius: var(--radius-sm); background: #F0F9FF; border: 1.5px solid #BAE6FD; cursor: pointer; }
+.showcase-toggle input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary-blue); flex-shrink: 0; }
+.showcase-toggle span { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.showcase-toggle strong { display: block; color: var(--text-dark); font-size: 14px; }

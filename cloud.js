@@ -737,7 +737,7 @@ const HMCloud = (() => {
         // first. Filter by { chapterId, source } if given.
         async listStories({ chapterId, source, sectionId } = {}) {
             let query = client.from('story_submissions')
-                .select('id, student_id, section_id, chapter_id, source, attempt, story_text, feedback, photo_path, created_by, created_at')
+                .select('*')   // includes `showcase` once supabase/phase7-qr-pages.sql is run
                 .order('created_at', { ascending: false });
             if (chapterId) query = query.eq('chapter_id', chapterId);
             if (source) query = query.eq('source', source);
@@ -794,6 +794,33 @@ const HMCloud = (() => {
                 throw error;
             }
             return data;
+        },
+
+        // ---- QR pages (supabase/phase7-qr-pages.sql) ----------------------
+        // Admin: a school's two secret links. Resolves to
+        // { progress_token, progress_on, portfolio_token, portfolio_on }.
+        async schoolLinks(schoolId) {
+            const { data, error } = await client.rpc('school_links', { p_school: schoolId });
+            if (!error) return data;
+            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('The QR pages are not set up yet: run supabase/phase7-qr-pages.sql first.');
+            throw new Error("Couldn't load the QR links. Please try again.");
+        },
+
+        // Admin: kind 'progress' | 'portfolio', action 'on' | 'off' | 'new'.
+        async changeSchoolLink(schoolId, kind, action) {
+            const { data, error } = await client.rpc('change_school_link', { p_school: schoolId, p_kind: kind, p_action: action });
+            if (!error) return data;
+            console.warn('Happy Minds: link change failed', error);
+            throw new Error("Couldn't change the link. Please try again.");
+        },
+
+        // Staff who teach the student: show / hide a story on the school portfolio.
+        async setStoryShowcase(storyId, on) {
+            const { error } = await client.rpc('set_story_showcase', { p_story: storyId, p_on: on });
+            if (!error) return;
+            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('Portfolio stories are not set up yet: run supabase/phase7-qr-pages.sql first.');
+            if (/only staff/i.test(error.message || '')) throw new Error(error.message);
+            throw new Error("Couldn't save that. Please try again.");
         },
 
         // Admin only (enforced by the database): today's extra minutes for
