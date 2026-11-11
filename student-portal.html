@@ -18,7 +18,7 @@
     <script src="recognition.js"></script>
     <link rel="stylesheet" href="student-portal.css">
     <!-- Student-side Chapter 1 practice (separate from the teacher app's chapter1-practice.*) -->
-    <link rel="stylesheet" href="student-practice.css">
+    <link rel="stylesheet" href="practice-chapters.css">
 </head>
 <body>
 <div id="sp-login" class="sp-login-screen">
@@ -676,15 +676,92 @@
     </div>
 </div>
 
-<!-- ========== CHAPTER 1 PRACTICE MOUNT ========== -->
-<div id="chapter1PracticeMount" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; background:white; overflow-y:auto;">
-    <button onclick="closeChapter1Practice()" style="position:fixed; top:20px; right:24px; z-index:100000; padding:12px 24px; background:var(--sp-primary); color:white; border:none; border-radius:99px; cursor:pointer; font-weight:800; font-size:15px; box-shadow:0 8px 24px rgba(0,0,0,0.15); font-family:var(--sp-font-body); transition:all 0.2s ease;">
-        <i class="fa-solid fa-xmark"></i> Close Practice
-    </button>
+<!-- ========== PRACTICE (chapters 1–20, practice-chapters.js) ==========
+     Each chapter draws into its own full-screen container. -->
+<div id="chapter1PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 1 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter1Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
     <div id="chapter1-practice"></div>
 </div>
+<div id="chapter2PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 2 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter2Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter2-practice"></div>
+</div>
+<div id="chapter3PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 3 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter3Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter3-practice"></div>
+</div>
+<div id="chapter4PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 4 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter4Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter4-practice"></div>
+</div>
+<div id="chapter5PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 5 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter5Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter5-practice"></div>
+</div>
+<div id="chapter6PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 6 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter6Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter6-practice"></div>
+</div>
+<div id="chapter7PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 7 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter7Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter7-practice"></div>
+</div>
+<div id="chapter8PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 8 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter8Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter8-practice"></div>
+</div>
+<div id="chapter9PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 9 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter9Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter9-practice"></div>
+</div>
+<div id="chapter10PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 10 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter10Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter10-practice"></div>
+</div>
+<div id="chapter11PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 11 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter11Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter11-practice"></div>
+</div>
+<div id="chapter12PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 12 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter12Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter12-practice"></div>
+</div>
+<div id="chapter13PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 13 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter13Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter13-practice"></div>
+</div>
+<div id="chapter14PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 14 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter14Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter14-practice"></div>
+</div>
+<div id="chapter15PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 15 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter15Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter15-practice"></div>
+</div>
+<div id="chapter16PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 16 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter16Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter16-practice"></div>
+</div>
+<div id="chapter17PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 17 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter17Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter17-practice"></div>
+</div>
+<div id="chapter18PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 18 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter18Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter18-practice"></div>
+</div>
+<div id="chapter19PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 19 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter19Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter19-practice"></div>
+</div>
+<div id="chapter20PracticeMount" class="sp-practice-mount" role="dialog" aria-modal="true" aria-label="Chapter 20 practice">
+    <button type="button" class="sp-practice-close" onclick="closeChapter20Practice()"><i class="fa-solid fa-xmark"></i> Close Practice</button>
+    <div id="chapter20-practice"></div>
+</div>
+</div>
 
-<script src="student-practice.js"></script>
+<script src="practice-store.js"></script>
+<script src="practice-chapters.js"></script>
 <script src="student-portal.js"></script>
 </body>
 </html>

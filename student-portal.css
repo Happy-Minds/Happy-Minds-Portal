@@ -1498,3 +1498,15 @@ body {
 @media (prefers-reduced-motion: reduce) { .sp-rec-streak { transition: none; } }
 
 .sp-privacy-link { display: block; margin-top: 10px; text-align: center; font-size: 12px; font-weight: 600; color: var(--sp-muted); }
+
+/* ==========================================================================
+   PRACTICE (chapters 1–20): each chapter's practice opens full screen
+   ========================================================================== */
+.sp-practice-mount { display: none; position: fixed; inset: 0; z-index: 99999; background: white; overflow-y: auto; }
+.sp-practice-close {
+    position: fixed; top: 20px; right: 24px; z-index: 100000;
+    padding: 12px 24px; background: var(--sp-primary); color: white; border: none; border-radius: 99px; cursor: pointer;
+    font-weight: 800; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-family: inherit;
+}
+.sp-practice-close:focus-visible { outline: 3px solid #A5B4FC; outline-offset: 2px; }
+@media (max-width: 560px) { .sp-practice-close { top: auto; bottom: 16px; right: 16px; padding: 10px 18px; font-size: 14px; } }

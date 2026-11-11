@@ -54,7 +54,7 @@ const CHAPTERS = [
         // Practice cards listed on the student portal's Practice page
         // (student-portal.js renderPractice) — id is routed by startPractice().
         practiceList: [
-            { id: 'ch1-practice', title: 'Noun Detective: 8 Interactive Activities' }
+            { id: 'ch1-practice', title: "Chapter 1: 10 Interactive Activities" }
         ],
         // "I Can Check Myself" from the worksheet maps one-to-one onto the
         // four stages, and drives this chapter's Class Planner items too.
@@ -386,6 +386,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Learning is experience. Everything else is just information.", by: "Albert Einstein" },
         video: 'chapter-02.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch2-practice", title: "Pip's Flight Academy: 4 Interactive Missions" }
+        ],
         videoYoutubeId: 'qpfCur7IYAo',   // https://youtu.be/qpfCur7IYAo
         thinkTalk: [
             'What was the very first step in the journey you watched?',
@@ -618,6 +622,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "I cannot teach anybody anything; I can only make them think.", by: "Socrates" },
         video: 'chapter-03.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch3-practice", title: "The Mirror Pool: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What three words did the character use to describe themselves?',
             'Why is it important to know what makes you special?',
@@ -848,6 +856,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Education is simply the soul of a society as it passes from one generation to another.", by: "G. K. Chesterton" },
         video: 'chapter-04.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch4-practice", title: "Sela's Big Day: The Pronoun Adventure (8 Activities)" }
+        ],
         thinkTalk: [
             'How did the characters help each other in the video?',
             'What feeling did you notice change during the story?',
@@ -1076,6 +1088,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Education is the most powerful weapon which you can use to change the world.", by: "Nelson Mandela" },
         video: 'chapter-05.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch5-practice", title: "A Tour of the Treehouse: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did the character love most about their home?',
             'How is the home in the video similar to yours?',
@@ -1300,6 +1316,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Formal education will make you a living; self-education will make you a fortune.", by: "Jim Rohn" },
         video: 'chapter-06.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch6-practice", title: "What We Did Yesterday: 8 Interactive Activities" }
+        ],
         thinkTalk: [
             'What was the first thing the character did in their day?',
             'Which part of the day looked the most fun?',
@@ -1526,6 +1546,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Intelligence plus character - that is the goal of true education.", by: "Dr. Martin Luther King Jr." },
         video: 'chapter-07.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch7-practice", title: "The Lumora Festival: 8 Interactive Activities" }
+        ],
         thinkTalk: [
             'What is your favourite festival or celebration?',
             'Who do you celebrate it with?',
@@ -1751,6 +1775,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "One child, one teacher, one book, one pen can change the world.", by: "Malala Yousafzai" },
         video: 'chapter-08.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch8-practice", title: "The Article Adventure: 6 Interactive Activities + Bonus" }
+        ],
         thinkTalk: [
             'What is your favourite animal, and where does it live?',
             'What new animal did the friends discover in the story?',
@@ -1980,6 +2008,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The mind is not a vessel to be filled but a fire to be kindled.", by: "Often attributed to Plutarch" },
         video: 'chapter-09.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch9-practice", title: "Then and Now: 8 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did the Clock Tree show the friends about old Lumora?',
             'How is Lumora different now compared to the past?',
@@ -2205,6 +2237,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The goal of education is the advancement of knowledge and the dissemination of truth.", by: "John F. Kennedy" },
         video: 'chapter-10.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch10-practice", title: "The Weather Adventure: 8 Interactive Activities" }
+        ],
         thinkTalk: [
             'What weather did the friends see turn into a storm?',
             'Where did the friends go to shelter from the storm?',
@@ -2442,6 +2478,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Learning never exhausts the mind.", by: "Leonardo da Vinci" },
         video: 'chapter-11.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch11-practice", title: "The Dream School: 8 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did the friends want to build for all of Lumora?',
             'What three rules did the friends choose for their dream school?',
@@ -2680,6 +2720,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Education is the key to unlocking the world, a passport to freedom.", by: "Oprah Winfrey" },
         video: 'chapter-12.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch12-practice", title: "Market Day: 9 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did Pip and Aanya need to buy at the market?',
             'Why couldn\'t the merchant count the starlight?',
@@ -2909,6 +2953,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Education is not preparation for life; education is life itself.", by: "John Dewey" },
         video: 'chapter-13.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch13-practice", title: "Healthy Habits Day: 9 Interactive Activities" }
+        ],
         thinkTalk: [
             'What healthy habit was each friend practicing?',
             'How did Flame warm up his wings?',
@@ -3141,6 +3189,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Education is not the filling of a pail, but the lighting of a fire.", by: "William Butler Yeats" },
         video: 'chapter-14.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch14-practice", title: "The Day of Falling Stars: 9 Interactive Activities" }
+        ],
         thinkTalk: [
             'What special event happened once in a hundred years?',
             'What did the friends do in the morning, afternoon, and at sunset?',
@@ -3378,6 +3430,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The purpose of education is to replace an empty mind with an open one.", by: "Malcolm Forbes" },
         video: 'chapter-15.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch15-practice", title: "The Book of Magic Words: 9 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did the Book of Magic Words show for each word spoken?',
             'What two words appeared when Aanya said "happy"?',
@@ -3608,6 +3664,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The roots of education are bitter, but the fruit is sweet.", by: "Aristotle" },
         video: 'chapter-16.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch16-practice", title: "The Color Contest: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What did Flame, Pip, and Sela bring to the Color Contest?',
             'How did Aanya describe the butterfly and the pond?',
@@ -3837,6 +3897,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The illiterate of the 21st century will not be those who cannot read and write, but those who cannot learn, unlearn, and relearn.", by: "Alvin Toffler" },
         video: 'chapter-17.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch17-practice", title: "The Sound Walk: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What sounds did the friends hear on their sound walk?',
             'Which punctuation mark matched the frog\'s sudden croak?',
@@ -4084,6 +4148,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "The future belongs to those who learn more skills and combine them in creative ways.", by: "Robert Greene" },
         video: 'chapter-18.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch18-practice", title: "The Story Tree: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What was out of order on the scrolls Pip found?',
             'What three sequence words did Aanya use to put the scrolls in order?',
@@ -4320,6 +4388,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Knowledge has to be improved, challenged, and increased constantly, or it vanishes.", by: "Peter Drucker" },
         video: 'chapter-19.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch19-practice", title: "The Rhyming River: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What rhymes did Pip, Flame, and Sela say at the Rhyming River?',
             'What rhyming words did the river give back for "sun"?',
@@ -4551,6 +4623,10 @@ const CHAPTERS = [
         // it opens the lesson on the teacher's Settle card and the projector.
         bookQuote: { text: "Learning is a treasure that will follow its owner everywhere.", by: "Chinese proverb" },
         video: 'chapter-20.mp4',
+        // Student practice in the Learning Space (practice-chapters.js).
+        practiceList: [
+            { id: "ch20-practice", title: "The Lumora Times: 6 Interactive Activities" }
+        ],
         thinkTalk: [
             'What news story did the young reporter share in the video?',
             'How did they make sure their report was clear?',

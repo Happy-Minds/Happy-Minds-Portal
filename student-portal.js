@@ -16,7 +16,8 @@ function freshPortalState() {
         streak: 0,
         lastLogin: null,
         joinedAt: null,
-        completedPractice: [],   // practice ids, added once every activity in the set is complete
+        completedPractice: [],   // practice ids, added when the student finishes the whole set
+        startedPractice: [],     // practice ids the student has opened
         completedFixIt: [],      // "<chapterId>-<box>" for each Fix It box the student worked through
         creations: [],
         badges: [],
@@ -88,6 +89,7 @@ HMCloud.onSaveStatus(status => {
 // here, and logging out here returns to index.html signed out.
 async function enterPortal(account) {
     currentUser = account;
+    PracticeStore.bind(account.studentId);
     loadState();
     document.getElementById('sp-login').classList.add('sp-hidden');
     document.getElementById('sp-app').classList.remove('sp-hidden');
@@ -203,8 +205,7 @@ function spRenderTime() {
 function spShowTimeUp() {
     spTime.up = true;
     spReportTime();
-    const practice = document.getElementById('chapter1PracticeMount');
-    if (practice && practice.style.display === 'block') closeChapter1Practice();
+    closeOpenPractice();
     document.querySelectorAll('.sp-modal-backdrop.open').forEach(m => m.classList.remove('open'));
     document.getElementById('sp-app').inert = true;
     document.getElementById('spTimeUpNote').textContent = '';
@@ -288,7 +289,7 @@ function spOpenDeepLink() {
 
     spNav('practice');
     const games = (ch.practiceList || []).map(p => {
-        const ready = p.id === 'ch1-practice';
+        const ready = practiceReady(p.id);
         return `<button type="button" class="sp-qr-option" ${ready ? `onclick="closeChapterModal(); startPractice('${p.id}')"` : 'disabled'}>
                 <i class="fa-solid fa-puzzle-piece"></i>
                 <span><strong>${escapeText(p.title)}</strong><small>${ready ? 'Practice games' : 'Coming soon'}</small></span>
@@ -537,10 +538,10 @@ function renderHome() {
 
     // Recommendations — only things that exist and aren't done yet
     const recs = [];
-    const openPractice = (currentChap.practiceList || []).find(p => !spState.completedPractice.includes(p.id));
+    const openPractice = (currentChap.practiceList || []).find(p => practiceReady(p.id) && !spState.completedPractice.includes(p.id));
     if (openPractice) {
-        const { done, total } = getPracticeProgress(openPractice.id);
-        recs.push({ icon: '🎯', type: done ? 'Keep Going' : 'Practice', title: openPractice.title, desc: done ? `${done} of ${total} activities done` : `${total} activities to try`, nav: 'practice' });
+        const started = (spState.startedPractice || []).includes(openPractice.id);
+        recs.push({ icon: '🎯', type: started ? 'Keep Going' : 'Practice', title: openPractice.title, desc: started ? 'Carry on where you left off' : 'New activities to try', nav: 'practice' });
     }
     const openFixIt = countOpenFixItBoxes();
     if (openFixIt) {
@@ -655,12 +656,12 @@ function renderPractice() {
         if (!ch.practiceList) return;
         ch.practiceList.forEach(prac => {
             const isDone = spState.completedPractice.includes(prac.id);
-            const { done, total } = getPracticeProgress(prac.id);
-            const isStarted = !isDone && done > 0;
+            const isStarted = !isDone && (spState.startedPractice || []).includes(prac.id);
+            const isOpen = unlocked.includes(ch.id);
             if (currentPracFilter === 'done' && !isDone) return;
-            if (currentPracFilter === 'inprogress' && (isDone || !unlocked.includes(ch.id))) return;
+            if (currentPracFilter === 'inprogress' && (isDone || !isOpen)) return;
 
-            const scoreText = isDone ? 'Completed' : isStarted ? `${done} of ${total} activities done` : 'Not started';
+            const scoreText = !isOpen ? `Opens when your class reaches Chapter ${ch.id}` : isDone ? 'Completed' : isStarted ? 'In progress' : 'Not started';
             const scoreClass = isDone ? 'good' : '';
 
             html += `
@@ -674,9 +675,9 @@ function renderPractice() {
                         </div>
                     </div>
                     <div class="sp-prac-actions">
-                        <button class="sp-btn-primary compact" onclick="startPractice('${prac.id}')">
+                        ${isOpen ? `<button class="sp-btn-primary compact" onclick="startPractice('${prac.id}')">
                             ${isDone ? 'Play Again' : isStarted ? 'Continue' : 'Start Practice'}
-                        </button>
+                        </button>` : `<button class="sp-btn-primary compact" disabled><i class="fa-solid fa-lock"></i> Locked</button>`}
                     </div>
                 </div>
             `;
@@ -687,42 +688,108 @@ function renderPractice() {
     grid.innerHTML = html;
 }
 
-// Real per-student progress for a practice set; sets without a game yet report 0/0.
-function getPracticeProgress(pracId) {
-    if (pracId === 'ch1-practice') return chapter1Practice.getProgress(currentUser.studentId);
-    return { done: 0, total: 0 };
+// ==========================================================================
+// PRACTICE — chapters 1–20 (practice-chapters.js). Each chapter's practice
+// opens full screen in #chapter<N>PracticeMount; its progress is saved to
+// the student's account by PracticeStore. A set counts as finished (and
+// earns XP) when the student completes it in the practice itself.
+// ==========================================================================
+const PRACTICE_MODULES = {
+    1: typeof chapter1Practice !== 'undefined' ? chapter1Practice : null,
+    2: typeof chapter2Practice !== 'undefined' ? chapter2Practice : null,
+    3: typeof chapter3Practice !== 'undefined' ? chapter3Practice : null,
+    4: typeof chapter4Practice !== 'undefined' ? chapter4Practice : null,
+    5: typeof chapter5Practice !== 'undefined' ? chapter5Practice : null,
+    6: typeof chapter6Practice !== 'undefined' ? chapter6Practice : null,
+    7: typeof chapter7Practice !== 'undefined' ? chapter7Practice : null,
+    8: typeof chapter8Practice !== 'undefined' ? chapter8Practice : null,
+    9: typeof chapter9Practice !== 'undefined' ? chapter9Practice : null,
+    10: typeof chapter10Practice !== 'undefined' ? chapter10Practice : null,
+    11: typeof chapter11Practice !== 'undefined' ? chapter11Practice : null,
+    12: typeof chapter12Practice !== 'undefined' ? chapter12Practice : null,
+    13: typeof chapter13Practice !== 'undefined' ? chapter13Practice : null,
+    14: typeof chapter14Practice !== 'undefined' ? chapter14Practice : null,
+    15: typeof chapter15Practice !== 'undefined' ? chapter15Practice : null,
+    16: typeof chapter16Practice !== 'undefined' ? chapter16Practice : null,
+    17: typeof chapter17Practice !== 'undefined' ? chapter17Practice : null,
+    18: typeof chapter18Practice !== 'undefined' ? chapter18Practice : null,
+    19: typeof chapter19Practice !== 'undefined' ? chapter19Practice : null,
+    20: typeof chapter20Practice !== 'undefined' ? chapter20Practice : null
+};
+const practiceModule = n => PRACTICE_MODULES[n] || null;
+const practiceNumber = pracId => { const m = /^ch(\d+)-practice$/.exec(pracId); return m ? Number(m[1]) : null; };
+const practiceReady = pracId => { const n = practiceNumber(pracId); return !!(n && practiceModule(n)); };
+const practiceMount = n => document.getElementById(`chapter${n}PracticeMount`);
+
+function chapterOpenToStudent(n) {
+    return getUnlockedChapters(getClassProgress()).some(c => c.id === n);
 }
 
 function startPractice(pracId) {
-    if (pracId === 'ch1-practice') {
-        const mount = document.getElementById('chapter1PracticeMount');
-        if (mount) {
-            mount.style.display = 'block';
-            chapter1Practice.init(currentUser.studentId);
-        }
-    } else {
-        showToast('This practice is not available yet.');
+    const n = practiceNumber(pracId);
+    const mod = n && practiceModule(n);
+    if (!mod || !practiceMount(n)) { showToast('This practice is not available yet.'); return; }
+    if (!chapterOpenToStudent(n)) { showToast(`Chapter ${n} practice opens when your class reaches it.`); return; }
+    closeOpenPractice(true);
+    practiceMount(n).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    mod.init();
+    if (!spState.startedPractice) spState.startedPractice = [];
+    if (!spState.startedPractice.includes(pracId)) {
+        spState.startedPractice.push(pracId);
+        saveState();
     }
 }
 
-// Called by the Close button and by the practice's own "Return" button.
-// The set only counts — and only earns XP — once every activity in it is done.
-function closeChapter1Practice() {
-    const mount = document.getElementById('chapter1PracticeMount');
-    if (mount) mount.style.display = 'none';
+// Hides whichever practice is open (without counting it as finished).
+function closeOpenPractice(quiet) {
+    let closed = false;
+    for (let n = 1; n <= 20; n++) {
+        const mount = practiceMount(n);
+        if (mount && mount.style.display === 'block') { mount.style.display = 'none'; closed = true; }
+    }
+    document.body.style.overflow = '';
+    if (closed && !quiet && document.getElementById('sp-practice').classList.contains('active-sp')) renderPractice();
+}
 
-    const { done, total } = getPracticeProgress('ch1-practice');
-    if (done === total && !spState.completedPractice.includes('ch1-practice')) {
-        spState.completedPractice.push('ch1-practice');
-        addHistory('Finished every Chapter 1 practice activity', '🧩');
+// The practice's own "Finish" (all activities done): count it and reward once.
+function finishPractice(n) {
+    const pracId = `ch${n}-practice`;
+    closeOpenPractice(true);
+    if (!spState.completedPractice.includes(pracId)) {
+        spState.completedPractice.push(pracId);
+        addHistory(`Finished every Chapter ${n} practice activity`, '🧩');
         addXP(20, 'Practice Set Complete');
         if (spState.completedPractice.length === 5) awardBadge('prac_5');
         saveState();
-    } else if (done > 0 && done < total) {
-        showToast(`${done} of ${total} activities done — finish them all to complete this set!`);
+    } else {
+        showToast(`Chapter ${n} practice done again. Great work!`);
     }
     renderPractice();
+    updateGlobalUI();
 }
+
+// The hooks the practice modules call: close (✕ / back) and complete.
+for (let n = 1; n <= 20; n++) {
+    window[`closeChapter${n}Practice`] = () => closeOpenPractice();
+    window[`completeChapter${n}Practice`] = () => finishPractice(n);
+}
+
+// The modules' own "next / previous chapter" buttons: only chapters the
+// class has reached, and through startPractice so it is recorded.
+function guardPracticeChapterSwitch() {
+    for (let n = 1; n <= 20; n++) {
+        const mod = practiceModule(n);
+        if (!mod || typeof mod.switchToChapter !== 'function') continue;
+        mod.switchToChapter = target => {
+            const to = Number(target);
+            if (!practiceReady(`ch${to}-practice`)) return;
+            if (!chapterOpenToStudent(to)) { showToast(`Chapter ${to} practice opens when your class reaches it.`); return; }
+            startPractice(`ch${to}-practice`);
+        };
+    }
+}
+guardPracticeChapterSwitch();
 
 function renderFixIt() {
     const sel = document.getElementById('spFixItChapterSel');
