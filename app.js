@@ -2911,18 +2911,21 @@ async function printPrincipalSlip(pin) {
 }
 
 // The one QR code for the book (same for every school).
-async function printPrincipalQr() {
+// One QR code for the book, the same for every school: a big code, who it
+// is for, and the address under it.
+async function printBookQr({ title, brand, heading, meta, caption, url }) {
     const w = window.open('', '_blank');
     if (!w) { showNotification('Allow pop-ups for this site to print the QR code.'); return; }
     let svg;
     try {
-        svg = await principalQrSvg();
+        await loadQrLibrary();
+        svg = qrSvg(url);
     } catch (err) {
         w.close();
         showNotification("Couldn't load the QR code maker. Check your internet connection and try again.");
         return;
     }
-    openPrintPage('Principals portal QR', `
+    openPrintPage(title, `
         <style>
             .qr-single { text-align: center; padding-top: 30px; }
             .qr-single svg { width: 80mm; height: 80mm; display: block; margin: 0 auto 14px; }
@@ -2930,15 +2933,33 @@ async function printPrincipalQr() {
             .qr-single .qr-url { font-size: 10px; color: #9CA3AF; word-break: break-all; }
         </style>
         <header>
-            <div class="brand">Happy Minds · Principals’ portal</div>
-            <h1>For school management</h1>
-            <p class="meta">Scan, then sign in with your school code and PIN to see your school’s progress and portfolio.</p>
+            <div class="brand">${escapeReportText(brand)}</div>
+            <h1>${escapeReportText(heading)}</h1>
+            <p class="meta">${escapeReportText(meta)}</p>
         </header>
         <div class="qr-single">
             ${svg}
-            <p>Principal · Chairman · Correspondent</p>
-            <p class="qr-url">${escapeReportText(principalPageUrl())}</p>
+            <p>${escapeReportText(caption)}</p>
+            <p class="qr-url">${escapeReportText(url)}</p>
         </div>`, w);
+}
+
+// Principals: opens principal.html (school code + PIN).
+function printPrincipalQr() {
+    printBookQr({ title: 'Principals portal QR', brand: 'Happy Minds · Principals’ portal', heading: 'For school management',
+        meta: 'Scan, then sign in with your school code and PIN to see your school’s progress and portfolio.',
+        caption: 'Principal · Chairman · Correspondent', url: principalPageUrl() });
+}
+
+// Teachers and trainers: opens the main sign-in page (the site's home).
+function teacherLoginUrl() {
+    return new URL('./', window.location.href).href;
+}
+
+function printTeacherQr() {
+    printBookQr({ title: 'Teachers sign-in QR', brand: 'Happy Minds · For teachers', heading: 'Teachers’ sign-in',
+        meta: 'Scan, then sign in with your Happy Minds username and password.',
+        caption: 'Class teachers · Happy Minds trainers', url: teacherLoginUrl() });
 }
 
 // ================= ADMIN: Workbook QR codes (Phase 6) =================
