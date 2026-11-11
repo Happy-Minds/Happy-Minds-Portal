@@ -797,7 +797,7 @@ function renderSchoolDetail() {
     renderSchoolTimetable();
     renderSubstitutes();
     renderSchoolHolidays();
-    renderSchoolLinks(school);
+    renderPrincipalCard(school);
 
     const list = document.getElementById('schoolSectionsList');
     if (!sections.length) {
@@ -2821,99 +2821,108 @@ async function removeHolidayRow(id, btn) {
     }
 }
 
-// ================= ADMIN: a school's two QR pages (Phase 7) =================
-// progress.html: for the school's management, private. portfolio.html:
-// printed in the school's books, public. Admin only; the secret links never
-// reach other accounts (supabase/phase7-qr-pages.sql).
-const SCHOOL_LINK_KINDS = [
-    { kind: 'progress', page: 'progress.html', title: 'School progress page', icon: 'fa-chart-simple',
-      who: 'For the Principal, Chairman and Correspondent. Keep it private: anyone with this link can see each class’s progress, visits and sessions.' },
-    { kind: 'portfolio', page: 'portfolio.html', title: 'Book portfolio page', icon: 'fa-book-open',
-      who: 'Printed as a QR code in this school’s books, so anyone can open it: chapters covered, totals, and only the stories staff chose to show.' }
-];
-let schoolLinks = null;
-
-function schoolLinkUrl(kind, links) {
-    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
-    const url = new URL(info.page, window.location.href);
-    url.search = `?k=${links[`${kind}_token`]}`;
-    return url.href;
+// ================= ADMIN: principals' sign-in (Phase 11) =================
+// One QR code in every book opens principal.html; the Principal types the
+// school code and its PIN (supabase/phase11-principals.sql). Only an admin
+// makes a PIN; it is shown once.
+function principalPageUrl() {
+    return new URL('principal.html', window.location.href).href;
 }
 
-async function renderSchoolLinks(school) {
-    const card = document.getElementById('schoolLinksCard');
-    const body = document.getElementById('schoolLinksBody');
+async function renderPrincipalCard(school) {
+    const card = document.getElementById('principalCard');
+    const body = document.getElementById('principalBody');
     card.hidden = appState.currentUser.role !== 'admin';
     if (card.hidden) return;
-    schoolLinks = null;
-    body.innerHTML = '<p class="prep-readiness-explain">Loading the links…</p>';
+    body.innerHTML = '<p class="prep-readiness-explain">Checking…</p>';
+    let setAt;
     try {
-        const links = await HMCloud.schoolLinks(school.id);
-        if (detailSchoolId !== school.id) return;
-        schoolLinks = links;
+        setAt = await HMCloud.principalPinSetAt(school.id);
     } catch (err) {
         body.innerHTML = `<p class="prep-readiness-explain">${escapeReportText(err.message)}</p>`;
         return;
     }
-    body.innerHTML = SCHOOL_LINK_KINDS.map(info => {
-        const on = schoolLinks[`${info.kind}_on`];
-        return `
-            <div class="school-link-row${on ? '' : ' is-off'}" data-kind="${info.kind}">
-                <div class="school-link-head">
-                    <i class="fa-solid ${info.icon}" aria-hidden="true"></i>
-                    <div>
-                        <h4>${info.title} <span class="admin-list-tag ${on ? 'full' : 'partial'}">${on ? 'On' : 'Off'}</span></h4>
-                        <p>${info.who}</p>
-                    </div>
-                </div>
-                <div class="school-link-actions">
-                    ${on ? `
-                    <a class="btn-glass compact" href="${schoolLinkUrl(info.kind, schoolLinks)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>
-                    <button type="button" class="btn-glass compact" onclick="copySchoolLink('${info.kind}')"><i class="fa-regular fa-copy"></i> Copy link</button>
-                    <button type="button" class="btn-glass compact" onclick="printSchoolLinkQr('${info.kind}')"><i class="fa-solid fa-print"></i> Print QR</button>
-                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'off')">Turn off</button>` : `
-                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'on')">Turn on</button>`}
-                    <button type="button" class="btn-glass compact" onclick="changeSchoolLink('${info.kind}', 'new')"><i class="fa-solid fa-rotate"></i> New link</button>
-                </div>
-            </div>`;
-    }).join('');
+    if (detailSchoolId !== school.id) return;
+    body.innerHTML = `
+        <dl class="principal-facts">
+            <div><dt>School code</dt><dd>${escapeReportText(school.code)}</dd></div>
+            <div><dt>PIN</dt><dd>${setAt ? `Made on ${formatVisitDate(new Date(setAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }))}` : 'Not made yet'}</dd></div>
+        </dl>
+        <div class="school-link-actions">
+            <button type="button" class="btn-primary-glowing compact" id="principalPinBtn" onclick="makePrincipalPin(${setAt ? 'true' : 'false'})"><i class="fa-solid fa-key"></i> ${setAt ? 'Make a new PIN' : 'Make the PIN'}</button>
+            <a class="btn-glass compact" href="principal.html" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open the principal page</a>
+        </div>
+        <div class="reset-password-result principal-pin-result" id="principalPinResult" hidden></div>`;
 }
 
-async function changeSchoolLink(kind, action) {
-    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
-    const name = info.title.toLowerCase();
-    if (action === 'new' && !confirm(`Make a new link for the ${name}? The old QR code${kind === 'portfolio' ? ', including any already printed in books,' : ''} will stop working.`)) return;
-    if (action === 'off' && !confirm(`Turn off the ${name}? Its QR code will say the link isn't active until you turn it on again.`)) return;
+async function makePrincipalPin(replacing) {
     const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    if (replacing && !confirm(`Make a new PIN for ${school.name}? The old PIN stops working and anyone signed in with it is signed out.`)) return;
+    const restore = busyButton(document.getElementById('principalPinBtn'), 'Making…');
     try {
-        await HMCloud.changeSchoolLink(school.id, kind, action);
-        showNotification(action === 'new' ? 'New link made. Print the new QR code.' : action === 'off' ? 'Link turned off.' : 'Link turned on.');
+        const pin = await HMCloud.newPrincipalPin(school.id);
+        restore();
+        await renderPrincipalCard(school);
+        const box = document.getElementById('principalPinResult');
+        box.hidden = false;
+        box.innerHTML = `
+            <span>${escapeReportText(school.name)}: school code <code>${escapeReportText(school.code)}</code>, PIN</span>
+            <code>${escapeReportText(pin)}</code>
+            <button type="button" class="btn-glass compact" onclick="printPrincipalSlip('${escapeReportText(pin)}')"><i class="fa-solid fa-print"></i> Print slip</button>
+            <p class="reset-password-help">This PIN is shown only now. Print the slip or note it before leaving this page.</p>`;
     } catch (err) {
+        restore();
         showNotification(err.message);
     }
-    renderSchoolLinks(school);
 }
 
-async function copySchoolLink(kind) {
-    try {
-        await navigator.clipboard.writeText(schoolLinkUrl(kind, schoolLinks));
-        showNotification('Link copied.');
-    } catch (err) {
-        showNotification("Couldn't copy. Use Open and copy the address from the new tab.");
-    }
+async function principalQrSvg() {
+    await loadQrLibrary();
+    return qrSvg(principalPageUrl());
 }
 
-async function printSchoolLinkQr(kind) {
-    const info = SCHOOL_LINK_KINDS.find(k => k.kind === kind);
+// A slip for the school: where to go, the school code and the PIN.
+async function printPrincipalSlip(pin) {
     const school = HappyMindsConfig.SCHOOLS.find(s => s.id === detailSchoolId);
+    const w = window.open('', '_blank');
+    if (!w) { showNotification('Allow pop-ups for this site to print the slip.'); return; }
+    let svg = '';
+    try { svg = await principalQrSvg(); } catch (err) { /* the address is printed too */ }
+    openPrintPage(`Principal sign-in - ${school.name}`, `
+        <style>
+            .slip { border: 2px solid #0EA5E9; border-radius: 10px; padding: 18px 22px; display: flex; gap: 24px; align-items: center; margin-top: 16px; }
+            .slip svg { width: 45mm; height: 45mm; flex-shrink: 0; }
+            .slip dl { margin: 0; } .slip dt { font-size: 12px; color: #6B7280; margin-top: 8px; } .slip dd { margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+            .slip .url { font-size: 11px; color: #6B7280; word-break: break-all; }
+        </style>
+        <header>
+            <div class="brand">Happy Minds · Principals’ portal</div>
+            <h1>${escapeReportText(school.name)}</h1>
+            <p class="meta">For the Principal, Chairman and Correspondent. Please keep this slip private.</p>
+        </header>
+        <div class="slip">
+            ${svg}
+            <dl>
+                <dt>1. Scan the code (or open)</dt><dd class="url">${escapeReportText(principalPageUrl())}</dd>
+                <dt>2. School code</dt><dd>${escapeReportText(school.code)}</dd>
+                <dt>3. PIN</dt><dd>${escapeReportText(pin)}</dd>
+            </dl>
+        </div>`, w);
+}
+
+// The one QR code for the book (same for every school).
+async function printPrincipalQr() {
+    const w = window.open('', '_blank');
+    if (!w) { showNotification('Allow pop-ups for this site to print the QR code.'); return; }
+    let svg;
     try {
-        await loadQrLibrary();
+        svg = await principalQrSvg();
     } catch (err) {
+        w.close();
         showNotification("Couldn't load the QR code maker. Check your internet connection and try again.");
         return;
     }
-    const url = schoolLinkUrl(kind, schoolLinks);
-    openPrintPage(`${info.title} QR - ${school.name}`, `
+    openPrintPage('Principals portal QR', `
         <style>
             .qr-single { text-align: center; padding-top: 30px; }
             .qr-single svg { width: 80mm; height: 80mm; display: block; margin: 0 auto 14px; }
@@ -2921,15 +2930,15 @@ async function printSchoolLinkQr(kind) {
             .qr-single .qr-url { font-size: 10px; color: #9CA3AF; word-break: break-all; }
         </style>
         <header>
-            <div class="brand">Happy Minds · ${escapeReportText(info.title)}</div>
-            <h1>${escapeReportText(school.name)}</h1>
-            <p class="meta">${kind === 'progress' ? 'For school management. Please keep this private.' : 'Scan to see what our students have learned with Happy Minds.'}</p>
+            <div class="brand">Happy Minds · Principals’ portal</div>
+            <h1>For school management</h1>
+            <p class="meta">Scan, then sign in with your school code and PIN to see your school’s progress and portfolio.</p>
         </header>
         <div class="qr-single">
-            ${qrSvg(url)}
-            <p>${kind === 'progress' ? 'Scan to see each class’s progress' : 'Scan to see our Happy Minds portfolio'}</p>
-            <p class="qr-url">${escapeReportText(url)}</p>
-        </div>`);
+            ${svg}
+            <p>Principal · Chairman · Correspondent</p>
+            <p class="qr-url">${escapeReportText(principalPageUrl())}</p>
+        </div>`, w);
 }
 
 // ================= ADMIN: Workbook QR codes (Phase 6) =================
@@ -6573,6 +6582,7 @@ async function renderRecognition() {
             ${starHtml}
             ${lastStar ? `<p class="recognition-last">${HMRecognition.monthName(lastMonthKey)}: ${escapeReportText((students.find(s => s.id === lastStar.studentId) || {}).name || lastStar.name)}</p>` : ''}
         </div>
+        ${awardsBlockHtml(section, students)}
         <div class="recognition-block">
             <h4>Fix It Zone streaks</h4>
             ${streaks.length ? `<ul class="recognition-list">${streaks.map(r => `<li><span>${escapeReportText(r.student.name)}</span><strong>${r.streak} days in a row</strong></li>`).join('')}</ul>`
@@ -6590,6 +6600,85 @@ async function renderRecognition() {
             recognitionStories = await HMCloud.listStories({ sectionId: section.id, light: true });
             if (currentSection() && currentSection().id === section.id) renderRecognition();
         } catch (err) { /* suggestions then use portal work only */ }
+    }
+}
+
+// ---- Awards our team gives (visits, events) ----
+const AWARD_ROLES = ['trainer', 'coordinator', 'management', 'admin'];
+const AWARD_TITLES = ['Best Storyteller', 'Star Speaker', 'Creative Writer', 'Most Improved', 'Fix It Champion', 'Confident Performer', 'Best Participation'];
+const AWARD_EVENTS = ['Trainer visit', 'Monthly assembly', 'Story competition', 'Annual Day', 'Sports Day'];
+
+function canGiveAwards() {
+    const role = appState.currentUser.role;
+    return AWARD_ROLES.includes(role) && !(role === 'trainer' && isViewOnly());
+}
+
+function awardsBlockHtml(section, students) {
+    const ids = new Set(students.map(s => s.id));
+    const awards = HappyMindsConfig.AWARDS.filter(a => ids.has(a.student_id))
+        .sort((a, b) => b.award_date.localeCompare(a.award_date) || String(b.created_at).localeCompare(String(a.created_at)));
+    const me = appState.currentUser;
+    const nameOf = id => (students.find(s => s.id === id) || {}).name || 'A student';
+    const list = awards.length ? `<ul class="recognition-list awards">${awards.map(a => `
+        <li>
+            <span><i class="fa-solid fa-award" aria-hidden="true"></i> <strong>${escapeReportText(nameOf(a.student_id))}</strong>: ${escapeReportText(a.title)}${a.event ? ` · ${escapeReportText(a.event)}` : ''}</span>
+            <span class="award-meta">${formatVisitDate(a.award_date)}${a.given_by ? ` · ${escapeReportText(accountName(a.given_by) || '')}` : ''}${a.given_by === me.id || canManage() ? ` <button type="button" class="link-btn" onclick="removeAward('${a.id}', this)">Remove</button>` : ''}</span>
+            ${a.note ? `<p>${escapeReportText(a.note)}</p>` : ''}
+        </li>`).join('')}</ul>`
+        : '<p class="prep-readiness-explain">No awards yet. Our team adds them after visits and events; principals see them in their portal.</p>';
+    const form = canGiveAwards() && students.length ? `
+        <details class="award-form-wrap">
+            <summary class="btn-glass compact"><i class="fa-solid fa-plus"></i> Give an award</summary>
+            <form class="award-form" onsubmit="submitAward(event)" novalidate>
+                <label class="manage-field"><span>Award</span><input type="text" name="title" maxlength="80" list="awardTitles" placeholder="e.g. Best Storyteller" required></label>
+                <label class="manage-field"><span>Visit or event (optional)</span><input type="text" name="event" maxlength="80" list="awardEvents" placeholder="e.g. Annual Day"></label>
+                <label class="manage-field"><span>Date</span><input type="date" name="date" value="${localDateString()}" max="${localDateString()}"></label>
+                <label class="manage-field award-note"><span>Why (optional)</span><input type="text" name="note" maxlength="300" placeholder="e.g. Told her story with great expression"></label>
+                <fieldset class="award-students"><legend>Who gets it</legend>
+                    ${students.map(s => `<label class="inline-choice"><input type="checkbox" name="student" value="${escapeReportText(s.id)}"> ${escapeReportText(s.name)}</label>`).join('')}
+                </fieldset>
+                <button type="submit" class="btn-primary-glowing compact" id="awardSubmit"><i class="fa-solid fa-award"></i> Save award</button>
+                <datalist id="awardTitles">${AWARD_TITLES.map(t => `<option value="${t}">`).join('')}</datalist>
+                <datalist id="awardEvents">${AWARD_EVENTS.map(t => `<option value="${t}">`).join('')}</datalist>
+            </form>
+        </details>` : '';
+    return `
+        <div class="recognition-block">
+            <h4>Awards</h4>
+            ${list}
+            ${form}
+        </div>`;
+}
+
+async function submitAward(event) {
+    event.preventDefault();
+    const form = event.target;
+    const section = currentSection();
+    const title = form.title.value.trim();
+    const studentIds = [...form.querySelectorAll('input[name="student"]:checked')].map(i => i.value);
+    if (title.length < 2) { showNotification('Type the award, e.g. Best Storyteller.'); form.title.focus(); return; }
+    if (!studentIds.length) { showNotification('Tick at least one student who gets the award.'); return; }
+    if (!form.date.value) { showNotification('Choose the date of the award.'); form.date.focus(); return; }
+    const restore = busyButton(document.getElementById('awardSubmit'), 'Saving…');
+    try {
+        await HMCloud.addAwards(studentIds.map(id => ({ studentId: id, sectionId: section.id, title, event: form.event.value.trim(), awardDate: form.date.value, note: form.note.value.trim() })));
+        showNotification(`Award saved for ${studentIds.length} ${studentIds.length === 1 ? 'student' : 'students'}. The principal sees it in their portal.`);
+        renderRecognition();
+    } catch (err) {
+        restore();
+        showNotification(err.message);
+    }
+}
+
+async function removeAward(id, btn) {
+    if (!confirm('Remove this award?')) return;
+    btn.disabled = true;
+    try {
+        await HMCloud.removeAward(id);
+        renderRecognition();
+    } catch (err) {
+        btn.disabled = false;
+        showNotification(err.message);
     }
 }
 

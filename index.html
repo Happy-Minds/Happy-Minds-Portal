@@ -1781,10 +1781,10 @@
                         </select>
                     </div>
                 </div>
-                <div class="admin-section-card" id="schoolLinksCard" hidden>
-                    <h3><i class="fa-solid fa-qrcode"></i> QR Pages</h3>
-                    <p class="admin-card-explain">Two pages that open without a login. Turning a link off, or making a new one, stops the old QR code from working.</p>
-                    <div id="schoolLinksBody" class="school-links"></div>
+                <div class="admin-section-card" id="principalCard" hidden>
+                    <h3><i class="fa-solid fa-user-tie"></i> Principal sign-in</h3>
+                    <p class="admin-card-explain">The Principal, Chairman and Correspondent scan the common QR code in the book, then type this school’s code and PIN to see its progress and portfolio. Making a new PIN signs everyone out of the old one.</p>
+                    <div id="principalBody"></div>
                 </div>
                 <div class="admin-section-card">
                     <h3><i class="fa-solid fa-people-group"></i> Classes</h3>
@@ -2018,6 +2018,15 @@
                     <input type="search" id="adminStudentTimeSearch" class="reflection-text-input admin-search-input" placeholder="Find a student by name, username or class (e.g. 4A)" autocomplete="off" oninput="renderAdminStudentTime(this.value)">
                     <p class="admin-card-explain student-time-status" id="adminStudentTimeStatus" role="status"></p>
                     <div class="admin-account-list" id="adminStudentTimeList"></div>
+                </div>
+
+                <div class="admin-section-card">
+                    <h3><i class="fa-solid fa-user-tie"></i> Principals’ Portal</h3>
+                    <p class="admin-card-explain">One QR code for every school, printed in the book. Principals scan it, then sign in with their school’s code and PIN (made on each school’s page under Schools).</p>
+                    <div class="qr-sheet-actions">
+                        <button type="button" class="btn-primary-glowing compact" onclick="printPrincipalQr()"><i class="fa-solid fa-print"></i> Print principals’ QR</button>
+                        <a class="btn-glass compact" href="principal.html" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open the page</a>
+                    </div>
                 </div>
 
                 <div class="admin-section-card">

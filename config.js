@@ -54,6 +54,8 @@ const HappyMindsConfig = {
     // Holidays and closures (school_id null = every school), and one-off
     // make-up sessions for periods the school cancelled.
     HOLIDAYS: [],
+    // Awards our team gave students (visits, events): student_awards rows.
+    AWARDS: [],
     // Each school's package changes: { school_id, package, from_date }.
     PACKAGE_HISTORY: [],
     EXTRA_SESSIONS: [],

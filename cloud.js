@@ -148,6 +148,7 @@ const HMCloud = (() => {
     let oversight = false;
     const detailLoaded = new Map();   // sectionId -> Promise of that class's details
     const SUBSTITUTION_COLUMNS = 'id, school_id, visit_date, trainer_id, substitute_id, note, assigned_by, assigned_at';
+    const AWARD_COLUMNS = 'id, student_id, section_id, title, event, award_date, note, given_by, created_at';
     const HOLIDAY_COLUMNS = 'id, school_id, start_date, end_date, reason, kind, status, added_by, confirmed_by, created_at';
     const EXTRA_COLUMNS = 'id, section_id, session, on_date, starts_at, ends_at, for_date, note, created_by';
     // Times come back as "10:00:00"; the portal uses "10:00".
@@ -220,7 +221,7 @@ const HMCloud = (() => {
         oversight = ['admin', 'coordinator', 'management'].includes(me.role);
         detailLoaded.clear();
         const notStudentDocs = q => q.not('doc', 'in', `(${STUDENT_DOCS.join(',')})`);
-        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras, packageHistory] = await Promise.all([
+        const [profiles, students, documents, schools, sections, classDocs, time, prep, slots, subs, sessionLog, notes, eod, holidays, extras, packageHistory, awards] = await Promise.all([
             selectAll('profiles', '*', 'username'),
             selectAll('students', '*', 'name'),
             selectAll('app_documents', 'doc, student_id, data', 'doc', oversight ? notStudentDocs : undefined),
@@ -236,8 +237,10 @@ const HMCloud = (() => {
             selectAllIfReady('eod_reports', oversight ? EOD_LIST_COLUMNS : EOD_COLUMNS, 'report_date'),
             selectAllIfReady('school_holidays', HOLIDAY_COLUMNS, 'start_date'),
             selectAllIfReady('extra_sessions', EXTRA_COLUMNS, 'on_date'),
-            selectAllIfReady('school_package_history', 'school_id, package, from_date', 'from_date')
+            selectAllIfReady('school_package_history', 'school_id, package, from_date', 'from_date'),
+            selectAllIfReady('student_awards', AWARD_COLUMNS, 'award_date')
         ]);
+        HappyMindsConfig.AWARDS = awards;
         HappyMindsConfig.PACKAGE_HISTORY = packageHistory;
         HappyMindsConfig.HOLIDAYS = holidays;
         HappyMindsConfig.EXTRA_SESSIONS = extras.map(toSlot);
@@ -443,6 +446,7 @@ const HMCloud = (() => {
             HappyMindsConfig.HOLIDAYS = [];
             HappyMindsConfig.EXTRA_SESSIONS = [];
             HappyMindsConfig.PACKAGE_HISTORY = [];
+            HappyMindsConfig.AWARDS = [];
         },
 
         // A copy of the saved document, or null if nothing is saved yet.
@@ -932,22 +936,38 @@ const HMCloud = (() => {
             return data;
         },
 
-        // ---- QR pages (supabase/phase7-qr-pages.sql) ----------------------
-        // Admin: a school's two secret links. Resolves to
-        // { progress_token, progress_on, portfolio_token, portfolio_on }.
-        async schoolLinks(schoolId) {
-            const { data, error } = await client.rpc('school_links', { p_school: schoolId });
+        // ---- Principals' portal (supabase/phase11-principals.sql) ---------
+        // Admin: a new 6-digit PIN for the school (shown once).
+        async newPrincipalPin(schoolId) {
+            const { data, error } = await client.rpc('new_principal_pin', { p_school: schoolId });
             if (!error) return data;
-            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('The QR pages are not set up yet: run supabase/phase7-qr-pages.sql first.');
-            throw new Error("Couldn't load the QR links. Please try again.");
+            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('The principals\u2019 portal is not set up yet: run supabase/phase11-principals.sql first.');
+            if (/only an admin/i.test(error.message || '')) throw new Error(error.message);
+            throw new Error("Couldn't make the PIN. Please try again.");
         },
 
-        // Admin: kind 'progress' | 'portfolio', action 'on' | 'off' | 'new'.
-        async changeSchoolLink(schoolId, kind, action) {
-            const { data, error } = await client.rpc('change_school_link', { p_school: schoolId, p_kind: kind, p_action: action });
+        // Admin: when the school's PIN was made (null if never).
+        async principalPinSetAt(schoolId) {
+            const { data, error } = await client.rpc('principal_pin_set_at', { p_school: schoolId });
             if (!error) return data;
-            console.warn('Happy Minds: link change failed', error);
-            throw new Error("Couldn't change the link. Please try again.");
+            if (error.code === 'PGRST202' || error.code === '42883') throw new Error('The principals\u2019 portal is not set up yet: run supabase/phase11-principals.sql first.');
+            throw new Error("Couldn't check the PIN. Please try again.");
+        },
+
+        // ---- Student awards ------------------------------------------------
+        // rows: [{ studentId, sectionId, title, event, awardDate, note }]
+        async addAwards(rows) {
+            const saved = await manage(client.from('student_awards').insert(rows.map(r => ({
+                student_id: r.studentId, section_id: r.sectionId, title: r.title, event: r.event || '',
+                award_date: r.awardDate, note: r.note || '', given_by: signedInUserId
+            }))).select(AWARD_COLUMNS));
+            HappyMindsConfig.AWARDS = HappyMindsConfig.AWARDS.concat(saved);
+            return saved;
+        },
+
+        async removeAward(id) {
+            await manage(client.from('student_awards').delete().eq('id', id));
+            HappyMindsConfig.AWARDS = HappyMindsConfig.AWARDS.filter(a => a.id !== id);
         },
 
         // Staff who teach the student: show / hide a story on the school portfolio.

@@ -5037,13 +5037,6 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
 }
 
 /* ---- Phase 7: school QR pages (admin) + portfolio stories ---- */
-.school-links { display: grid; gap: 12px; }
-.school-link-row { border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); padding: 14px 16px; display: grid; gap: 12px; }
-.school-link-row.is-off { background: #F8FAFC; }
-.school-link-head { display: flex; gap: 12px; align-items: flex-start; }
-.school-link-head > i { font-size: 18px; color: var(--primary-blue); margin-top: 3px; width: 22px; text-align: center; }
-.school-link-head h4 { font-size: 15px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 4px; }
-.school-link-head p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
 .school-link-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .school-link-actions a.btn-glass { text-decoration: none; }
 
@@ -5101,3 +5094,23 @@ body.has-script-fab .content-container { padding-bottom: 96px; }
 
 .login-privacy-link { display: block; margin-top: 16px; text-align: center; font-size: 13px; font-weight: 600; color: var(--text-muted); }
 .login-privacy-link:hover { color: var(--primary-blue); }
+
+/* ---- Principal sign-in card (school page) + awards ---- */
+.principal-facts { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 0 0 12px; }
+.principal-facts dt { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.principal-facts dd { margin: 2px 0 0; font-size: 17px; font-weight: 800; color: var(--text-dark); }
+.principal-pin-result { margin-top: 12px; flex-wrap: wrap; }
+.principal-pin-result .reset-password-help { flex-basis: 100%; margin: 4px 0 0; }
+.recognition-list.awards li { flex-direction: column; gap: 2px; }
+.recognition-list.awards i { color: #D97706; }
+.award-meta { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.recognition-list.awards p { margin: 0; font-size: 13px; color: var(--text-muted); }
+.award-form-wrap { margin-top: 10px; }
+.award-form-wrap > summary { list-style: none; display: inline-flex; cursor: pointer; }
+.award-form-wrap > summary::-webkit-details-marker { display: none; }
+.award-form { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin-top: 12px; padding: 14px; border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); }
+.award-form input[type="text"], .award-form input[type="date"] { border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; }
+.award-form .award-note { flex-basis: 100%; }
+.award-students { flex-basis: 100%; border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 12px; max-height: 220px; overflow-y: auto; }
+.award-students legend { font-size: 12.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; padding: 0; }
+.recognition-list.awards strong { color: var(--text-dark); }

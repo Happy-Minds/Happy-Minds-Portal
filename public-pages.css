@@ -197,3 +197,52 @@ h1, h2 { margin: 0; line-height: 1.2; }
 .pp-star { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 9px; border-radius: 99px; background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; }
 .pp-star i { color: #D97706; }
 .pp-footer a { color: inherit; }
+
+/* ==========================================================================
+   Principals' portal (principal.html)
+   ========================================================================== */
+.pr-signin { max-width: 440px; margin: 8vh auto 0; background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: 24px; padding: 32px 28px; }
+.pr-signin h1 { font-size: 24px; font-weight: 900; margin: 14px 0 6px; }
+.pr-signin form { display: grid; gap: 14px; margin-top: 20px; }
+.pr-signin label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.pr-signin input { font: inherit; font-size: 17px; padding: 12px 14px; border: 1.5px solid var(--pp-border); border-radius: 12px; outline: none; }
+.pr-signin input:focus { border-color: var(--pp-blue); box-shadow: 0 0 0 3px #BAE6FD; }
+.pr-signin .pp-button { margin-top: 4px; justify-content: center; width: 100%; }
+.pr-signin .pp-button:disabled { opacity: 0.6; cursor: default; }
+.pr-error { min-height: 1.4em; margin: 0; font-size: 13px; font-weight: 600; color: #B91C1C; }
+.pr-help { margin: 18px 0 0; font-size: 13px; color: var(--pp-muted); }
+.pr-help a { color: inherit; }
+
+.pr-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--pp-border); }
+.pr-bar .pp-brand { flex: 1 1 200px; font-size: 14px; }
+.pr-tabs { display: inline-flex; background: #E0F2FE; border-radius: 99px; padding: 4px; }
+.pr-tabs button { font: inherit; font-size: 14px; font-weight: 700; border: 0; background: transparent; color: var(--pp-blue-deep); padding: 9px 18px; border-radius: 99px; cursor: pointer; min-height: 40px; }
+.pr-tabs button.is-active { background: var(--pp-surface); box-shadow: 0 2px 8px rgba(3, 105, 161, 0.15); }
+.pr-tabs button:focus-visible, .pr-signout:focus-visible { outline: 3px solid #7DD3FC; outline-offset: 2px; }
+.pr-signout { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--pp-border); background: var(--pp-surface); color: var(--pp-muted); padding: 8px 14px; border-radius: 99px; cursor: pointer; min-height: 40px; }
+.pp-principal #prPanel .pp-header .pp-brand { display: none; }
+.pp-principal #prPanel .pp-header h1 { margin-top: 0; }
+
+.pr-awards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.pr-award { display: flex; gap: 12px; background: var(--pp-surface); border: 1px solid var(--pp-border); border-left: 4px solid #F59E0B; border-radius: var(--pp-radius); padding: 14px 16px; }
+.pr-award > i { color: #D97706; font-size: 22px; margin-top: 2px; }
+.pr-award strong { display: block; font-size: 15px; }
+.pr-award span { display: block; font-size: 14px; font-weight: 600; }
+.pr-award small { display: block; font-size: 12px; color: var(--pp-muted); margin-top: 2px; }
+.pr-award p { margin: 6px 0 0; font-size: 13px; color: var(--pp-muted); }
+.pr-stars { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.pr-stars li { background: #FEF3C7; border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+.pr-stars small { display: block; color: #92400E; font-size: 12px; }
+.pr-star-class { font-size: 12px; font-weight: 800; color: #92400E; margin-right: 4px; }
+.pr-earlier { margin-top: 10px; } .pr-earlier summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--pp-blue-deep); margin-bottom: 8px; }
+.pr-top-help { margin: -6px 0 12px; font-size: 13px; }
+.pr-top { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.pr-top-class { background: var(--pp-surface); border: 1px solid var(--pp-border); border-radius: var(--pp-radius); padding: 14px 16px; }
+.pr-top-class h3 { margin: 0 0 8px; font-size: 15px; }
+.pr-top-class ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pr-top-class li { font-size: 14px; }
+.pr-top-class small { display: block; color: var(--pp-muted); font-size: 12px; margin-left: 24px; }
+@media (max-width: 560px) {
+    .pr-signin { margin-top: 2vh; padding: 24px 18px; }
+    .pr-tabs { width: 100%; } .pr-tabs button { flex: 1; padding: 9px 8px; }
+}
