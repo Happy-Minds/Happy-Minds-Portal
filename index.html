@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Chapter 1's dedicated Practice experience (self-contained, scoped to #chapter1-practice) -->
     <link rel="stylesheet" href="chapter1-practice.css">
+    <!-- Chapter 2's "Pip's Daily Flight" practice (Simple Present Tense) -->
+    <link rel="stylesheet" href="chapter2-practice.css">
     <!-- App Data & Config (must load before app.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.min.js"></script>
     <script src="config.js"></script>
@@ -916,6 +918,9 @@
                     <!-- Activity card: filled entirely by app.js — a different mini-game per step -->
                     <div class="quiz-question-card" id="practiceActivityCard"></div>
                 </div>
+
+                <!-- Chapter 2's "Pip's Daily Flight" practice — drawn by chapter2-practice.js -->
+                <div id="chapter2PracticeMount" style="display:none;"><div id="chapter2-practice"></div></div>
 
                 <!-- Chapter 1's dedicated "Noun Detective" practice — see chapter1-practice.css/.js -->
                 <div id="chapter1PracticeMount" style="display:none;">
@@ -2425,6 +2430,7 @@
     <!-- Scan Completed Success Modal -->
     <!-- Chapter 1's dedicated Practice experience (self-contained IIFE) -->
     <script src="chapter1-practice.js"></script>
+    <script src="chapter2-practice.js"></script>
     <!-- Custom JS -->
     <script src="app.js"></script>
     <!-- YouTube IFrame API: loaded async, calls window.onYouTubeIframeAPIReady (defined in app.js) when ready -->

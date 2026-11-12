@@ -841,3 +841,14 @@ video.proj-video-el { object-fit: contain; }
 
 /* Activity timer paused by the teacher: dim the ring so the class can see it. */
 .proj-draw-timer.paused { opacity: 0.55; }
+
+/* Chapter 2 practice ("Pip's Daily Flight"): the shared view, full width,
+   scrolling if a long result is shown. Text is left-aligned inside cards. */
+.proj-practice-c2 {
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: 3vh 4vw;
+    text-align: left;
+}
+.proj-practice-c2 #proj-c2-root { width: 100%; max-width: 1400px; margin: 0 auto; }

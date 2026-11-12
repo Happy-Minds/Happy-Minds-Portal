@@ -15,6 +15,7 @@
          #chapter1-practice — see that file's header), rather than
          reinventing equivalent styles. Never loads chapter1-practice.js. -->
     <link rel="stylesheet" href="chapter1-practice.css">
+    <link rel="stylesheet" href="chapter2-practice.css">
     <!--
         Projector View — the second, student-facing surface described in the
         Developer Brief's "Teacher mode" section: "The projector shows only
@@ -256,6 +257,9 @@
              chapter1-practice.css's classes directly; interactive controls
              (buttons, text inputs, the Hunt modal) are left out — the class
              watches, they don't tap the screen. -->
+        <!-- Chapter 2 practice: drawn from the teacher's state by chapter2-practice.js -->
+        <div class="proj-screen proj-practice-c2" id="proj-practice-c2"><div id="proj-c2-root"></div></div>
+
         <div class="proj-screen proj-practice-c1" id="proj-practice-c1">
             <div id="chapter1-practice">
 
@@ -443,6 +447,7 @@
 
     </div>
 
+    <script src="chapter2-practice.js"></script>
     <script src="projector.js"></script>
     <!-- YouTube IFrame API: loaded async, calls window.onYouTubeIframeAPIReady (defined in projector.js) when ready -->
     <script src="https://www.youtube.com/iframe_api"></script>

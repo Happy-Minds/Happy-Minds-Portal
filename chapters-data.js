@@ -399,7 +399,7 @@ const CHAPTERS = [
         ],
         comprehension: { question: 'How did the character feel on the first day of the journey?', answer: 'Excited' },
         vocab: { meaning: 'to begin something for the first time', word: 'Start' },
-        starter: 'The moment I stepped out the door...',
+        starter: "My short-term goal is...",
         storybook: [
             { character: null, image: 'assets/StoryBook/chapter2-storybook/page1-door-return.jpg', text: 'The next rainy Saturday, Aanya opened the small wooden door again, and found herself back in Lumora. Pip, the little blue bird, landed on her shoulder at once, chirping excitedly.' },
             { character: 'pip', image: 'assets/StoryBook/chapter2-storybook/page2-pips-dream.jpg', text: '"Aanya! I have a dream," Pip said. "I want to fly all the way to the North Cloud Mountains for the Great Migration."' },
@@ -411,25 +411,21 @@ const CHAPTERS = [
             { character: 'pip', image: 'assets/StoryBook/chapter2-storybook/page8-celebrating-progress.jpg', text: '"You are ready for a bigger goal now," Flame said. "Next season, you could really join the migration." Pip puffed out his feathers proudly. "I practice every day, and I never give up. I am going to reach those mountains."' }
         ],
         create: {
-            challenge: 'Think about a journey you began — a new school, a new place, or a new skill. What was it like to start?',
-            bullets: ['Where were you going?', 'How did you feel before you started?', 'Who was with you?', 'What happened on the way?'],
-            starters: ['The moment I stepped out the door...', 'My journey began when...'],
-            target: '5-6 sentences',
-            hints: [
-                'What sounds did you hear on your first day?',
-                'Who gave you courage to start?',
-                'What did you carry with you?',
-                'What surprised you along the way?'
-            ],
+            "challenge": "My Goals for the Future: write one short-term goal (the next 3 months) and one long-term goal (5+ years), each with 3 steps you will take. Write your steps in the Simple Present: I practise..., I read..., every day.",
+            "bullets": ["What do you want to reach in the next 3 months?", "What is your big dream for when you are older?", "What 3 small steps will you take for each goal?", "When will you do them: every day, every week?"],
+            "starters": ["My short-term goal is...", "My long-term goal is...", "Every day, I..."],
+            "target": "2 goals + 3 steps each",
+            "hints": ["Look at Box 1 and Box 4 of your vision board.", "Make each step small: what will you do tomorrow?", "Who will help you? My teacher helps me...", "Add a time word: every morning, every Friday."],
+            recap: "Welcome back, everyone! Take out your vision board. Today we write our goals, and the steps we will take to reach them.",
             modelText: [
                 'Every morning, I wake up and think about my dream of becoming a wildlife photographer.',
-                'I practice taking pictures of birds in my garden every weekend.',
+                'I practise taking pictures of birds in my garden every weekend.',
                 'My best friend Ritu believes in my goal and cheers me on.',
                 'Sometimes I worry that cameras are expensive, but I save a little money every month.',
                 'I know that small steps lead to big dreams.',
                 'One day, I want to photograph tigers in the wild.'
             ],
-            modelNouns: ['practice', 'believes', 'cheers', 'worry', 'save', 'know', 'want']
+            modelNouns: ['practise', 'believes', 'cheers', 'worry', 'save', 'know', 'want']
         },
         practice: {
             sortTitle: 'Simple Present Tense Sort',
@@ -505,112 +501,658 @@ const CHAPTERS = [
             // Session 1 step shown on the Explore activity card (hands-on task + roving prompts).
             activityStep: 5,
             lessonPlan: {
-                objectives: [
-                    'Set personal goals and express them using the Simple Present Tense',
-                    'Identify a short-term and a long-term goal with concrete steps',
-                    "Build confidence sharing a goal aloud and respond to a classmate's goal"
+                "objectives": [
+                    "Say when we use the Simple Present: things we do every day, habits and routines, and what we want or like",
+                    "Use the plain verb with I, you, we, they and add -s with he, she, it (plays, watches, flies)",
+                    "Make a vision board and write 3 Simple Present sentences about their own habits (I…, My friend…, We…)",
+                    "Write a short-term and a long-term goal with 3 steps each, and share one goal with a partner"
                 ],
-                studentOutputs: {
-                    session1: 'A personal vision board (4 boxes: goals, inspiration, habits, dream job)',
-                    session2: 'A short-term and long-term goal with 3 steps each + verbal feedback to a partner'
+                "studentOutputs": {
+                    "session1": "A vision board (goals, inspiration, habits, dream job) + 3 Simple Present sentences about their habits",
+                    "session2": "A short-term and a long-term goal with 3 steps each + what they learned from a partner's goal"
                 },
-                materials: ['Whiteboard or chart paper', 'Markers (multiple colours)', 'Timer', 'Student workbooks', 'Pencils, erasers, coloured pencils'],
-                differentiation: [
-                    { level: 'Advanced', action: 'Can you add a deadline to each step? Can you write a 3rd, longer-term goal?' },
-                    { level: 'Struggling', action: 'Write 1 step instead of 3. I will help you choose a goal.' },
-                    { level: 'Very Shy', action: 'You can draw your goal instead of writing it. You can whisper to me.' }
+                "materials": [
+                    "Student workbooks (Chapter 2 pages)",
+                    "Pencils, erasers, coloured pencils",
+                    "Projector or smart TV, with your phone or laptop as the remote",
+                    "Whiteboard and markers (backup if there is no screen)"
+                ],
+                "differentiation": [
+                    {
+                        "level": "Advanced",
+                        "action": "Write 2 extra habit sentences with he or she, and add a deadline to each step."
+                    },
+                    {
+                        "level": "Struggling",
+                        "action": "Write 1 habit sentence and 1 step per goal. Point to the -s on the board: one person (not I or you) → add -s."
+                    },
+                    {
+                        "level": "Very Shy",
+                        "action": "Draw your goal instead of writing it. Whisper your sentence to me or to your partner first."
+                    }
                 ]
             },
             beforeClassChecklist: [
-                'Materials ready (paper, pencils, colours)',
-                'Vision board space in workbook',
-                'Timer ready',
-                'Projector tested'
+                "Open Chapter 2 and the projector view; test the sound and play the first seconds of Pip's video",
+                "Workbooks ready at Chapter 2 (Vision Board, Grammar Spotlight, My Goals for the Future)",
+                "Pencils and colours on every table",
+                "No screen today? Tell Pip's story aloud and write the -s rule on the board: I / you / we / they play · he / she / it plays"
             ],
             session1Script: [
-                { step: 1, stage: 'Explore', title: 'Settle and breathe', lines: [
-                    { type: 'teacher_says', text: "Good morning, everyone! Today we start a brand-new chapter: 'My Journey Begins.' Close your eyes. Think about one thing — just one thing — that you really, truly want to do this year. Not because your parents said so. Because YOU want it." },
-                    { type: 'stage_direction', text: 'Pause 10 seconds, then have students open their eyes.' }
-                ]},
-                { step: 2, stage: 'Explore', title: 'Watch the video', lines: [
-                    { type: 'teacher_says', text: "Keep that dream in mind as you watch — this video is about a journey just like the one you're thinking of." },
-                    { type: 'stage_direction', text: 'Play the Chapter 2 video. Pause if a question comes up.' }
-                ]},
-                { step: 3, stage: 'Explore', title: 'Storybook read-along', lines: [
-                    { type: 'teacher_says', text: "Let's read Pip's story together, page by page — Pip has a big dream too, and needs small steps to reach it." },
-                    { type: 'stage_direction', text: 'Turn the page once everyone has looked at the pictures.' }
-                ]},
-                { step: 4, stage: 'Explore', title: 'Think and Talk circle', lines: [
-                    { type: 'teacher_says', text: 'First question: what is something you really want to do this year? Call it out!' },
-                    { type: 'expected_answers', text: 'Learn to swim! / Get better at maths! / Make a new friend!' },
-                    { type: 'teacher_says', text: 'Who inspires you, and why? Call out the name and the reason.' },
-                    { type: 'expected_answers', text: 'My mom, because she works hard! / MS Dhoni, because he stays calm!' },
-                    { type: 'teacher_says', text: 'What challenge might stop you, and how can you overcome it?' },
-                    { type: 'expected_answers', text: 'I forget my homework — I can use a checklist. / I feel shy — I can practice talking to one new person each week.' }
-                ]},
-                { step: 5, stage: 'Explore', title: 'Vision board', lines: [
-                    { type: 'teacher_says', text: 'Dreams stay small if we keep them only in our heads. Today we make them visible with a vision board — four boxes: your goals, who inspires you, habits you want to build, and your dream job.' },
-                    { type: 'roving_prompt', text: "What's one goal you said earlier? Write it or draw it in Box 1." },
-                    { type: 'roving_prompt', text: 'Who inspires you? Draw a small face or write their name in Box 2.' },
-                    { type: 'support_prompt', text: "Stuck? Let's look at Box 1 together — what's one thing you want to do this year? Just write that one word." }
-                ]},
-                { step: 6, stage: 'Explore', title: 'Wrap up', lines: [
-                    { type: 'teacher_says', text: 'Pencils down. Hold up your vision board. You have taken your real dreams and put them on paper — that is the first step of any journey. Keep it somewhere you can see it.' }
-                ]},
-                { step: 7, stage: 'Practice', title: 'Grammar Spotlight: Simple Present Tense', lines: [
-                    { type: 'teacher_says', text: "We use the Simple Present Tense for things we do every day, our habits, and what we want. 'I play football every Sunday. She reads storybooks at night.'" },
-                    { type: 'expected_answers', text: 'I want... / We like... / She plays...' }
-                ]},
-                { step: 8, stage: 'Practice', title: 'Try It Together', lines: [
-                    { type: 'teacher_says', text: "Let's practice. I give a subject, you complete it with a present-tense verb. Ready? 'She ___ books every night.'" },
-                    { type: 'expected_answers', text: 'Reads!' },
-                    { type: 'stage_direction', text: 'Repeat with a few more pairs: He plays, They want, We practice.' }
-                ]},
-                { step: 9, stage: 'Practice', title: 'Write your goals and steps', lines: [
-                    { type: 'teacher_says', text: 'A goal without a plan is just a wish. Write a short-term goal (next 3 months) and 3 small steps. Then a long-term goal (5+ years) and 3 steps.' },
-                    { type: 'roving_prompt', text: "Look at Box 1 on your vision board — pick one goal. Now list 3 steps. Step 1: what will you do tomorrow?" },
-                    { type: 'support_prompt', text: "If you don't have a dream job yet, write 'find a career I love' — that's fine." }
-                ]},
-                { step: 10, stage: 'Practice', title: 'Quick check and close', lines: [
-                    { type: 'teacher_says', text: "Quick check! Is 'She want to read' correct, or should it be 'She wants to read'?" },
-                    { type: 'stage_direction', text: 'Show of hands — tap how many got it: Most / Some / Few.' }
-                ]}
+                {
+                    "step": 1,
+                    "stage": "Explore",
+                    "title": "Setting the stage",
+                    "minutes": 2,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Open Chapter 2 › Explore with the projector view on. The Settle card shows the book's quote (“Learning is experience. Everything else is just information.” — Albert Einstein); the video waits until you tap “Class is calm — Start”."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Workbooks stay closed."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Good morning, everyone! Today we start a brand new chapter. It's called 'My Journey Begins.' Chapter 1 was about magic doors and imaginary worlds. This chapter is about something real: something that belongs only to YOU."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Close your eyes. Think about one thing, just one thing, that you really, truly want to do this year. Not because your parents said so. Not because your teacher told you. Because YOU want it. Maybe it's riding a bicycle, reading a big book, or making a new friend. Hold that one thing in your mind."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Pause for 10 seconds, longer than in Chapter 1, so they really think."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Now open your eyes. Keep that thought. Today we talk about dreams: your dreams."
+                        }
+                    ]
+                },
+                {
+                    "step": 2,
+                    "stage": "Explore",
+                    "title": "Watch the video",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Tap “Class is calm — Start”, then play the Chapter 2 video, “Pip's Big Dream”. It plays full screen on the projector; you play and pause it from your device."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Keep your dream in mind. Let's meet someone else with a very big dream."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Let the video play through without talking over it."
+                        }
+                    ]
+                },
+                {
+                    "step": 3,
+                    "stage": "Explore",
+                    "title": "Storybook read-along",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "When the video ends, the Lumora Storybook opens: 8 pages about Pip. Tap the speaker to read each page aloud; the words light up on the projector."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "What is Pip's big dream?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "To fly to the North Cloud Mountains! / To join the Great Migration!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Pip's wings are small. How does he get stronger?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "He practises every day! / Flame and Aanya help him!"
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Point out the words every day: we come back to them in Practice."
+                        }
+                    ]
+                },
+                {
+                    "step": 4,
+                    "stage": "Explore",
+                    "title": "The Think & Talk circle",
+                    "minutes": 5,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Think & Talk opens after the last page, with four questions. As students call out answers, type the key word only on the Lumora Wall (for example swim, mom, practise). The words appear on the projector and come back as the Word Bank in Create."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "What was the very first step in Pip's journey?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "He told Aanya his dream! / He started practising!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Have you ever started something new and felt a little nervous? What did you do?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "My first day at a new school! / I asked a friend to help me."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "What is something YOU really want to do this year? And who inspires you, and why? Call it out!"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Learn to swim! / My mom, because she works hard! / My teacher, because she helps everyone!"
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "If a student gives only a name, ask gently: “And why does that person inspire you?” Make sure 5-6 students answer the last question; it builds resilience."
+                        }
+                    ]
+                },
+                {
+                    "step": 5,
+                    "stage": "Explore",
+                    "title": "Start your vision board",
+                    "minutes": 6,
+                    "lines": [
+                        {
+                            "type": "workbook",
+                            "text": "Open to Practice › My Personal Vision Board: four boxes."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Athletes, artists and inventors use vision boards to remember what they are working toward. Yours has four boxes: 1, your goals for school and for you; 2, people who inspire you; 3, habits you want to build; 4, your dream job or future dream."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Remember someone said 'learn to swim'? That goes in Box 1. 'My mom, because she works hard' goes in Box 2. A habit is something you do every day, like 'read for 10 minutes'. That's Box 3. Draw or write. It's YOUR board."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "A habit is not a big goal. It's a tiny action. What's one tiny thing you want to do every day?"
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "You said 'scientist' earlier. Put that in Box 4. Draw a test tube or a star."
+                        },
+                        {
+                            "type": "support_prompt",
+                            "text": "Stuck? Let's look at Box 1. What's one thing you want to do this year? Just write that one word. One box done is still a win."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Make sure everyone writes at least one habit in Box 3: Practice uses it. Boxes 2 and 4 can be finished at home."
+                        }
+                    ]
+                },
+                {
+                    "step": 6,
+                    "stage": "Explore",
+                    "title": "Wrap up Explore",
+                    "minutes": 1,
+                    "lines": [
+                        {
+                            "type": "teacher_says",
+                            "text": "Pencils down for a moment. You have taken your dreams and put them on paper. That is the first step of any journey. Now let's learn the words that help us talk about our habits."
+                        },
+                        {
+                            "type": "platform",
+                            "text": "Go to 2 Practice."
+                        }
+                    ]
+                },
+                {
+                    "step": 7,
+                    "stage": "Practice",
+                    "title": "Introducing the Simple Present",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Practice opens on “Pip's Daily Flight”. The screen shows Pip's dream and the 6 missions. Tap Start the flight. Pip climbs one of the book's 5 Steps to Success for every mission."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Open to Grammar Spotlight: Simple Present Tense."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Pip practises every day. Practises, every day: these are Simple Present words. We use the Simple Present for three things: things we do every day, our habits and routines, and what we want or like."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Listen: I play. She reads. We want. Which one has an extra letter at the end?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Reads! / It has an s!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Today we find out exactly when that little -s comes, and when it doesn't."
+                        }
+                    ]
+                },
+                {
+                    "step": 8,
+                    "stage": "Practice",
+                    "title": "Missions 1-2: When and who",
+                    "minutes": 4,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Mission 1 · Again and Again?: 6 sentences. The class decides (hands up for each group), then you tap Again and again or Wants and likes. Mission 2 · Who Is Doing It?: 10 subjects; the class decides, then you tap Plain verb or Verb + s. The projector follows every tap; your “Say this” prompts stay on your screen."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "'Pip practises flying every morning.' Does it happen again and again, or is it something he wants?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Again and again! / Because it says every morning!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Stand up if this person takes the verb with -s; sit down if it takes the plain verb. Ready? 'My friend'!"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Stand! / My friend helps me!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Now a tricky one: 'Aanya and Flame'. Two people. Plain verb or -s?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Plain verb! / Aanya and Flame cheer!"
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Use the stand/sit vote so every child answers, not only the fast ones."
+                        }
+                    ]
+                },
+                {
+                    "step": 9,
+                    "stage": "Practice",
+                    "title": "Missions 3-4: The -s Machine and Pip's diary",
+                    "minutes": 5,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Mission 3 · The -s Machine: 9 verbs. The class predicts +s, +es or y → ies before you tap; the machine shows the answer and the rule. Mission 4 · Fix Pip's Training Diary: one wrong verb in each of 6 lines. Students point; you tap the word they choose."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Watch the end of the verb. 'Watch' ends in -ch. Shout your prediction: plus s, plus es, or y to ies?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Plus es! / Watches!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "And 'fly'? Pip flies every morning. What happened to the y?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "It changed to ies! / Flies!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Pip wrote his diary in a hurry: 'Every morning, Pip fly to the old oak tree.' Which word is wrong? Point at it in the air."
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Fly! / It should be flies!"
+                        }
+                    ]
+                },
+                {
+                    "step": 10,
+                    "stage": "Practice",
+                    "title": "Mission 5 and your own habit sentences",
+                    "minutes": 5,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Mission 5 · Build Your Habit: three sentences from the workbook, I…, My friend…, We…. The class picks a habit, then the verb form (if they pick the wrong form, the screen explains), then a time word. Each sentence goes on Our Habit Wall."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "My friend... drink or drinks a glass of water every morning? Why?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Drinks! / Because my friend is one person!"
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Grammar Spotlight › Let's Practice!: write 3 sentences about your goals or daily habits: I…, My friend…, We…. Use the habit in Box 3 of your vision board."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Now use YOUR habits. Look at Box 3 of your vision board. Write three sentences: one with I, one with My friend, one with We. Remember the -s only for My friend."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "I read every day. Lovely. Now, what does your friend do? My friend... plays? reads?"
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "Check your My friend sentence: did you add the -s?"
+                        },
+                        {
+                            "type": "support_prompt",
+                            "text": "Let's do one together. What do you do every morning? Brush your teeth? So: I brush my teeth every morning. Write it. Now your friend: My friend brushes... Good, -es because brush ends in sh."
+                        }
+                    ]
+                },
+                {
+                    "step": 11,
+                    "stage": "Practice",
+                    "title": "Quick check and wrap up",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Mission 6 · Quick Check: 5 questions. The class holds up 1 or 2 fingers, you tap the answer, then tap Many, Some or Few. Any “Few” shows a Fix It Zone suggestion. Then Pip reaches the North Cloud Mountains; tap Continue to Create to mark Practice as done (Create opens next session)."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "'She ___ storybooks at night.' Read or reads? Hold up your fingers!"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Reads! / Because she is one person!"
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Note who held up the wrong answer twice. Point them to the Fix It Zone in their Learning Space at home."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Today you shared your dreams, made a vision board, and learned the Simple Present: the words for things we do again and again. Next time, we write our goals and the steps to reach them. Keep your vision board safe. Great work today!"
+                        }
+                    ]
+                }
             ],
             session2Script: [
-                { step: 1, stage: 'Create', title: 'Opening ritual and recap', lines: [
-                    { type: 'teacher_says', text: 'Welcome back, explorers! Last session, you made a vision board with your goals, your inspirations, your habits, and your dream job. Today we take one more step: writing down your goals and the steps to reach them.' },
-                    { type: 'stage_direction', text: 'Pause for student responses.' }
-                ]},
-                { step: 2, stage: 'Create', title: 'Goal starter', lines: [
-                    { type: 'teacher_says', text: 'A goal without a plan is just a wish. Today we make a plan — a short-term goal and a long-term goal, each with 3 steps.' }
-                ]},
-                { step: 3, stage: 'Create', title: 'Teacher models a goal', lines: [
-                    { type: 'teacher_says', text: 'Let me model mine: my short-term goal is to learn 10 new spelling words. My steps: 1. Practice 10 minutes every day. 2. Ask my teacher for help if I get stuck. 3. Check my progress every Friday.' },
-                    { type: 'stage_direction', text: 'Write or speak slowly, pointing to each step as you go.' }
-                ]},
-                { step: 4, stage: 'Create', title: 'Write your goals', lines: [
-                    { type: 'teacher_says', text: 'You have about 12 minutes to write your short-term goal with 3 steps, then your long-term goal with 3 steps. Ready? Begin!' },
-                    { type: 'roving_prompt', text: "Look at Box 4 on your vision board — your dream job. That's your long-term goal. Write it." },
-                    { type: 'support_prompt', text: "Stuck? Look at your vision board — Box 1. Pick one goal and start there." }
-                ]},
-                { step: 5, stage: 'Create', title: 'Check my goals', lines: [
-                    { type: 'teacher_says', text: 'Pencils down. Look at what you wrote — a short-term goal with steps, a long-term dream with steps. That is a plan. That is powerful.' }
-                ]},
-                { step: 6, stage: 'Perform', title: 'Feedback frame', lines: [
-                    { type: 'teacher_says', text: "You will share ONE goal with a partner. After they share, don't just say 'good job' — tell them one thing you learned and how it inspired you." },
-                    { type: 'stage_direction', text: 'Write the frame on the board: Their goal: ___. How it inspired me: ___.' }
-                ]},
-                { step: 7, stage: 'Perform', title: 'Pair share', lines: [
-                    { type: 'teacher_says', text: 'Partner A shares first — short-term or long-term, your choice. Partner B listens, then writes the goal and how it inspired them. Then switch. 3-4 minutes each.' },
-                    { type: 'roving_prompt', text: 'Partner B, what did you hear? Write their goal exactly, then how it made you feel.' }
-                ]},
-                { step: 8, stage: 'Perform', title: "Explorer's Stage", lines: [
-                    { type: 'teacher_says', text: "Who wants to share something they learned from a classmate's goal — not your own? Call it out!" },
-                    { type: 'stage_direction', text: 'Pick 2-3 volunteers; class claps after each share.' }
-                ]},
-                { step: 9, stage: 'Perform', title: 'Close', lines: [
-                    { type: 'teacher_says', text: 'Today you created a plan and performed by sharing it. That is how journeys begin — not alone, but together. Keep your goal sheet and take one small step today.' }
-                ]}
+                {
+                    "step": 1,
+                    "stage": "Create",
+                    "title": "Opening and recap",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Open Chapter 2 › Create. The opening card shows the welcome line; tap Continue when you are ready for the starter."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Workbooks open at your vision board."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Welcome back, everyone! Take out your vision board. You have your goals, your inspirations, your habits and your dream job. Today we take one more step: we write our goals, and the steps we will take to reach them."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Quick warm-up: tell me one habit sentence from last time. Remember the -s for he and she!"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "I read every day! / My friend plays football on Sundays!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "A goal without a plan is just a wish. Today we make a plan."
+                        }
+                    ]
+                },
+                {
+                    "step": 2,
+                    "stage": "Create",
+                    "title": "Short-term goal and steps",
+                    "minutes": 5,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "The Story Starter card shows “My short-term goal is...” large on the projector."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Open to Create › My Goals for the Future: My Short-Term Goal (Next 3 Months) and Steps I Will Take."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "First, a short-term goal: something you want to reach in the next 3 months. For example: learn 10 new spelling words, or practise swimming twice a week."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Then 3 steps: small actions, written in the Simple Present. 1, I practise for 10 minutes every day. 2, I ask my teacher for help when I get stuck. 3, I check my progress every Friday."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Remember someone said 'learn to swim'? Steps: I watch swimming videos. I practise floating. I ask my parents for swimming classes. See? Simple."
+                        }
+                    ]
+                },
+                {
+                    "step": 3,
+                    "stage": "Create",
+                    "title": "Long-term goal: teacher models",
+                    "minutes": 4,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Teacher Models a Story shows a model goal, one sentence at a time, with the Simple Present verbs highlighted. Tap Next for each sentence."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Now a long-term goal: something for 5 years or more. Your big dream. Listen to mine: 'Every morning, I wake up and think about my dream of becoming a wildlife photographer. I practise taking pictures of birds every weekend.'"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Which words tell us it happens again and again?"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "Every morning! / Every weekend! / I practise!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Your long-term steps can be bigger: I study science every year. I find a mentor. You don't have to know everything now. Just imagine."
+                        }
+                    ]
+                },
+                {
+                    "step": 4,
+                    "stage": "Create",
+                    "title": "Write your goals",
+                    "minutes": 11,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Write Your Story shows the reminder and the starters (“My short-term goal is...”, “My long-term goal is...”, “Every day, I...”) on the projector."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Create › My Goals for the Future: short-term goal + 3 steps, then long-term goal + 3 steps."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Write your short-term goal and three steps first, then your long-term goal and three steps. Use I and the plain verb for your steps. You have 11 minutes. Begin!"
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "What is one thing you want to get better at in the next 3 months? Look at Box 1 of your vision board."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "Step 1: what will you do tomorrow? Write it with I: I read..., I practise..."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "Look at Box 4, your dream job. That's your long-term goal."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "Finished early? Add a time to each step: every morning, by the end of July."
+                        },
+                        {
+                            "type": "support_prompt",
+                            "text": "Let's choose together. Do you want to read more, swim, or help at home? Read more? Then: My short-term goal is to read 5 books. Step 1: I read 10 pages every day. Write that, then we find step 2."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Time warnings: at 10 minutes left, “Finish your short-term goal and 2 steps.” At 5, “Work on your long-term goal.” At 2, “Read everything to yourself and add one small detail.”"
+                        }
+                    ]
+                },
+                {
+                    "step": 5,
+                    "stage": "Create",
+                    "title": "Check my goals",
+                    "minutes": 2,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Check My Story shows the checklist on the projector."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Pencils down. Check: do you have 2 goals? 3 steps for each? Do your steps start with I and a plain verb? Is there a time word? Fix one thing now."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Students who want feedback on their writing can send it from the Learning Space at home (2 chances per chapter)."
+                        }
+                    ]
+                },
+                {
+                    "step": 6,
+                    "stage": "Perform",
+                    "title": "Sharing expectations",
+                    "minutes": 3,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Go to 4 Perform. The feedback frame shows large on the projector."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "Perform › Sharing My Goal: “Their goal: ___” and “How it inspired me: ___”."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "You will share ONE goal with a partner, short-term or long-term, you choose. Your partner listens, then writes your goal and how it inspired them. Then you switch."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Let me show you. My partner says: 'My short-term goal is to read one book every month.' I write: 'Their goal: to read one book every month. How it inspired me: it made me want to read more too.'"
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Model with one volunteer before the pairs begin."
+                        }
+                    ]
+                },
+                {
+                    "step": 7,
+                    "stage": "Perform",
+                    "title": "Pair share",
+                    "minutes": 8,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Pair Share: tap Start Partner 1 for the 4-minute timer, then Switch Partner."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Partner A shares first. Partner B listens, then writes their goal and how it inspired you. Begin!"
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "Partner B, what did you hear? Write their goal exactly."
+                        },
+                        {
+                            "type": "roving_prompt",
+                            "text": "How did it make you feel? Write that in 'How it inspired me'."
+                        },
+                        {
+                            "type": "support_prompt",
+                            "text": "Partner A, speak clearly. Your goal matters. You can read it straight from your page."
+                        },
+                        {
+                            "type": "stage_direction",
+                            "text": "Give a 1-minute warning before switching: “One more minute for Partner A, then switch.”"
+                        }
+                    ]
+                },
+                {
+                    "step": 8,
+                    "stage": "Perform",
+                    "title": "Explorer's Stage",
+                    "minutes": 2,
+                    "lines": [
+                        {
+                            "type": "platform",
+                            "text": "Tap Continue to the Explorer's Stage. Ask for a volunteer, pick their name, then tap Spotlight; the spotlight and applause show on the projector."
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Who wants to share something they learned from a classmate's goal? Not your own: someone else's. Call it out!"
+                        },
+                        {
+                            "type": "expected_answers",
+                            "text": "My partner's goal is to learn coding. It inspired me because I like computers too!"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "See? When we share our goals, we inspire each other."
+                        }
+                    ]
+                },
+                {
+                    "step": 9,
+                    "stage": "Perform",
+                    "title": "Celebrate and close",
+                    "minutes": 2,
+                    "lines": [
+                        {
+                            "type": "teacher_says",
+                            "text": "Turn to your partner and say: 'Thank you for sharing your goal with me.'"
+                        },
+                        {
+                            "type": "teacher_says",
+                            "text": "Today you created a short-term plan and a long-term dream, you shared it, and you learned from someone else's goal. That is how journeys begin: not alone, but together. Read your goals every morning. Take one small step today. Your journey has already started."
+                        },
+                        {
+                            "type": "workbook",
+                            "text": "I Can Check Myself: students tick the boxes for Chapter 2."
+                        },
+                        {
+                            "type": "platform",
+                            "text": "Tap Continue. The closing card shows on the projector. Tap Finish Chapter. The short notes box above it is optional and only for you."
+                        }
+                    ]
+                }
             ]
         }
     },

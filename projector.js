@@ -702,6 +702,7 @@ function handleProjectorMessage(msg) {
         case 'practice-builder-word': renderPracticeBuilderWord(msg.word); break;
         case 'practice-word-found': renderPracticeWordFound(msg.cells, msg.word); break;
         case 'practice-result': renderPracticeResult(msg.correct); break;
+        case 'practice-c2': showProjScreen('proj-practice-c2'); chapter2Practice.renderInto(document.getElementById('proj-c2-root'), msg.state); break;
         case 'practice-c1-discover': renderC1Discover(msg); break;
         case 'practice-c1-classify': renderC1Classify(msg); break;
         case 'practice-c1-why': renderC1Why(msg); break;

@@ -3585,6 +3585,10 @@ function broadcastCurrentPracticeState() {
         if (typeof chapter1Practice !== 'undefined') chapter1Practice.broadcastCurrentState();
         return;
     }
+    if (appState.currentChapterId === 2) {
+        if (typeof chapter2Practice !== 'undefined') chapter2Practice.broadcastCurrentState();
+        return;
+    }
     const activity = appState.practiceActivities[appState.practiceStepIndex];
     if (activity) broadcastPracticeActivity(activity);
 }
@@ -4355,9 +4359,16 @@ function buildPracticeActivities(chapter) {
 // and comes back keeps their progress instead of restarting from screen 1.
 function renderPracticeStage(chapter) {
     const isChapter1 = chapter.id === 1;
-    document.getElementById('genericPracticeSystem').style.display = isChapter1 ? 'none' : 'block';
+    const isChapter2 = chapter.id === 2;
+    document.getElementById('genericPracticeSystem').style.display = isChapter1 || isChapter2 ? 'none' : 'block';
     document.getElementById('chapter1PracticeMount').style.display = isChapter1 ? 'block' : 'none';
+    document.getElementById('chapter2PracticeMount').style.display = isChapter2 ? 'block' : 'none';
 
+    // Chapter 2: "Pip's Daily Flight" (chapter2-practice.js) keeps its progress on repeat visits.
+    if (isChapter2) {
+        chapter2Practice.mount();
+        return;
+    }
     if (!isChapter1) {
         appState.practiceActivities = buildPracticeActivities(chapter);
         appState.practiceStepIndex = 0;
@@ -4372,6 +4383,16 @@ function renderPracticeStage(chapter) {
 // Zone follow-up (there's no Fix It Zone module built yet, so for now this
 // just surfaces as a teacher-facing notification rather than being silently
 // dropped).
+// Bridge called by chapter2-practice.js when the class finishes "Pip's
+// Daily Flight" and continues to Create.
+function completeChapter2Practice(needsFixItZone) {
+    markStageDone(2, 'practice');
+    if (needsFixItZone) {
+        showNotification('Quick Check: some students found the -s rule tricky. Go over it again in Session 2, or use the Fix It Zone.');
+    }
+    startChapterStage('create');
+}
+
 function completeChapter1Practice(needsFixItZone) {
     markStageDone(1, 'practice');
     if (needsFixItZone) {
@@ -4730,6 +4751,11 @@ let createModelIndex = 0;
 function renderCreateStage(chapter) {
     document.getElementById('createTitle').textContent = `Create: ${chapter.title}`;
     document.getElementById('sentenceTargetPill').textContent = `Target: ${chapter.create.target}`;
+    // The welcome-back line: this chapter's own recap from its Session 2
+    // script (create.recap if set), not Chapter 1's.
+    const recapStep = ((chapter.prep && chapter.prep.session2Script) || [])[0];
+    const recapLine = chapter.create.recap || (recapStep && (recapStep.lines.find(l => l.type === 'teacher_says') || {}).text);
+    if (recapLine) document.querySelector('#createRitualSection .ritual-line').textContent = `“${recapLine}”`;
     playRitualChime();
 
     // Reset to step 1 — ritual is always-visible, everything after is gated.
